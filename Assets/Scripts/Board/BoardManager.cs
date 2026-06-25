@@ -1,17 +1,16 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Collections;
-
 
 public class BoardManager : MonoBehaviour
 {
     public int width = 8;
     public int height = 8;
 
-    public GameObject candyPrefab;
+    public GameObject mineralPrefab;
 
-    private Candy[,] board;
-    private Candy selectedCandy;
+    private Cell[,] cells;
+    private Mineral selectedMineral;
 
     void Start()
     {
@@ -20,69 +19,75 @@ public class BoardManager : MonoBehaviour
 
     void GenerateBoard()
     {
-        board = new Candy[width, height];
-
-        float offsetX = (width - 1) / 2f;
-        float offsetY = (height - 1) / 2f;
+        cells = new Cell[width, height];
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                CreateCandy(x, y, offsetX, offsetY);
+                cells[x, y] = new Cell(x, y);
+                CreateMineral(x, y);
             }
         }
     }
 
-    void CreateCandy(int x, int y, float offsetX, float offsetY)
+    void CreateMineral(int x, int y)
     {
-        Vector2 position = new Vector2(x - offsetX, y - offsetY);
+        Vector2 position = GetWorldPosition(x, y);
 
-        GameObject newCandy = Instantiate(
-            candyPrefab,
+        GameObject newMineral = Instantiate(
+            mineralPrefab,
             position,
             Quaternion.identity,
             transform
         );
 
-        Candy candy = newCandy.GetComponent<Candy>();
-        candy.SetPosition(x, y);
+        Mineral mineral = newMineral.GetComponent<Mineral>();
+        mineral.SetPosition(x, y);
 
-        board[x, y] = candy;
+        cells[x, y].mineral = mineral;
     }
 
-    public void SelectCandy(Candy candy)
+    Vector2 GetWorldPosition(int x, int y)
     {
-        if (selectedCandy == null)
+        float offsetX = (width - 1) / 2f;
+        float offsetY = (height - 1) / 2f;
+
+        return new Vector2(x - offsetX, y - offsetY);
+    }
+
+    public void SelectMineral(Mineral mineral)
+    {
+        if (selectedMineral == null)
         {
-            selectedCandy = candy;
-            selectedCandy.Select();
+            selectedMineral = mineral;
+            selectedMineral.Select();
         }
         else
         {
-            selectedCandy.Deselect();
+            selectedMineral.Deselect();
 
-            if (IsNeighbor(selectedCandy, candy))
+            if (IsNeighbor(selectedMineral, mineral))
             {
-                SwapCandies(selectedCandy, candy);
+                SwapMinerals(selectedMineral, mineral);
 
-                List<Candy> matches = GetMatches();
+                List<Mineral> matches = GetMatches();
 
-              if (matches.Count > 0)
-{
-    StartCoroutine(ProcessBoard());
-}
-else
-{
-    SwapCandies(selectedCandy, candy);
-}
+                if (matches.Count > 0)
+                {
+                    StartCoroutine(ProcessBoard());
+                }
+                else
+                {
+                    SwapMinerals(selectedMineral, mineral);
+                }
             }
 
-            selectedCandy = null;
+            selectedMineral = null;
         }
     }
 
-    bool IsNeighbor(Candy a, Candy b)
+    bool IsNeighbor(Mineral a, Mineral b)
     {
         int distanceX = Mathf.Abs(a.x - b.x);
         int distanceY = Mathf.Abs(a.y - b.y);
@@ -90,10 +95,10 @@ else
         return distanceX + distanceY == 1;
     }
 
-    void SwapCandies(Candy a, Candy b)
+    void SwapMinerals(Mineral a, Mineral b)
     {
-        board[a.x, a.y] = b;
-        board[b.x, b.y] = a;
+        cells[a.x, a.y].mineral = b;
+        cells[b.x, b.y].mineral = a;
 
         int tempX = a.x;
         int tempY = a.y;
@@ -106,25 +111,25 @@ else
         b.transform.position = tempPos;
     }
 
-    List<Candy> GetMatches()
+    List<Mineral> GetMatches()
     {
-        List<Candy> matches = new List<Candy>();
+        List<Mineral> matches = new List<Mineral>();
 
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width - 2; x++)
             {
-                Candy c1 = board[x, y];
-                Candy c2 = board[x + 1, y];
-                Candy c3 = board[x + 2, y];
+                Mineral m1 = cells[x, y].mineral;
+                Mineral m2 = cells[x + 1, y].mineral;
+                Mineral m3 = cells[x + 2, y].mineral;
 
-                if (c1 != null && c2 != null && c3 != null &&
-                    c1.colorId == c2.colorId &&
-                    c2.colorId == c3.colorId)
+                if (m1 != null && m2 != null && m3 != null &&
+                    m1.mineralType == m2.mineralType &&
+                    m2.mineralType == m3.mineralType)
                 {
-                    AddMatch(matches, c1);
-                    AddMatch(matches, c2);
-                    AddMatch(matches, c3);
+                    AddMatch(matches, m1);
+                    AddMatch(matches, m2);
+                    AddMatch(matches, m3);
                 }
             }
         }
@@ -133,17 +138,17 @@ else
         {
             for (int y = 0; y < height - 2; y++)
             {
-                Candy c1 = board[x, y];
-                Candy c2 = board[x, y + 1];
-                Candy c3 = board[x, y + 2];
+                Mineral m1 = cells[x, y].mineral;
+                Mineral m2 = cells[x, y + 1].mineral;
+                Mineral m3 = cells[x, y + 2].mineral;
 
-                if (c1 != null && c2 != null && c3 != null &&
-                    c1.colorId == c2.colorId &&
-                    c2.colorId == c3.colorId)
+                if (m1 != null && m2 != null && m3 != null &&
+                    m1.mineralType == m2.mineralType &&
+                    m2.mineralType == m3.mineralType)
                 {
-                    AddMatch(matches, c1);
-                    AddMatch(matches, c2);
-                    AddMatch(matches, c3);
+                    AddMatch(matches, m1);
+                    AddMatch(matches, m2);
+                    AddMatch(matches, m3);
                 }
             }
         }
@@ -151,20 +156,46 @@ else
         return matches;
     }
 
-    void AddMatch(List<Candy> matches, Candy candy)
+    void AddMatch(List<Mineral> matches, Mineral mineral)
     {
-        if (!matches.Contains(candy))
+        if (!matches.Contains(mineral))
         {
-            matches.Add(candy);
+            matches.Add(mineral);
         }
     }
 
-    void ClearMatches(List<Candy> matches)
+    IEnumerator ProcessBoard()
     {
-        foreach (Candy candy in matches)
+        yield return new WaitForSeconds(0.2f);
+
+        List<Mineral> matches = GetMatches();
+
+        while (matches.Count > 0)
         {
-            board[candy.x, candy.y] = null;
-            Destroy(candy.gameObject);
+            ClearMatches(matches);
+
+            yield return new WaitForSeconds(0.2f);
+
+            CollapseColumns();
+
+            yield return new WaitForSeconds(0.3f);
+
+            RefillBoard();
+
+            yield return new WaitForSeconds(0.3f);
+
+            matches = GetMatches();
+        }
+
+        Debug.Log("No hay más combinaciones");
+    }
+
+    void ClearMatches(List<Mineral> matches)
+    {
+        foreach (Mineral mineral in matches)
+        {
+            cells[mineral.x, mineral.y].mineral = null;
+            Destroy(mineral.gameObject);
         }
 
         Debug.Log("Minerales eliminados: " + matches.Count);
@@ -172,117 +203,43 @@ else
 
     void CollapseColumns()
     {
-        float offsetX = (width - 1) / 2f;
-        float offsetY = (height - 1) / 2f;
-
         for (int x = 0; x < width; x++)
         {
             int emptyY = -1;
 
             for (int y = 0; y < height; y++)
             {
-                if (board[x, y] == null && emptyY == -1)
+                if (cells[x, y].mineral == null && emptyY == -1)
                 {
                     emptyY = y;
                 }
-                else if (board[x, y] != null && emptyY != -1)
+                else if (cells[x, y].mineral != null && emptyY != -1)
                 {
-                    Candy candy = board[x, y];
+                    Mineral mineral = cells[x, y].mineral;
 
-                    board[x, emptyY] = candy;
-                    board[x, y] = null;
+                    cells[x, emptyY].mineral = mineral;
+                    cells[x, y].mineral = null;
 
-                    candy.SetPosition(x, emptyY);
-                    StartCoroutine(MoveCandy(
-    candy,
-    new Vector2(x - offsetX, emptyY - offsetY)
-));
+                    mineral.SetPosition(x, emptyY);
+                    mineral.transform.position = GetWorldPosition(x, emptyY);
 
                     emptyY++;
                 }
             }
         }
-
-        Debug.Log("Columnas bajaron");
     }
 
     void RefillBoard()
-{
-    float offsetX = (width - 1) / 2f;
-    float offsetY = (height - 1) / 2f;
-
-    for (int x = 0; x < width; x++)
     {
-        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
         {
-            if (board[x, y] == null)
+            for (int y = 0; y < height; y++)
             {
-                Vector2 position = new Vector2(
-                    x - offsetX,
-                    y - offsetY
-                );
-
-                GameObject newCandy = Instantiate(
-                    candyPrefab,
-                    position,
-                    Quaternion.identity,
-                    transform
-                );
-
-                Candy candy = newCandy.GetComponent<Candy>();
-
-                candy.SetPosition(x, y);
-
-                board[x, y] = candy;
+                if (cells[x, y].mineral == null)
+                {
+                    CreateMineral(x, y);
+                }
             }
         }
     }
-}
-IEnumerator MoveCandy(Candy candy, Vector2 targetPosition)// 
-{
-    float duration = 0.2f;
-    float elapsed = 0f;
-
-    Vector2 startPosition = candy.transform.position;
-
-    while (elapsed < duration)
-    {
-        candy.transform.position = Vector2.Lerp(
-            startPosition,
-            targetPosition,
-            elapsed / duration
-        );
-
-        elapsed += Time.deltaTime;
-        yield return null;
-    }
-
-    candy.transform.position = targetPosition;
-}
-
-IEnumerator ProcessBoard()
-{
-    yield return new WaitForSeconds(0.2f);
-
-    List<Candy> matches = GetMatches();
-
-    while (matches.Count > 0)
-    {
-        ClearMatches(matches);
-
-        yield return new WaitForSeconds(0.2f);
-
-        CollapseColumns();
-
-        yield return new WaitForSeconds(0.3f);
-
-        RefillBoard();
-
-        yield return new WaitForSeconds(0.3f);
-
-        matches = GetMatches();
-    }
-
-    Debug.Log("No hay más combinaciones");
-}
 }

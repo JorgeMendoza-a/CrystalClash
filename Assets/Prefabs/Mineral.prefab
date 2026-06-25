@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1485209502113824481}
   - component: {fileID: 7966562196370442028}
   m_Layer: 0
-  m_Name: Candy
+  m_Name: Mineral
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

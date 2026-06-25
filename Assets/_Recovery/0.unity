@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7c400072e794484f92f2b1d41cbceac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  selectedMineral: {fileID: 0}
+  selectedCandy: {fileID: 0}
 --- !u!4 &99362016
 Transform:
   m_ObjectHideFlags: 0
@@ -480,7 +480,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardManager
   width: 8
   height: 8
-  mineralPrefab: {fileID: 7755888246174150598, guid: 1e18cc131d3aa0943a239736206d6944, type: 3}
+  candyPrefab: {fileID: 7755888246174150598, guid: 1e18cc131d3aa0943a239736206d6944, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

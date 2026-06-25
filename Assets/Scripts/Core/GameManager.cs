@@ -4,7 +4,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public Candy selectedCandy;
+    public Mineral selectedMineral;
 
     private void Awake()
     {
