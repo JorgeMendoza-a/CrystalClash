@@ -1,0 +1,14 @@
+[Ll]ibrary/
+[Tt]emp/
+[Ll]ogs/
+UserSettings/
+
+.vscode/
+
+*.csproj
+*.sln
+*.slnx
+MemoryCaptures/
+Obj/
+Build/
+Builds/
