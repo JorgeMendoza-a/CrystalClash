@@ -9,13 +9,18 @@ public class BoardManager : MonoBehaviour
 
     public GameObject mineralPrefab;
 
-    private Cell[,] cells;
-    private Mineral selectedMineral;
+   private Cell[,] cells;
+private Mineral selectedMineral;
+private MoveFinder moveFinder;
 
     void Start()
-    {
-        GenerateBoard();
-    }
+{
+    moveFinder = GetComponent<MoveFinder>();
+
+    GenerateBoard();
+
+    CheckAvailableMoves();
+}
 
     void GenerateBoard()
     {
@@ -188,6 +193,7 @@ public class BoardManager : MonoBehaviour
         }
 
         Debug.Log("No hay más combinaciones");
+CheckAvailableMoves();
     }
 
     void ClearMatches(List<Mineral> matches)
@@ -242,4 +248,65 @@ public class BoardManager : MonoBehaviour
             }
         }
     }
+
+void CheckAvailableMoves()
+{
+    bool hasMoves = moveFinder.HasAvailableMoves(cells, width, height);
+
+    if (hasMoves)
+    {
+        Debug.Log("Sí hay movimientos disponibles");
+    }
+    else
+    {
+        Debug.LogWarning("No hay movimientos disponibles. Reorganizando tablero...");
+        ShuffleBoard();
+    }
+}
+
+void ShuffleBoard()
+{
+    List<MineralType> types = new List<MineralType>();
+
+    for (int x = 0; x < width; x++)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            if (cells[x, y].mineral != null)
+            {
+                types.Add(cells[x, y].mineral.mineralType);
+            }
+        }
+    }
+
+    for (int i = 0; i < types.Count; i++)
+    {
+        int randomIndex = Random.Range(i, types.Count);
+
+        MineralType temp = types[i];
+        types[i] = types[randomIndex];
+        types[randomIndex] = temp;
+    }
+
+    int index = 0;
+
+    for (int x = 0; x < width; x++)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            if (cells[x, y].mineral != null)
+            {
+                cells[x, y].mineral.SetMineralType(types[index]);
+                index++;
+            }
+        }
+    }
+
+    Debug.Log("Tablero reorganizado");
+
+    if (!moveFinder.HasAvailableMoves(cells, width, height))
+    {
+        ShuffleBoard();
+    }
+}
 }

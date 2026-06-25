@@ -30,10 +30,8 @@ public class Mineral : MonoBehaviour
         normalScale = transform.localScale;
         selectedScale = normalScale * 1.2f;
 
-        int randomIndex = Random.Range(0, colors.Length);
-        mineralType = (MineralType)randomIndex;
-
-        spriteRenderer.color = colors[randomIndex];
+       int randomIndex = Random.Range(0, colors.Length);
+SetMineralType((MineralType)randomIndex);
     }
 
     public void SetPosition(int newX, int newY)
@@ -57,4 +55,16 @@ public class Mineral : MonoBehaviour
     {
         transform.localScale = normalScale;
     }
+
+    public void SetMineralType(MineralType newType)
+{
+    mineralType = newType;
+
+    if (spriteRenderer == null)
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    spriteRenderer.color = colors[(int)mineralType];
+}
 }
