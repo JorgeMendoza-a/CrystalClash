@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
 
+
 public class BoardManager : MonoBehaviour
 {
     public int width = 8;
@@ -67,16 +68,14 @@ public class BoardManager : MonoBehaviour
 
                 List<Candy> matches = GetMatches();
 
-               if (matches.Count > 0)
+              if (matches.Count > 0)
 {
-    ClearMatches(matches);
-    CollapseColumns();
-    RefillBoard();
+    StartCoroutine(ProcessBoard());
 }
-                else
-                {
-                    SwapCandies(selectedCandy, candy);
-                }
+else
+{
+    SwapCandies(selectedCandy, candy);
+}
             }
 
             selectedCandy = null;
@@ -259,5 +258,31 @@ IEnumerator MoveCandy(Candy candy, Vector2 targetPosition)//
     }
 
     candy.transform.position = targetPosition;
+}
+
+IEnumerator ProcessBoard()
+{
+    yield return new WaitForSeconds(0.2f);
+
+    List<Candy> matches = GetMatches();
+
+    while (matches.Count > 0)
+    {
+        ClearMatches(matches);
+
+        yield return new WaitForSeconds(0.2f);
+
+        CollapseColumns();
+
+        yield return new WaitForSeconds(0.3f);
+
+        RefillBoard();
+
+        yield return new WaitForSeconds(0.3f);
+
+        matches = GetMatches();
+    }
+
+    Debug.Log("No hay más combinaciones");
 }
 }
