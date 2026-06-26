@@ -197,15 +197,19 @@ CheckAvailableMoves();
     }
 
     void ClearMatches(List<Mineral> matches)
+{
+    foreach (Mineral mineral in matches)
     {
-        foreach (Mineral mineral in matches)
-        {
-            cells[mineral.x, mineral.y].mineral = null;
-            Destroy(mineral.gameObject);
-        }
+        cells[mineral.x, mineral.y].mineral = null;
 
-        Debug.Log("Minerales eliminados: " + matches.Count);
+        // Sumar 10 puntos por cada mineral destruido
+        ScoreManager.Instance.AddScore(10);
+
+        Destroy(mineral.gameObject);
     }
+
+    Debug.Log("Minerales eliminados: " + matches.Count);
+}
 
     void CollapseColumns()
     {

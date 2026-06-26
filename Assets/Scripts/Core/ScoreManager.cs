@@ -2,15 +2,29 @@ using UnityEngine;
 
 public class ScoreManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public static ScoreManager Instance;
+
+    public int Score { get; private set; }
+
+    private void Awake()
     {
-        
+        Instance = this;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void AddScore(int points)
+{
+    Score += points;
+
+    Debug.Log($"Puntos: {Score}");
+
+    if (GameUI.Instance != null)
     {
-        
+        GameUI.Instance.UpdateScore(Score);
+    }
+}
+
+    public void ResetScore()
+    {
+        Score = 0;
     }
 }
