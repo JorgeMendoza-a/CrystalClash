@@ -16,6 +16,7 @@ using UnityEngine.SceneManagement;
 public class RankedMatchController : MonoBehaviour
 {
     private const float SyncIntervalSeconds = 2f;
+    private const int GemsPerWin = 10;
 
     private IRankedService service;
     private RankedMatchInfo match;
@@ -183,6 +184,15 @@ public class RankedMatchController : MonoBehaviour
             default: title = "Empate"; break;
         }
 
+        // Premio local en gemas por ganar (con el servidor real lo dará el servidor).
+        string gemsLine = "";
+        if (result.Outcome == MatchOutcome.Win)
+        {
+            SaveManager.Progress.gems += GemsPerWin;
+            SaveManager.Save();
+            gemsLine = $"\n<color=#C080FF>+{GemsPerWin} gemas</color>";
+        }
+
         string change = result.PointsChange >= 0 ? $"<color=#66FF77>+{result.PointsChange}</color>" : $"<color=#FF7070>{result.PointsChange}</color>";
         RankTier tier = RankTiers.ForPoints(result.NewPoints);
 
@@ -190,7 +200,7 @@ public class RankedMatchController : MonoBehaviour
             title,
             $"Tú: <b>{result.MyScore}</b>   —   {result.OpponentName}: <b>{result.OpponentScore}</b>\n\n" +
             $"Puntos de clasificatoria: {change}\n" +
-            $"Ahora tienes <b>{result.NewPoints}</b> · <color=#{ColorUtility.ToHtmlStringRGB(UiKit.LeagueColor(tier.LeagueIndex))}>{tier.Name}</color>",
+            $"Ahora tienes <b>{result.NewPoints}</b> · <color=#{ColorUtility.ToHtmlStringRGB(UiKit.LeagueColor(tier.LeagueIndex))}>{tier.Name}</color>" + gemsLine,
             new StoryPopup.PopupButton("Jugar otra", () => Leave(AppNavigation.Screen.Ranked)),
             new StoryPopup.PopupButton("Salir", () => Leave(AppNavigation.Screen.Home)));
     }

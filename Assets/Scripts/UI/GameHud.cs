@@ -296,10 +296,36 @@ public class GameHud : MonoBehaviour
 
         // En clasificatoria no hay potenciadores (las dos partidas deben ser iguales).
         if (rankedMatch == null) BuildBoosterBar();
+        if (rankedMatch == null) BuildPauseRow(current);
 
         SetMoves(current.MovesLeft);
         SetObjectives(current);
         SetScore(current.Score);
+    }
+
+    /// <summary>Fila superior: botón Menú (pausa) y nombre del nivel.</summary>
+    private void BuildPauseRow(LevelSession current)
+    {
+        GameObject rowGO = UiKit.Node(transform, "Pausa");
+        var row = (RectTransform)rowGO.transform;
+        row.anchorMin = new Vector2(0f, 1f);
+        row.anchorMax = new Vector2(1f, 1f);
+        row.pivot = new Vector2(0.5f, 1f);
+        row.anchoredPosition = new Vector2(0f, -20f);
+        row.sizeDelta = new Vector2(-40f, 105f);
+        HorizontalLayoutGroup layout = UiKit.Horizontal(rowGO, 0, 16f);
+        layout.childForceExpandWidth = false;
+
+        Button menu = UiKit.Button(rowGO.transform, "Menú", UiKit.ButtonStyle.Gray, () =>
+        {
+            if (GameManager.Instance != null) GameManager.Instance.ShowPause();
+        }, 40f);
+        UiKit.Size(menu, width: 220f);
+
+        string title = current.Level.Number > 0 ? $"Nivel {current.Level.Number} · {current.Level.Name}" : current.Level.Name;
+        TMP_Text label = UiKit.Text(rowGO.transform, title, 40f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(label, 0.2f);
+        UiKit.Size(label, flexibleWidth: 1f);
     }
 
     private void BuildMovesCard(Transform parent)

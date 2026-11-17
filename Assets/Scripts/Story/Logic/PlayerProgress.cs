@@ -61,6 +61,95 @@ namespace CrystalClash.Story.Logic
             boosters = resized;
         }
 
+        // ------------------------------------------------------------------
+        // Monedas, gemas y vidas
+        // ------------------------------------------------------------------
+
+        public const int StartingCoins = 500;
+        public const int MaxLives = 5;
+        public const int LifeRegenSeconds = 20 * 60;
+
+        public const int CoinsPerWin = 50;
+        public const int CoinsPerStar = 25;
+        public const int BoosterPrice = 250;     // monedas
+        public const int RefillLivesPrice = 20;  // gemas
+
+        public int coins = StartingCoins;
+        public int gems;
+
+        /// <summary>Vidas guardadas en el momento livesTimestampUtc (la regeneración se calcula al leer).</summary>
+        public int lives = MaxLives;
+        public long livesTimestampUtc;
+
+        /// <summary>Vidas actuales, contando las que se recuperaron con el tiempo.</summary>
+        public int GetLives(long nowUtc)
+        {
+            ApplyRegen(nowUtc);
+            return lives;
+        }
+
+        /// <summary>Segundos para la próxima vida (0 si están llenas).</summary>
+        public int SecondsToNextLife(long nowUtc)
+        {
+            ApplyRegen(nowUtc);
+            if (lives >= MaxLives) return 0;
+            return (int)Math.Max(0, LifeRegenSeconds - (nowUtc - livesTimestampUtc));
+        }
+
+        /// <summary>Quita una vida (al perder un nivel). Devuelve false si no quedaban.</summary>
+        public bool LoseLife(long nowUtc)
+        {
+            ApplyRegen(nowUtc);
+            if (lives <= 0) return false;
+            if (lives == MaxLives) livesTimestampUtc = nowUtc; // empieza a contar la regeneración
+            lives--;
+            return true;
+        }
+
+        public void RefillLives(long nowUtc)
+        {
+            lives = MaxLives;
+            livesTimestampUtc = nowUtc;
+        }
+
+        private void ApplyRegen(long nowUtc)
+        {
+            if (lives >= MaxLives)
+            {
+                lives = MaxLives;
+                return;
+            }
+            if (nowUtc <= livesTimestampUtc) return;
+
+            long elapsed = nowUtc - livesTimestampUtc;
+            int recovered = (int)(elapsed / LifeRegenSeconds);
+            if (recovered <= 0) return;
+
+            lives = Math.Min(MaxLives, lives + recovered);
+            livesTimestampUtc += (long)recovered * LifeRegenSeconds;
+            if (lives >= MaxLives) livesTimestampUtc = nowUtc;
+        }
+
+        /// <summary>Monedas que da ganar un nivel (siempre, no solo la primera vez).</summary>
+        public static int CoinsForWin(int stars)
+        {
+            return CoinsPerWin + CoinsPerStar * Math.Max(0, Math.Min(3, stars));
+        }
+
+        public bool TrySpendCoins(int amount)
+        {
+            if (amount < 0 || coins < amount) return false;
+            coins -= amount;
+            return true;
+        }
+
+        public bool TrySpendGems(int amount)
+        {
+            if (amount < 0 || gems < amount) return false;
+            gems -= amount;
+            return true;
+        }
+
         public bool IsUnlocked(int levelNumber)
         {
             return levelNumber >= 1 && levelNumber <= highestUnlocked;

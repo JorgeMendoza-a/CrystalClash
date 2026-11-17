@@ -257,7 +257,7 @@ def main(out):
     bomb(f"{out}/bomb.png")
 
 
-if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2"):
+if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2", "--ui3"):
     main(sys.argv[1])
 
 
@@ -563,8 +563,153 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui2":
     ui_button(f"{out}/btn_blue.png", (80, 150, 240), (25, 70, 160))
     ui_button(f"{out}/btn_gray.png", (110, 115, 130), (50, 54, 66))
     ui_button(f"{out}/btn_red.png", (235, 95, 80), (140, 30, 25))
+    ui_button(f"{out}/btn_purple.png", (170, 90, 240), (80, 25, 150))
     ui_panel(f"{out}/panel.png")
     ui_bar(f"{out}/bar_bg.png", (12, 16, 28), (26, 32, 50))
     ui_bar(f"{out}/bar_fill.png", (90, 180, 255), (25, 90, 210))
     ui_row(f"{out}/row.png")
     coin_icon(f"{out}/coin.png")
+
+
+# ======================================================================
+# Mapa, barra de navegación e íconos (Assets/Resources/UI)
+# Uso: python3 Tools/gen_gems.py --ui3 Assets/Resources/UI
+# ======================================================================
+
+def level_node(path, top, bottom):
+    img, d = new()
+    # sombra
+    sh = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sh).ellipse([C - 205, C - 180, C + 215, C + 235], fill=(0, 0, 0, 150))
+    img.alpha_composite(sh.filter(ImageFilter.GaussianBlur(12)))
+    # aro dorado
+    rim = _vgradient(S, (255, 225, 140), (140, 90, 20))
+    m = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(m).ellipse([C - 215, C - 215, C + 215, C + 215], fill=255)
+    img.paste(rim, (0, 0), m)
+    # cuerpo
+    body = _vgradient(S, top, bottom)
+    m2 = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(m2).ellipse([C - 185, C - 185, C + 185, C + 185], fill=255)
+    img.paste(body, (0, 0), m2)
+    d = ImageDraw.Draw(img)
+    d.ellipse([C - 185, C - 185, C + 185, C + 185], outline=(0, 0, 0, 140), width=6)
+    gloss = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(gloss).ellipse([C - 140, C - 170, C + 140, C - 10], fill=(255, 255, 255, 70))
+    img.alpha_composite(gloss.filter(ImageFilter.GaussianBlur(4)))
+    finish(img, path)
+
+
+def rail_segment(path, w=256, h=96):
+    """Tramo de riel horizontal (se estira a lo largo; 9-slice de 24 px a los lados)."""
+    k = 3
+    W, H = w * k, h * k
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([0, 10 * k, W - 1, H - 10 * k], radius=24 * k, fill=(70, 45, 25, 255), outline=(30, 18, 8, 255), width=3 * k)
+    # durmientes de madera
+    for x in range(16 * k, W - 10 * k, 28 * k):
+        d.rectangle([x, 18 * k, x + 14 * k, H - 18 * k], fill=(160, 110, 55, 255), outline=(80, 50, 20, 255), width=k)
+    # dos rieles metálicos
+    for y in (32 * k, H - 32 * k):
+        d.rectangle([6 * k, y - 4 * k, W - 6 * k, y + 4 * k], fill=(205, 210, 220, 255), outline=(70, 75, 85, 255), width=k)
+    img.resize((w, h), Image.LANCZOS).save(path)
+
+
+def heart_icon(path):
+    img, d = new()
+    pts = []
+    for i in range(200):
+        t = 2 * math.pi * i / 200
+        x = 16 * math.sin(t) ** 3
+        y = -(13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t))
+        pts.append((C + x * 13, C + y * 13 + 10))
+    d.polygon(pts, fill=(220, 30, 50, 255), outline=(110, 0, 15, 255))
+    d.line(pts + [pts[0]], fill=(110, 0, 15, 255), width=12)
+    highlight(img, C - 80, C - 90, 55, 35, alpha=170)
+    finish(img, path)
+
+
+def gear_icon(path):
+    img, d = new()
+    teeth = []
+    for i in range(16):
+        r = 210 if i % 2 == 0 else 165
+        a0 = 2 * math.pi * i / 16
+        for da in (-0.17, 0.17):
+            teeth.append((C + math.cos(a0 + da) * r, C + math.sin(a0 + da) * r))
+    d.polygon(teeth, fill=(210, 165, 70, 255), outline=(90, 60, 15, 255))
+    d.ellipse([C - 70, C - 70, C + 70, C + 70], fill=(40, 30, 20, 255), outline=(90, 60, 15, 255), width=10)
+    highlight(img, C - 60, C - 90, 50, 25, alpha=110)
+    finish(img, path)
+
+
+def nav_map_icon(path):
+    img, d = new()
+    d.polygon([(C - 200, C - 140), (C - 70, C - 190), (C + 70, C - 140), (C + 200, C - 190), (C + 200, C + 150),
+               (C + 70, C + 200), (C - 70, C + 150), (C - 200, C + 200)], fill=(225, 200, 140, 255), outline=(110, 80, 35, 255))
+    d.line([(C - 70, C - 190), (C - 70, C + 150)], fill=(170, 140, 90, 255), width=8)
+    d.line([(C + 70, C - 140), (C + 70, C + 200)], fill=(170, 140, 90, 255), width=8)
+    d.line([(C - 150, C + 100), (C - 40, C - 20), (C + 60, C + 40), (C + 130, C - 90)], fill=(190, 60, 40, 255), width=12)
+    d.line([(C + 100, C - 120), (C + 160, C - 60)], fill=(190, 40, 30, 255), width=16)
+    d.line([(C + 160, C - 120), (C + 100, C - 60)], fill=(190, 40, 30, 255), width=16)
+    finish(img, path)
+
+
+def nav_home_icon(path):
+    img, d = new()
+    d.rectangle([C - 140, C - 20, C + 140, C + 190], fill=(200, 150, 90, 255), outline=(90, 55, 20, 255), width=10)
+    d.polygon([(C - 200, C), (C, C - 200), (C + 200, C)], fill=(60, 110, 220, 255), outline=(20, 40, 100, 255))
+    d.rectangle([C - 40, C + 70, C + 40, C + 190], fill=(110, 70, 30, 255))
+    d.rectangle([C + 60, C + 20, C + 120, C + 80], fill=(255, 220, 120, 255), outline=(90, 55, 20, 255), width=6)
+    finish(img, path)
+
+
+def nav_shop_icon(path):
+    img, d = new()
+    d.rectangle([C - 170, C - 10, C + 170, C + 190], fill=(140, 90, 50, 255), outline=(70, 40, 15, 255), width=10)
+    for i in range(6):
+        x0 = C - 200 + i * 67
+        d.polygon([(x0, C - 140), (x0 + 67, C - 140), (x0 + 67, C - 10), (x0, C - 10)],
+                  fill=(170, 60, 210, 255) if i % 2 == 0 else (235, 225, 245, 255))
+    d.rectangle([C - 200, C - 160, C + 200, C - 130], fill=(120, 40, 160, 255))
+    d.rectangle([C - 120, C + 40, C + 120, C + 140], fill=(255, 210, 110, 255), outline=(70, 40, 15, 255), width=6)
+    finish(img, path)
+
+
+def nav_trophy_icon(path):
+    img, d = new()
+    gold = (245, 190, 40, 255)
+    dark = (130, 80, 0, 255)
+    d.arc([C - 210, C - 160, C - 60, C + 20], 90, 270, fill=gold, width=24)
+    d.arc([C + 60, C - 160, C + 210, C + 20], 270, 90, fill=gold, width=24)
+    d.polygon([(C - 140, C - 190), (C + 140, C - 190), (C + 110, C + 20), (C, C + 70), (C - 110, C + 20)], fill=gold, outline=dark)
+    d.rectangle([C - 30, C + 60, C + 30, C + 140], fill=gold, outline=dark, width=6)
+    d.rectangle([C - 110, C + 140, C + 110, C + 200], fill=(150, 90, 40, 255), outline=(70, 40, 15, 255), width=8)
+    highlight(img, C - 60, C - 120, 40, 50, alpha=120)
+    finish(img, path)
+
+
+def nav_profile_icon(path):
+    img, d = new()
+    d.ellipse([C - 90, C - 190, C + 90, C - 10], fill=(240, 200, 150, 255), outline=(110, 70, 30, 255), width=8)
+    d.pieslice([C - 200, C + 10, C + 200, C + 400], 180, 360, fill=(60, 110, 200, 255), outline=(20, 40, 100, 255))
+    # casco de minero
+    d.chord([C - 110, C - 230, C + 110, C - 30], 180, 360, fill=(230, 180, 50, 255), outline=(110, 70, 10, 255))
+    d.ellipse([C - 25, C - 200, C + 25, C - 150], fill=(255, 250, 200, 255))
+    finish(img, path)
+
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui3":
+    out = sys.argv[2]
+    level_node(f"{out}/node_green.png", (110, 205, 70), (30, 110, 25))
+    level_node(f"{out}/node_blue.png", (80, 150, 240), (20, 60, 150))
+    level_node(f"{out}/node_gray.png", (80, 82, 92), (30, 32, 40))
+    rail_segment(f"{out}/rail.png")
+    heart_icon(f"{out}/heart.png")
+    gear_icon(f"{out}/gear.png")
+    nav_map_icon(f"{out}/nav_map.png")
+    nav_home_icon(f"{out}/nav_home.png")
+    nav_shop_icon(f"{out}/nav_shop.png")
+    nav_trophy_icon(f"{out}/nav_trophy.png")
+    nav_profile_icon(f"{out}/nav_profile.png")

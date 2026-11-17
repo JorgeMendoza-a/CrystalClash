@@ -56,6 +56,10 @@ public class GameManager : MonoBehaviour
     {
         if (GameUI.Instance != null) GameUI.Instance.HideLegacyPanel();
 
+        // La barra superior de la escena era de muestra (números fijos): la reemplazan los menús.
+        GameObject sceneTopBar = GameObject.Find("TopBar");
+        if (sceneTopBar != null) sceneTopBar.SetActive(false);
+
         if (RankedMatchState.Active)
         {
             ranked = gameObject.AddComponent<RankedMatchController>();
@@ -72,13 +76,41 @@ public class GameManager : MonoBehaviour
 
         if (screen == AppNavigation.Screen.Home) MenuScreens.ShowHome();
         else if (screen == AppNavigation.Screen.Ranked) MenuScreens.ShowRanked();
+        else if (screen == AppNavigation.Screen.Map) MenuScreens.ShowMap();
         else if (showLevelIntro) StartStory();
     }
 
     /// <summary>Muestra el inicio del nivel de historia actual.</summary>
     public void StartStory()
     {
-        if (LevelCatalog.Count > 0) ShowIntro();
+        if (LevelCatalog.Count == 0) return;
+
+        PlayerProgress progress = SaveManager.Progress;
+        long now = GameClock.NowUtc;
+        if (progress.GetLives(now) <= 0)
+        {
+            int seconds = progress.SecondsToNextLife(now);
+            StoryPopup.Show("Sin vidas",
+                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>
+
+También puedes llenarlas en la tienda.",
+                new StoryPopup.PopupButton("Tienda", () => MenuScreens.Show(MenuScreens.Screen.Shop)),
+                new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
+            return;
+        }
+
+        ShowIntro();
+    }
+
+    /// <summary>Menú de pausa (botón "Menú" del HUD).</summary>
+    public void ShowPause()
+    {
+        if (IsRanked || StoryPopup.IsOpen || MenuScreens.IsOpen) return;
+        StoryPopup.Show("Pausa", $"Nivel {Session.Level.Number} · {Session.Level.Name}",
+            new StoryPopup.PopupButton("Continuar", null),
+            new StoryPopup.PopupButton("Reiniciar nivel", RetryLevel),
+            new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap),
+            new StoryPopup.PopupButton("Inicio", MenuScreens.ShowHome));
     }
 
     private void OnDestroy()
@@ -216,25 +248,7 @@ public class GameManager : MonoBehaviour
 
     public void OpenLevelSelect()
     {
-        PlayerProgress progress = SaveManager.Progress;
-        var cells = new List<StoryPopup.PopupButton>();
-
-        for (int number = 1; number <= LevelCatalog.Count; number++)
-        {
-            int n = number;
-            bool unlocked = progress.IsUnlocked(n);
-            string label = unlocked
-                ? $"{n}\n<size=70%>{progress.GetStars(n)}/3</size>"
-                : $"{n}\n<size=70%>cerrado</size>";
-            cells.Add(new StoryPopup.PopupButton(label, () => PlayLevel(n), unlocked));
-        }
-
-        StoryPopup.ShowGrid(
-            "Modo historia",
-            $"Estrellas: {progress.TotalStars}/{LevelCatalog.Count * 3}",
-            cells,
-            5,
-            new StoryPopup.PopupButton("Cerrar", null));
+        MenuScreens.ShowMap();
     }
 
     // ------------------------------------------------------------------
@@ -306,8 +320,8 @@ public class GameManager : MonoBehaviour
             $"Nivel {level.Number}",
             $"<b>{level.Name}</b>\n\n{DescribeObjectives(Session, false)}\n\n{level.MaxMoves} movimientos",
             new StoryPopup.PopupButton("¡Jugar!", null),
-            new StoryPopup.PopupButton("Niveles", OpenLevelSelect),
-            new StoryPopup.PopupButton("Menú principal", MenuScreens.ShowHome));
+            new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap),
+            new StoryPopup.PopupButton("Inicio", MenuScreens.ShowHome));
     }
 
     private void OnWin()
@@ -319,11 +333,15 @@ public class GameManager : MonoBehaviour
             bool firstWin = SaveManager.Progress.GetStars(levelNumber) == 0;
             SaveManager.Progress.RecordWin(levelNumber, Session.Stars, LevelCatalog.Count);
 
+            int coins = PlayerProgress.CoinsForWin(Session.Stars);
+            SaveManager.Progress.coins += coins;
+            reward += $"\n\n<color=#FFD040>+{coins} monedas</color>";
+
             if (firstWin)
             {
                 BoosterKind prize = PlayerProgress.FirstWinReward(levelNumber);
                 SaveManager.Progress.AddBooster(prize, 1);
-                reward = $"\n\n<color=#66FF77>¡Premio: +1 {BoosterName(prize)}!</color>";
+                reward += $"\n<color=#66FF77>¡Premio: +1 {BoosterName(prize)}!</color>";
             }
 
             SaveManager.Save();
@@ -341,17 +359,30 @@ public class GameManager : MonoBehaviour
             $"Puntos: {Session.Score}\n" +
             $"Bonus por {Session.MovesLeft} movimientos: +{Session.MoveBonus}\n" +
             $"<b>Total: {Session.FinalScore}</b>" + reward,
-            new StoryPopup.PopupButton(isLast ? "Ver niveles" : "Siguiente nivel", NextLevel),
-            new StoryPopup.PopupButton("Repetir", RetryLevel));
+            new StoryPopup.PopupButton(isLast ? "Ver mapa" : "Siguiente nivel", NextLevel),
+            new StoryPopup.PopupButton("Repetir", RetryLevel),
+            new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
     }
 
     private void OnLose()
     {
+        PlayerProgress progress = SaveManager.Progress;
+        long now = GameClock.NowUtc;
+        progress.LoseLife(now);
+        SaveManager.Save();
+        int lives = progress.GetLives(now);
+
+        string livesText = lives > 0
+            ? $"Te quedan <color=#FF7070>{lives}</color> vidas"
+            : "<color=#FF7070>¡Te quedaste sin vidas!</color>";
+
         StoryPopup.Show(
             "Sin movimientos",
-            $"¡Casi!\n\n{DescribeObjectives(Session, true)}",
-            new StoryPopup.PopupButton("Reintentar", RetryLevel),
-            new StoryPopup.PopupButton("Niveles", OpenLevelSelect));
+            $"¡Casi!\n\n{DescribeObjectives(Session, true)}\n\n{livesText}",
+            lives > 0
+                ? new StoryPopup.PopupButton("Reintentar", RetryLevel)
+                : new StoryPopup.PopupButton("Tienda", () => MenuScreens.Show(MenuScreens.Screen.Shop)),
+            new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
     }
 
     /// <summary>Texto con los objetivos, p. ej. "Zafiro 12/15". Lo usan los popups y GameUI.</summary>

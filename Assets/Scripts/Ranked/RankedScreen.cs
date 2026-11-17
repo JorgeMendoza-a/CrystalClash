@@ -34,10 +34,11 @@ public class RankedScreen : MonoBehaviour
     private CancellationTokenSource searchCancel;
     private bool searching;
 
-    private void Awake()
+    /// <summary>Construye la pantalla dentro de la zona de contenido del menú.</summary>
+    public void Init(Transform content)
     {
         service = RankedServices.Current;
-        Build();
+        Build(UiKit.ScrollArea(content, 14f));
     }
 
     private async void Start()
@@ -210,13 +211,9 @@ public class RankedScreen : MonoBehaviour
     // Construcción
     // ------------------------------------------------------------------
 
-    private void Build()
+    private void Build(Transform list)
     {
-        UiKit.FullscreenBackground(transform, 0.62f);
-
-        GameObject column = UiKit.Node(transform, "Columna");
-        UiKit.Stretch((RectTransform)column.transform, 30f);
-        UiKit.Vertical(column, 0, 14f);
+        GameObject column = list.gameObject;
 
         // Encabezado: emblema + título dorado + emblema
         GameObject header = UiKit.Node(column.transform, "Encabezado");
@@ -233,7 +230,7 @@ public class RankedScreen : MonoBehaviour
 
         BuildRankCard(column.transform);
 
-        searchButton = UiKit.Button(column.transform, "BUSCAR PARTIDA", UiKit.ButtonStyle.Green, OnSearch, 72f);
+        searchButton = UiKit.Button(column.transform, "BUSCAR PARTIDA", UiKit.ButtonStyle.Purple, OnSearch, 72f);
         UiKit.Size(searchButton, height: 170f);
 
         Image info = UiKit.Card(column.transform, "Info");
@@ -253,7 +250,6 @@ public class RankedScreen : MonoBehaviour
         UiKit.Size(buttons.transform, height: 120f);
         UiKit.Button(buttons.transform, "Posiciones", UiKit.ButtonStyle.Blue, OnLeaderboard, 42f);
         UiKit.Button(buttons.transform, "Historial", UiKit.ButtonStyle.Blue, OnHistory, 42f);
-        UiKit.Button(buttons.transform, "Volver", UiKit.ButtonStyle.Gray, MenuScreens.ShowHome, 42f);
 
         status = UiKit.Text(column.transform, "", 28f, UiKit.Muted);
         UiKit.Outline(status, 0.15f);

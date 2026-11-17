@@ -132,7 +132,7 @@ public static class RankedMatchState
 /// <summary>Qué pantalla abrir al cargar la escena.</summary>
 public static class AppNavigation
 {
-    public enum Screen { None, Home, Ranked }
+    public enum Screen { None, Home, Ranked, Map }
 
     /// <summary>La primera vez que se abre el juego se muestra el inicio.</summary>
     public static Screen PendingScreen = Screen.Home;

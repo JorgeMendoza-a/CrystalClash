@@ -18,7 +18,7 @@ public static class UiKit
     public static readonly Color Dark = new Color(0.04f, 0.05f, 0.09f, 0.97f);
     public static readonly Color CardFallback = new Color(0.08f, 0.12f, 0.2f, 0.95f);
 
-    public enum ButtonStyle { Green, Blue, Gray, Red }
+    public enum ButtonStyle { Green, Blue, Gray, Red, Purple }
 
     private const int FrameBorderPixels = 48;
     private static Sprite cardSprite;
@@ -109,6 +109,7 @@ public static class UiKit
             case ButtonStyle.Green: file = "UI/btn_green"; break;
             case ButtonStyle.Blue: file = "UI/btn_blue"; break;
             case ButtonStyle.Red: file = "UI/btn_red"; break;
+            case ButtonStyle.Purple: file = "UI/btn_purple"; break;
             default: file = "UI/btn_gray"; break;
         }
         return LoadSliced(file, 56, 110f);
@@ -267,6 +268,36 @@ public static class UiKit
         Outline(label, 0.2f);
         Stretch(label.rectTransform);
         return rect;
+    }
+
+    /// <summary>
+    /// Zona con desplazamiento vertical. Devuelve el contenido (con VerticalLayoutGroup)
+    /// donde se agregan los elementos; su altura crece sola.
+    /// </summary>
+    public static Transform ScrollArea(Transform parent, float spacing = 14f)
+    {
+        GameObject view = Node(parent, "Scroll");
+        Stretch((RectTransform)view.transform);
+        view.AddComponent<RectMask2D>();
+        var scroll = view.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.movementType = ScrollRect.MovementType.Elastic;
+        scroll.scrollSensitivity = 40f;
+
+        GameObject content = Node(view.transform, "Contenido");
+        var rect = (RectTransform)content.transform;
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.offsetMin = new Vector2(0f, 0f);
+        rect.offsetMax = new Vector2(0f, 0f);
+        Vertical(content, 0, spacing);
+        var fitter = content.AddComponent<ContentSizeFitter>();
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        scroll.viewport = (RectTransform)view.transform;
+        scroll.content = rect;
+        return content.transform;
     }
 
     /// <summary>Fondo de fila de tabla.</summary>
