@@ -4,6 +4,7 @@ using UnityEngine;
 public class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
+    public TMP_Text movesText;
 
     public TMP_Text scoreText;
 
@@ -12,6 +13,10 @@ public class GameUI : MonoBehaviour
         Instance = this;
     }
 
+public void UpdateMoves(int moves)
+{
+    movesText.text = "Movimientos: " + moves;
+}
     private void Start()
     {
         UpdateScore(0);

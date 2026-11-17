@@ -79,13 +79,14 @@ private MoveFinder moveFinder;
                 List<Mineral> matches = GetMatches();
 
                 if (matches.Count > 0)
-                {
-                    StartCoroutine(ProcessBoard());
-                }
-                else
-                {
-                    SwapMinerals(selectedMineral, mineral);
-                }
+{
+    GameManager.Instance.UseMove();
+    StartCoroutine(ProcessBoard());
+}
+else
+{
+    SwapMinerals(selectedMineral, mineral);
+}
             }
 
             selectedMineral = null;
