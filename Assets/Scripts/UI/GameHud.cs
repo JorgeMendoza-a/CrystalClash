@@ -54,8 +54,13 @@ public class GameHud : MonoBehaviour
     private Sprite starEmpty;
     private LevelSession session;
 
-    /// <summary>Crea el panel para esta partida.</summary>
-    public static GameHud Create(LevelSession session)
+    private RankedMatchInfo rankedMatch;
+    private TMP_Text timerText;
+    private TMP_Text opponentScore;
+    private TMP_Text opponentMoves;
+
+    /// <summary>Crea el panel para esta partida (match != null = clasificatoria).</summary>
+    public static GameHud Create(LevelSession session, RankedMatchInfo match = null)
     {
         var canvasGO = new GameObject("GameHud", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas = canvasGO.GetComponent<Canvas>();
@@ -68,6 +73,7 @@ public class GameHud : MonoBehaviour
         scaler.matchWidthOrHeight = 0f; // ajustar por ancho (pantalla vertical)
 
         var hud = canvasGO.AddComponent<GameHud>();
+        hud.rankedMatch = match;
         hud.Build(session);
         return hud;
     }
@@ -278,9 +284,18 @@ public class GameHud : MonoBehaviour
         layout.childForceExpandHeight = true;
 
         BuildMovesCard(row);
-        BuildObjectivesCard(row, current);
+        if (rankedMatch != null)
+        {
+            BuildOpponentCard(row);
+        }
+        else
+        {
+            BuildObjectivesCard(row, current);
+        }
         BuildScoreCard(row);
-        BuildBoosterBar();
+
+        // En clasificatoria no hay potenciadores (las dos partidas deben ser iguales).
+        if (rankedMatch == null) BuildBoosterBar();
 
         SetMoves(current.MovesLeft);
         SetObjectives(current);
@@ -290,7 +305,39 @@ public class GameHud : MonoBehaviour
     private void BuildMovesCard(Transform parent)
     {
         Transform card = CreateCard(parent, "MOVIMIENTOS", 250f, 1f);
-        movesValue = CreateText(card, "0", 100f, Color.white, FontStyles.Bold, 120f);
+        if (rankedMatch == null)
+        {
+            movesValue = CreateText(card, "0", 100f, Color.white, FontStyles.Bold, 120f);
+            return;
+        }
+
+        movesValue = CreateText(card, "0", 80f, Color.white, FontStyles.Bold, 96f);
+        timerText = CreateText(card, "", 34f, LabelColor, FontStyles.Bold, 44f);
+    }
+
+    private void BuildOpponentCard(Transform parent)
+    {
+        Transform card = CreateCard(parent, "RIVAL", 0f, 2f);
+        CreateText(card, rankedMatch.OpponentName, 38f, Color.white, FontStyles.Bold, 48f);
+        opponentScore = CreateText(card, "0", 60f, new Color(1f, 0.55f, 0.5f), FontStyles.Bold, 66f);
+        opponentMoves = CreateText(card, $"Movimientos: {CrystalClash.Ranked.Logic.RankedRules.Moves}", 28f, Color.white, FontStyles.Normal, 36f);
+    }
+
+    /// <summary>Clasificatoria: puntaje del rival en vivo.</summary>
+    public void SetOpponent(int score, int movesLeft, bool finished)
+    {
+        if (opponentScore == null) return;
+        opponentScore.text = score.ToString();
+        opponentMoves.text = finished ? "¡Terminó!" : $"Movimientos: {movesLeft}";
+    }
+
+    /// <summary>Clasificatoria: tiempo restante.</summary>
+    public void SetTimer(float secondsLeft)
+    {
+        if (timerText == null) return;
+        int total = Mathf.CeilToInt(secondsLeft);
+        timerText.text = $"{total / 60}:{total % 60:00}";
+        timerText.color = total <= 20 ? LowMovesColor : LabelColor;
     }
 
     private void BuildObjectivesCard(Transform parent, LevelSession current)

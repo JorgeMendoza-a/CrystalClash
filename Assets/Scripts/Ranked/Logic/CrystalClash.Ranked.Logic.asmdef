@@ -1,0 +1,16 @@
+{
+    "name": "CrystalClash.Ranked.Logic",
+    "rootNamespace": "CrystalClash.Ranked.Logic",
+    "references": [
+        "CrystalClash.Board.Logic"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

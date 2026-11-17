@@ -31,12 +31,17 @@ public class GameManager : MonoBehaviour
     public BoosterKind? PendingBooster { get; private set; }
 
     private BoardManager board;
+    private RankedMatchController ranked;
+
+    /// <summary>True si esta partida es de clasificatoria (no de historia).</summary>
+    public bool IsRanked => ranked != null;
 
     public int CurrentMoves => Session != null ? Session.MovesLeft : 0;
     public bool IsOutOfMoves => CurrentMoves <= 0;
 
     /// <summary>True si se puede hacer una jugada ahora mismo.</summary>
-    public bool CanPlay => Session != null && Session.CanPlay && !StoryPopup.IsOpen;
+    public bool CanPlay => Session != null && Session.CanPlay && !StoryPopup.IsOpen && !MenuScreens.IsOpen &&
+                           (ranked == null || ranked.AcceptingMoves);
 
     private void Awake()
     {
@@ -49,14 +54,31 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        GameHud.Create(Session);
         if (GameUI.Instance != null) GameUI.Instance.HideLegacyPanel();
+
+        if (RankedMatchState.Active)
+        {
+            ranked = gameObject.AddComponent<RankedMatchController>();
+            ranked.Begin(Session, board, RankedMatchState.Current);
+            RefreshUI();
+            return;
+        }
+
+        GameHud.Create(Session);
         RefreshUI();
 
-        if (showLevelIntro && LevelCatalog.Count > 0)
-        {
-            ShowIntro();
-        }
+        AppNavigation.Screen screen = AppNavigation.PendingScreen;
+        AppNavigation.PendingScreen = AppNavigation.Screen.None;
+
+        if (screen == AppNavigation.Screen.Home) MenuScreens.ShowHome();
+        else if (screen == AppNavigation.Screen.Ranked) MenuScreens.ShowRanked();
+        else if (showLevelIntro) StartStory();
+    }
+
+    /// <summary>Muestra el inicio del nivel de historia actual.</summary>
+    public void StartStory()
+    {
+        if (LevelCatalog.Count > 0) ShowIntro();
     }
 
     private void OnDestroy()
@@ -73,6 +95,7 @@ public class GameManager : MonoBehaviour
     public void RegisterMove(SwapResult result)
     {
         Session.ApplyMove(result);
+        if (ranked != null) ranked.RecordMove(result);
 
         if (GameUI.Instance != null)
         {
@@ -106,7 +129,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void OnBoosterButton(BoosterKind kind)
     {
-        if (!CanPlay || board == null || board.IsBusy) return;
+        if (!CanPlay || board == null || board.IsBusy || IsRanked) return;
         if (SaveManager.Progress.GetBoosters(kind) <= 0) return;
 
         if (kind == BoosterKind.Shuffle)
@@ -150,6 +173,12 @@ public class GameManager : MonoBehaviour
     public void OnMoveFinished()
     {
         RefreshUI();
+
+        if (ranked != null)
+        {
+            ranked.OnMoveFinished();
+            return;
+        }
 
         if (Session.State != SessionState.Playing) SetPendingBooster(null);
 
@@ -212,6 +241,11 @@ public class GameManager : MonoBehaviour
 
     private LevelDefinition ChooseLevel()
     {
+        if (RankedMatchState.Active)
+        {
+            return RankedMatchController.CreateLevel(RankedMatchState.Current);
+        }
+
         int count = LevelCatalog.Count;
         if (count == 0)
         {
@@ -272,7 +306,8 @@ public class GameManager : MonoBehaviour
             $"Nivel {level.Number}",
             $"<b>{level.Name}</b>\n\n{DescribeObjectives(Session, false)}\n\n{level.MaxMoves} movimientos",
             new StoryPopup.PopupButton("¡Jugar!", null),
-            new StoryPopup.PopupButton("Niveles", OpenLevelSelect));
+            new StoryPopup.PopupButton("Niveles", OpenLevelSelect),
+            new StoryPopup.PopupButton("Menú principal", MenuScreens.ShowHome));
     }
 
     private void OnWin()

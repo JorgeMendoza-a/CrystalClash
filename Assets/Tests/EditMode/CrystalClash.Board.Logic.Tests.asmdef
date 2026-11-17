@@ -4,6 +4,7 @@
     "references": [
         "CrystalClash.Board.Logic",
         "CrystalClash.Story.Logic",
+        "CrystalClash.Ranked.Logic",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

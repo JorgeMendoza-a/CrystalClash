@@ -161,7 +161,7 @@ public class BoardManager : MonoBehaviour
     {
         if (IsBusy || mineral == null) return;
         if (GameManager.Instance != null && !GameManager.Instance.CanPlay) return;
-        if (StoryPopup.IsOpen) return;
+        if (StoryPopup.IsOpen || MenuScreens.IsOpen) return;
 
         // Si hay un potenciador elegido (Martillo, Bomba, Rayo), este clic lo usa.
         if (GameManager.Instance != null && GameManager.Instance.TryConsumePendingBooster(new GridPos(mineral.x, mineral.y)))

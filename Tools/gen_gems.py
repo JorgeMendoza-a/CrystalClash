@@ -407,6 +407,35 @@ def badge_icon(path):
     finish(img, path)
 
 
+LEAGUES = [  # nombre de archivo, color del metal, color de la gema
+    ("bronce", (184, 115, 51), (230, 140, 70)),
+    ("plata", (175, 180, 195), (220, 225, 240)),
+    ("oro", (225, 175, 35), (255, 215, 80)),
+    ("platino", (60, 190, 150), (90, 235, 200)),
+    ("diamante", (55, 140, 230), (110, 200, 255)),
+    ("maestro", (210, 50, 55), (255, 90, 90)),
+    ("campeon", (150, 70, 230), (210, 140, 255)),
+]
+
+
+def rank_emblem(path, metal, gem):
+    img, d = new()
+    # alas laterales
+    for side in (-1, 1):
+        wing = [(C + side * 120, C - 120), (C + side * 235, C - 160), (C + side * 210, C - 40),
+                (C + side * 240, C + 10), (C + side * 180, C + 80), (C + side * 120, C + 60)]
+        d.polygon(wing, fill=shade(metal, 0.75), outline=shade(metal, 0.35))
+    # escudo
+    shield = [(C - 150, C - 190), (C + 150, C - 190), (C + 165, C - 20), (C + 90, C + 130), (C, C + 220),
+              (C - 90, C + 130), (C - 165, C - 20)]
+    faceted_gem(d, shield, metal, table_k=0.78)
+    # gema central
+    faceted_gem(d, poly(6, 85, rot=math.pi / 6, cy=C - 15), gem, table_k=0.5)
+    highlight(img, C - 50, C - 110, 50, 22)
+    sparkle(img, C - 40, C - 50, 26)
+    finish(img, path)
+
+
 if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui":
     out = sys.argv[2]
     star_icon(f"{out}/star_full.png", True)
@@ -416,3 +445,5 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui":
     lightning_icon(f"{out}/booster_lightning.png")
     shuffle_icon(f"{out}/booster_shuffle.png")
     badge_icon(f"{out}/badge.png")
+    for name, metal, gem in LEAGUES:
+        rank_emblem(f"{out}/rank_{name}.png", metal, gem)
