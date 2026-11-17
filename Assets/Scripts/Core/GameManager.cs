@@ -45,6 +45,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         GameHud.Create(Session);
+        if (GameUI.Instance != null) GameUI.Instance.HideLegacyPanel();
         RefreshUI();
 
         if (showLevelIntro && LevelCatalog.Count > 0)

@@ -48,6 +48,25 @@ public class GameUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Esconde el panel viejo de textos (movimientos/puntos/objetivos) porque
+    /// ahora los muestra GameHud. Busca el "InfoPanel" que los contiene; si no
+    /// lo encuentra, esconde la tarjeta de cada texto.
+    /// </summary>
+    public void HideLegacyPanel()
+    {
+        foreach (TMP_Text text in new[] { movesText, scoreText, objectivesText })
+        {
+            if (text == null) continue;
+
+            Transform panel = text.transform;
+            while (panel != null && panel.name != "InfoPanel") panel = panel.parent;
+
+            if (panel != null) panel.gameObject.SetActive(false);
+            else if (text.transform.parent != null) text.transform.parent.gameObject.SetActive(false);
+        }
+    }
+
     public void UpdateMoves(int moves)
     {
         if (movesText != null)
