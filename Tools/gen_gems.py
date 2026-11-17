@@ -257,5 +257,68 @@ def main(out):
     bomb(f"{out}/bomb.png")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and sys.argv[1] != "--board":
     main(sys.argv[1])
+
+
+# ======================================================================
+# Marco y casillas del tablero (Assets/Resources/Board)
+# Uso: python3 Tools/gen_gems.py --board Assets/Resources/Board
+# ======================================================================
+
+FRAME_SIZE = 192
+FRAME_BORDER = 48   # píxeles de borde para el 9-slice (debe coincidir con BoardManager)
+
+
+def board_frame(path):
+    k = 4  # dibujar 4x más grande y reducir
+    n = FRAME_SIZE * k
+    b = FRAME_BORDER * k
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    # cuerpo de metal oscuro con degradado vertical
+    for i in range(n):
+        t = i / n
+        col = (int(70 - 30 * t), int(52 - 22 * t), int(40 - 18 * t), 255)
+        d.line([(0, i), (n, i)], fill=col)
+    mask = Image.new("L", (n, n), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, n - 1, n - 1], radius=b * 0.7, fill=255)
+    body = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    body.paste(img, (0, 0), mask)
+    img = body
+    d = ImageDraw.Draw(img)
+    # borde exterior oscuro y aro dorado
+    d.rounded_rectangle([2, 2, n - 3, n - 3], radius=b * 0.7, outline=(20, 12, 8, 255), width=6 * k // 2)
+    d.rounded_rectangle([b * 0.28, b * 0.28, n - b * 0.28, n - b * 0.28], radius=b * 0.45,
+                        outline=(214, 166, 72, 255), width=3 * k)
+    d.rounded_rectangle([b * 0.28 + 3 * k, b * 0.28 + 3 * k, n - b * 0.28 - 3 * k, n - b * 0.28 - 3 * k],
+                        radius=b * 0.4, outline=(120, 85, 30, 255), width=k)
+    # interior: panel azul muy oscuro (semi-transparente) con sombra interior
+    inner = [b * 0.62, b * 0.62, n - b * 0.62, n - b * 0.62]
+    d.rounded_rectangle(inner, radius=b * 0.25, fill=(10, 16, 30, 235), outline=(5, 8, 15, 255), width=2 * k)
+    # remaches dorados en las esquinas
+    for cx, cy in [(b * 0.45, b * 0.45), (n - b * 0.45, b * 0.45), (b * 0.45, n - b * 0.45), (n - b * 0.45, n - b * 0.45)]:
+        r = b * 0.17
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(196, 150, 60, 255), outline=(90, 60, 20, 255), width=k)
+        d.ellipse([cx - r * 0.5, cy - r * 0.6, cx, cy - r * 0.1], fill=(255, 230, 160, 255))
+    img.resize((FRAME_SIZE, FRAME_SIZE), Image.LANCZOS).save(path)
+
+
+def board_cell(path, base):
+    k = 4
+    n = 128 * k
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    pad = 4 * k
+    d.rounded_rectangle([pad, pad, n - pad, n - pad], radius=18 * k, fill=base + (215,))
+    # bisel: luz arriba-izquierda, sombra abajo-derecha
+    d.rounded_rectangle([pad, pad, n - pad, n - pad], radius=18 * k, outline=(255, 255, 255, 28), width=3 * k)
+    d.line([(pad + 18 * k, n - pad - 2 * k), (n - pad - 18 * k, n - pad - 2 * k)], fill=(0, 0, 0, 90), width=4 * k)
+    img.resize((128, 128), Image.LANCZOS).save(path)
+
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--board":
+    out = sys.argv[2]
+    board_frame(f"{out}/board_frame.png")
+    board_cell(f"{out}/board_cell.png", (24, 32, 52))
+    board_cell(f"{out}/board_cell_alt.png", (32, 42, 66))

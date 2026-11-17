@@ -24,12 +24,19 @@ public class BoardManager : MonoBehaviour
 
     public GameObject mineralPrefab;
 
+    [Header("Marco del tablero")]
+    [Tooltip("Dibuja un marco y casillas detrás de los minerales (Resources/Board/*.png).")]
+    public bool showBoardFrame = true;
+
+    [Tooltip("Grosor del marco alrededor de las casillas, en celdas.")]
+    public float frameThickness = 0.42f;
+
     [Header("Cámara")]
     [Tooltip("Ajusta la cámara para que el tablero entero quepa en pantalla (vertical u horizontal).")]
     public bool fitCameraToBoard = true;
 
     [Tooltip("Espacio extra alrededor del tablero, en celdas.")]
-    public float cameraPadding = 0.75f;
+    public float cameraPadding = 0.3f;
 
     [Header("Animaciones (segundos)")]
     public float swapDuration = 0.15f;
@@ -68,7 +75,66 @@ public class BoardManager : MonoBehaviour
             GameUI.Instance.UpdateScore(Logic.Score);
         }
 
+        if (showBoardFrame) BuildBoardBackground();
         FitCamera();
+    }
+
+    // Orden de dibujo: fondo de la UI (-100) < marco (-20) < casillas (-10) < minerales (0).
+    private const int FrameSortingOrder = -20;
+    private const int CellSortingOrder = -10;
+    private const int FrameBorderPixels = 48; // igual que FRAME_BORDER en Tools/gen_gems.py
+
+    void BuildBoardBackground()
+    {
+        Texture2D frameTexture = Resources.Load<Texture2D>("Board/board_frame");
+        Texture2D cellTexture = Resources.Load<Texture2D>("Board/board_cell");
+        Texture2D cellAltTexture = Resources.Load<Texture2D>("Board/board_cell_alt");
+
+        var root = new GameObject("BoardBackground");
+        root.transform.SetParent(transform, false);
+
+        if (frameTexture != null)
+        {
+            // 9-slice: las esquinas no se estiran, solo los lados y el centro.
+            float pixelsPerUnit = FrameBorderPixels / frameThickness;
+            var border = new Vector4(FrameBorderPixels, FrameBorderPixels, FrameBorderPixels, FrameBorderPixels);
+            Sprite frameSprite = Sprite.Create(frameTexture, new Rect(0, 0, frameTexture.width, frameTexture.height),
+                new Vector2(0.5f, 0.5f), pixelsPerUnit, 0, SpriteMeshType.FullRect, border);
+
+            var frameGO = new GameObject("Frame");
+            frameGO.transform.SetParent(root.transform, false);
+            frameGO.transform.position = GetWorldPosition((width - 1) / 2f, (height - 1) / 2f);
+            var frame = frameGO.AddComponent<SpriteRenderer>();
+            frame.sprite = frameSprite;
+            frame.drawMode = SpriteDrawMode.Sliced;
+            frame.size = new Vector2(width + frameThickness * 2f, height + frameThickness * 2f);
+            frame.sortingOrder = FrameSortingOrder;
+        }
+
+        if (cellTexture != null)
+        {
+            Sprite cell = CreateCellSprite(cellTexture);
+            Sprite cellAlt = cellAltTexture != null ? CreateCellSprite(cellAltTexture) : cell;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    var cellGO = new GameObject($"Cell {x},{y}");
+                    cellGO.transform.SetParent(root.transform, false);
+                    cellGO.transform.position = GetWorldPosition(x, y);
+                    var renderer = cellGO.AddComponent<SpriteRenderer>();
+                    renderer.sprite = (x + y) % 2 == 0 ? cell : cellAlt;
+                    renderer.sortingOrder = CellSortingOrder;
+                }
+            }
+        }
+    }
+
+    static Sprite CreateCellSprite(Texture2D texture)
+    {
+        // Una casilla mide exactamente 1 celda.
+        return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width);
     }
 
     void FitCamera()
@@ -78,8 +144,9 @@ public class BoardManager : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null || !cam.orthographic) return;
 
-        float neededHalfHeight = height / 2f + cameraPadding;
-        float neededHalfWidth = width / 2f + cameraPadding;
+        float frame = showBoardFrame ? frameThickness : 0f;
+        float neededHalfHeight = height / 2f + frame + cameraPadding;
+        float neededHalfWidth = width / 2f + frame + cameraPadding;
 
         cam.orthographicSize = Mathf.Max(neededHalfHeight, neededHalfWidth / cam.aspect);
         cam.transform.position = new Vector3(0f, 0f, cam.transform.position.z);
