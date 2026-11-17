@@ -39,9 +39,10 @@ public static class StoryPopup
     {
         Transform panel = CreatePanel(title, body);
 
-        foreach (PopupButton button in buttons)
+        for (int i = 0; i < buttons.Length; i++)
         {
-            CreateButton(panel, button, 120f, 46f);
+            // El primer botón es la acción principal (verde); el resto, azules.
+            CreateButton(panel, buttons[i], 130f, 50f, i == 0 ? UiKit.ButtonStyle.Green : UiKit.ButtonStyle.Blue);
         }
     }
 
@@ -64,12 +65,12 @@ public static class StoryPopup
 
         foreach (PopupButton cell in cells)
         {
-            CreateButton(gridGO.transform, cell, 0f, 34f);
+            CreateButton(gridGO.transform, cell, 0f, 36f, UiKit.ButtonStyle.Blue);
         }
 
         foreach (PopupButton button in footer)
         {
-            CreateButton(panel, button, 120f, 46f);
+            CreateButton(panel, button, 120f, 46f, UiKit.ButtonStyle.Gray);
         }
     }
 
@@ -105,14 +106,20 @@ public static class StoryPopup
         dimRect.offsetMin = Vector2.zero;
         dimRect.offsetMax = Vector2.zero;
 
-        Image panel = CreateImage("Panel", canvasGO.transform, PanelColor);
+        Sprite panelSprite = UiKit.PanelSprite();
+        Image panel = CreateImage("Panel", canvasGO.transform, panelSprite != null ? Color.white : PanelColor);
+        if (panelSprite != null)
+        {
+            panel.sprite = panelSprite;
+            panel.type = Image.Type.Sliced;
+        }
         RectTransform panelRect = panel.rectTransform;
         panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
         panelRect.pivot = new Vector2(0.5f, 0.5f);
         panelRect.sizeDelta = new Vector2(880f, 0f);
 
         var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(56, 56, 56, 56);
+        layout.padding = new RectOffset(70, 70, 70, 70);
         layout.spacing = 28f;
         layout.childAlignment = TextAnchor.UpperCenter;
         layout.childControlWidth = true;
@@ -123,18 +130,31 @@ public static class StoryPopup
         var fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        CreateText("Title", panel.transform, title, 66f, TitleColor, FontStyles.Bold);
+        TMP_Text titleText = CreateText("Title", panel.transform, title, 76f, TitleColor, FontStyles.Normal);
+        titleText.enableVertexGradient = true;
+        titleText.colorGradient = new VertexGradient(
+            new Color(1f, 0.93f, 0.55f), new Color(1f, 0.93f, 0.55f),
+            new Color(0.95f, 0.6f, 0.12f), new Color(0.95f, 0.6f, 0.12f));
+        UiKit.Outline(titleText, 0.22f);
+
         if (!string.IsNullOrEmpty(body))
         {
-            CreateText("Body", panel.transform, body, 42f, Color.white, FontStyles.Normal);
+            TMP_Text bodyText = CreateText("Body", panel.transform, body, 44f, Color.white, FontStyles.Normal);
+            UiKit.Outline(bodyText, 0.12f);
         }
 
         return panel.transform;
     }
 
-    private static void CreateButton(Transform parent, PopupButton data, float height, float fontSize)
+    private static void CreateButton(Transform parent, PopupButton data, float height, float fontSize, UiKit.ButtonStyle style)
     {
-        Image image = CreateImage("Button", parent, data.Interactable ? ButtonColor : DisabledButtonColor);
+        Sprite sprite = UiKit.ButtonSprite(data.Interactable ? style : UiKit.ButtonStyle.Gray);
+        Image image = CreateImage("Button", parent, sprite != null ? Color.white : (data.Interactable ? ButtonColor : DisabledButtonColor));
+        if (sprite != null)
+        {
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+        }
         if (height > 0f)
         {
             image.gameObject.AddComponent<LayoutElement>().preferredHeight = height;
@@ -151,12 +171,13 @@ public static class StoryPopup
             onClick?.Invoke();
         });
 
-        TMP_Text label = CreateText("Label", image.transform, data.Label, fontSize, Color.white, FontStyles.Bold);
+        TMP_Text label = CreateText("Label", image.transform, data.Label, fontSize, Color.white, FontStyles.Normal);
+        UiKit.Outline(label, 0.2f);
         RectTransform labelRect = label.rectTransform;
         labelRect.anchorMin = Vector2.zero;
         labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(8f, 8f);
-        labelRect.offsetMax = new Vector2(-8f, -8f);
+        labelRect.offsetMin = new Vector2(18f, 20f);
+        labelRect.offsetMax = new Vector2(-18f, -12f);
     }
 
     private static Image CreateImage(string name, Transform parent, Color color)
@@ -173,6 +194,7 @@ public static class StoryPopup
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var tmp = go.AddComponent<TextMeshProUGUI>();
+        UiKit.ApplyFont(tmp);
         tmp.text = text;
         tmp.fontSize = size;
         tmp.color = color;

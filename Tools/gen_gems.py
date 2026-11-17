@@ -257,7 +257,7 @@ def main(out):
     bomb(f"{out}/bomb.png")
 
 
-if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui"):
+if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2"):
     main(sys.argv[1])
 
 
@@ -447,3 +447,124 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui":
     badge_icon(f"{out}/badge.png")
     for name, metal, gem in LEAGUES:
         rank_emblem(f"{out}/rank_{name}.png", metal, gem)
+
+
+# ======================================================================
+# Piezas de interfaz con relieve (Assets/Resources/UI)
+# Uso: python3 Tools/gen_gems.py --ui2 Assets/Resources/UI
+# Todas son 9-slice: el borde indicado no se estira (ver UiKit.cs).
+# ======================================================================
+
+def _rounded_mask(n, radius, inset=0):
+    m = Image.new("L", (n, n), 0)
+    ImageDraw.Draw(m).rounded_rectangle([inset, inset, n - 1 - inset, n - 1 - inset], radius=radius, fill=255)
+    return m
+
+
+def _vgradient(n, top, bottom):
+    g = Image.new("RGBA", (n, n))
+    d = ImageDraw.Draw(g)
+    for i in range(n):
+        t = i / (n - 1)
+        d.line([(0, i), (n, i)], fill=tuple(int(top[k] + (bottom[k] - top[k]) * t) for k in range(3)) + (255,))
+    return g
+
+
+def ui_button(path, top, bottom, size=160):
+    """Botón 9-slice (borde 56 px): degradado, brillo arriba, aro dorado y sombra abajo."""
+    k = 4
+    n = size * k
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    # sombra inferior
+    shadow = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle([6 * k, 12 * k, n - 6 * k, n - 2 * k], radius=34 * k, fill=(0, 0, 0, 150))
+    img.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(4 * k)))
+    # aro dorado
+    rim = _vgradient(n, (255, 222, 140), (150, 95, 25))
+    img.paste(rim, (0, 0), _rounded_mask(n, 36 * k, inset=4 * k))
+    # cuerpo
+    body = _vgradient(n, top, bottom)
+    img.paste(body, (0, 0), _rounded_mask(n, 30 * k, inset=12 * k))
+    d = ImageDraw.Draw(img)
+    # brillo en la mitad superior
+    gloss = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    ImageDraw.Draw(gloss).rounded_rectangle([20 * k, 18 * k, n - 20 * k, n // 2], radius=24 * k, fill=(255, 255, 255, 70))
+    img.alpha_composite(gloss)
+    # línea oscura de base
+    d.rounded_rectangle([12 * k, 12 * k, n - 12 * k, n - 12 * k], radius=30 * k, outline=(0, 0, 0, 120), width=2 * k)
+    img.resize((size, size), Image.LANCZOS).save(path)
+
+
+def ui_panel(path, size=256):
+    """Panel 9-slice (borde 80 px): piedra azul oscura, doble aro dorado y adornos en las esquinas."""
+    k = 3
+    n = size * k
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    outer = _vgradient(n, (92, 66, 34), (40, 26, 14))
+    img.paste(outer, (0, 0), _rounded_mask(n, 40 * k, inset=2 * k))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([2 * k, 2 * k, n - 2 * k, n - 2 * k], radius=40 * k, outline=(20, 12, 6, 255), width=3 * k)
+    # aro dorado exterior e interior
+    d.rounded_rectangle([12 * k, 12 * k, n - 12 * k, n - 12 * k], radius=32 * k, outline=(232, 186, 90, 255), width=4 * k)
+    d.rounded_rectangle([18 * k, 18 * k, n - 18 * k, n - 18 * k], radius=28 * k, outline=(120, 80, 28, 255), width=2 * k)
+    # interior piedra oscura con degradado
+    inner = _vgradient(n, (22, 30, 52), (9, 13, 26))
+    img.paste(inner, (0, 0), _rounded_mask(n, 24 * k, inset=24 * k))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([24 * k, 24 * k, n - 24 * k, n - 24 * k], radius=24 * k, outline=(0, 0, 0, 200), width=3 * k)
+    d.line([(40 * k, 27 * k), (n - 40 * k, 27 * k)], fill=(255, 255, 255, 30), width=2 * k)
+    # adornos de esquina: rombo dorado con gema azul
+    for cx, cy in [(22 * k, 22 * k), (n - 22 * k, 22 * k), (22 * k, n - 22 * k), (n - 22 * k, n - 22 * k)]:
+        r = 17 * k
+        d.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)], fill=(226, 178, 80, 255), outline=(90, 55, 15, 255))
+        r2 = 8 * k
+        d.polygon([(cx, cy - r2), (cx + r2, cy), (cx, cy + r2), (cx - r2, cy)], fill=(80, 170, 255, 255))
+        d.ellipse([cx - 3 * k, cy - 5 * k, cx + 1 * k, cy - 1 * k], fill=(230, 245, 255, 255))
+    img.resize((size, size), Image.LANCZOS).save(path)
+
+
+def ui_bar(path, top, bottom, size=96):
+    """Barra 9-slice (borde 40 px)."""
+    k = 4
+    n = size * k
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    img.paste(_vgradient(n, top, bottom), (0, 0), _rounded_mask(n, 40 * k, inset=4 * k))
+    gloss = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    ImageDraw.Draw(gloss).rounded_rectangle([14 * k, 10 * k, n - 14 * k, n * 0.42], radius=20 * k, fill=(255, 255, 255, 60))
+    img.alpha_composite(gloss)
+    ImageDraw.Draw(img).rounded_rectangle([4 * k, 4 * k, n - 4 * k, n - 4 * k], radius=40 * k, outline=(0, 0, 0, 160), width=3 * k)
+    img.resize((size, size), Image.LANCZOS).save(path)
+
+
+def ui_row(path, size=96):
+    """Fondo de fila de tabla 9-slice (borde 24 px)."""
+    k = 4
+    n = size * k
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    img.paste(_vgradient(n, (34, 44, 70), (20, 27, 46)), (0, 0), _rounded_mask(n, 18 * k, inset=2 * k))
+    ImageDraw.Draw(img).rounded_rectangle([2 * k, 2 * k, n - 2 * k, n - 2 * k], radius=18 * k, outline=(90, 110, 150, 120), width=2 * k)
+    img.resize((size, size), Image.LANCZOS).save(path)
+
+
+def coin_icon(path):
+    img, d = new()
+    d.ellipse([C - 210, C - 210, C + 210, C + 210], fill=(150, 95, 10, 255))
+    d.ellipse([C - 195, C - 205, C + 195, C + 185], fill=(250, 196, 40, 255))
+    d.ellipse([C - 150, C - 160, C + 150, C + 140], fill=(230, 165, 25, 255), outline=(160, 105, 10, 255), width=10)
+    crown = [(C - 90, C + 50), (C - 100, C - 60), (C - 45, C - 10), (C, C - 85), (C + 45, C - 10), (C + 100, C - 60), (C + 90, C + 50)]
+    d.polygon(crown, fill=(255, 225, 110, 255), outline=(150, 95, 10, 255))
+    highlight(img, C - 70, C - 120, 70, 30, alpha=140)
+    finish(img, path)
+
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui2":
+    out = sys.argv[2]
+    ui_button(f"{out}/btn_green.png", (110, 205, 70), (35, 110, 25))
+    ui_button(f"{out}/btn_blue.png", (80, 150, 240), (25, 70, 160))
+    ui_button(f"{out}/btn_gray.png", (110, 115, 130), (50, 54, 66))
+    ui_button(f"{out}/btn_red.png", (235, 95, 80), (140, 30, 25))
+    ui_panel(f"{out}/panel.png")
+    ui_bar(f"{out}/bar_bg.png", (12, 16, 28), (26, 32, 50))
+    ui_bar(f"{out}/bar_fill.png", (90, 180, 255), (25, 90, 210))
+    ui_row(f"{out}/row.png")
+    coin_icon(f"{out}/coin.png")

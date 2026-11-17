@@ -209,116 +209,152 @@ public class RankedScreen : MonoBehaviour
 
     private void Build()
     {
-        Image background = UiKit.Image(transform, "Fondo", new Color(0.03f, 0.04f, 0.08f, 0.94f));
-        UiKit.Stretch(background.rectTransform);
+        UiKit.FullscreenBackground(transform, 0.62f);
 
         GameObject column = UiKit.Node(transform, "Columna");
-        UiKit.Stretch((RectTransform)column.transform, 36f);
+        UiKit.Stretch((RectTransform)column.transform, 30f);
         UiKit.Vertical(column, 0, 14f);
 
-        UiKit.Size(UiKit.Text(column.transform, "CLASIFICATORIA", 88f, UiKit.Gold, FontStyles.Bold), height: 110f);
-        UiKit.Size(UiKit.Text(column.transform, "Compite, sube de rango y demuestra que eres el mejor minero.", 34f, Color.white), height: 46f);
-        status = UiKit.Text(column.transform, "", 30f, UiKit.Muted);
-        UiKit.Size(status, height: 44f);
+        // Encabezado: emblema + título dorado + emblema
+        GameObject header = UiKit.Node(column.transform, "Encabezado");
+        HorizontalLayoutGroup headerRow = UiKit.Horizontal(header, 0, 10f);
+        headerRow.childForceExpandWidth = false;
+        UiKit.Size(header.transform, height: 130f);
+        UiKit.Size(UiKit.Image(header.transform, "Emblema", Color.white, UiKit.RankEmblem(4)), width: 130f);
+        UiKit.Size(UiKit.Title(header.transform, "CLASIFICATORIA", 100f), flexibleWidth: 1f);
+        UiKit.Size(UiKit.Image(header.transform, "Emblema", Color.white, UiKit.RankEmblem(6)), width: 130f);
+
+        TMP_Text subtitle = UiKit.Text(column.transform, "Compite, sube de rango y demuestra que eres el mejor minero.", 34f, Color.white);
+        UiKit.Outline(subtitle, 0.15f);
+        UiKit.Size(subtitle, height: 46f);
 
         BuildRankCard(column.transform);
 
-        searchButton = UiKit.Button(column.transform, "BUSCAR PARTIDA", UiKit.Green, OnSearch, 60f);
-        UiKit.Size(searchButton, height: 150f);
-        recordText = UiKit.Text(column.transform, "", 30f, UiKit.Muted);
-        UiKit.Size(recordText, height: 40f);
+        searchButton = UiKit.Button(column.transform, "BUSCAR PARTIDA", UiKit.ButtonStyle.Green, OnSearch, 72f);
+        UiKit.Size(searchButton, height: 170f);
 
-        UiKit.Size(UiKit.Text(column.transform, SeasonText(), 34f, UiKit.Gold), height: 48f);
+        Image info = UiKit.Card(column.transform, "Info");
+        UiKit.Size(info, height: 120f);
+        UiKit.Vertical(info.gameObject, 30, 0f, TextAnchor.MiddleCenter);
+        TMP_Text season = UiKit.Text(info.transform, SeasonText(), 36f, UiKit.Gold);
+        UiKit.Size(season, height: 44f);
+        recordText = UiKit.Text(info.transform, "", 30f, UiKit.Muted);
+        UiKit.Size(recordText, height: 36f);
 
         BuildTiersTable(column.transform);
 
         GameObject buttons = UiKit.Node(column.transform, "Botones");
         UiKit.Horizontal(buttons, 0, 16f).childForceExpandWidth = true;
         UiKit.Size(buttons.transform, height: 120f);
-        UiKit.Button(buttons.transform, "Posiciones", UiKit.Blue, OnLeaderboard, 38f);
-        UiKit.Button(buttons.transform, "Historial", UiKit.Blue, OnHistory, 38f);
-        UiKit.Button(buttons.transform, "Volver", new Color(0.3f, 0.3f, 0.36f), MenuScreens.ShowHome, 38f);
+        UiKit.Button(buttons.transform, "Posiciones", UiKit.ButtonStyle.Blue, OnLeaderboard, 42f);
+        UiKit.Button(buttons.transform, "Historial", UiKit.ButtonStyle.Blue, OnHistory, 42f);
+        UiKit.Button(buttons.transform, "Volver", UiKit.ButtonStyle.Gray, MenuScreens.ShowHome, 42f);
+
+        status = UiKit.Text(column.transform, "", 28f, UiKit.Muted);
+        UiKit.Outline(status, 0.15f);
+        UiKit.Size(status, height: 38f);
     }
 
     private void BuildRankCard(Transform parent)
     {
         Image card = UiKit.Card(parent, "Rango");
         UiKit.Size(card, height: 380f);
-        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 34, 10f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 40, 10f);
         row.childForceExpandWidth = true;
 
         GameObject left = UiKit.Node(card.transform, "Actual");
-        UiKit.Vertical(left, 0, 4f, TextAnchor.MiddleCenter);
-        UiKit.Size(UiKit.Text(left.transform, "TU RANGO", 30f, UiKit.LeagueColor(4), FontStyles.Bold), height: 40f);
+        UiKit.Vertical(left, 0, 2f, TextAnchor.MiddleCenter);
+        TMP_Text leftLabel = UiKit.Text(left.transform, "TU RANGO", 32f, UiKit.LeagueColor(4));
+        UiKit.Outline(leftLabel, 0.15f);
+        UiKit.Size(leftLabel, height: 42f);
         currentEmblem = UiKit.Image(left.transform, "Emblema", Color.white, UiKit.RankEmblem(0));
-        UiKit.Size(currentEmblem, height: 190f);
-        currentName = UiKit.Text(left.transform, "...", 40f, Color.white, FontStyles.Bold);
-        UiKit.Size(currentName, height: 54f);
+        UiKit.Size(currentEmblem, height: 180f);
+        currentName = UiKit.Text(left.transform, "...", 44f, Color.white);
+        UiKit.Outline(currentName, 0.2f);
+        UiKit.Size(currentName, height: 56f);
 
         GameObject middle = UiKit.Node(card.transform, "Puntos");
         UiKit.Vertical(middle, 0, 8f, TextAnchor.MiddleCenter);
         UiKit.Size(middle.transform, flexibleWidth: 1.3f);
-        UiKit.Size(UiKit.Text(middle.transform, "PUNTOS", 32f, Color.white, FontStyles.Bold), height: 42f);
-        pointsText = UiKit.Text(middle.transform, "-", 84f, UiKit.Gold, FontStyles.Bold);
-        UiKit.Size(pointsText, height: 100f);
+        TMP_Text pointsLabel = UiKit.Text(middle.transform, "PUNTOS", 34f, Color.white);
+        UiKit.Outline(pointsLabel, 0.15f);
+        UiKit.Size(pointsLabel, height: 44f);
 
-        Image bar = UiKit.Image(middle.transform, "Barra", new Color(0.05f, 0.07f, 0.12f));
-        UiKit.Size(bar, height: 50f);
-        Image fill = UiKit.Image(bar.transform, "Relleno", new Color(0.15f, 0.5f, 0.95f));
-        progressFill = fill.rectTransform;
-        progressFill.anchorMin = Vector2.zero;
-        progressFill.anchorMax = new Vector2(0f, 1f);
-        progressFill.offsetMin = Vector2.zero;
-        progressFill.offsetMax = Vector2.zero;
-        progressText = UiKit.Text(bar.transform, "", 30f, Color.white, FontStyles.Bold);
-        UiKit.Stretch(progressText.rectTransform);
+        GameObject pointsRow = UiKit.Node(middle.transform, "Valor");
+        UiKit.Horizontal(pointsRow, 0, 12f).childForceExpandWidth = false;
+        UiKit.Size(pointsRow.transform, height: 110f);
+        UiKit.Size(UiKit.Image(pointsRow.transform, "Estrella", Color.white, UiKit.LoadSprite("UI/star_full")), width: 80f);
+        pointsText = UiKit.Title(pointsRow.transform, "-", 96f);
+        UiKit.Size(pointsText, width: 220f);
+
+        progressFill = UiKit.ProgressBar(middle.transform, 56f, out progressText);
 
         toNextText = UiKit.Text(middle.transform, "", 30f, Color.white);
+        UiKit.Outline(toNextText, 0.12f);
         UiKit.Size(toNextText, height: 80f);
 
         GameObject right = UiKit.Node(card.transform, "Siguiente");
-        UiKit.Vertical(right, 0, 4f, TextAnchor.MiddleCenter);
-        UiKit.Size(UiKit.Text(right.transform, "SIGUIENTE", 30f, UiKit.LeagueColor(4), FontStyles.Bold), height: 40f);
+        UiKit.Vertical(right, 0, 2f, TextAnchor.MiddleCenter);
+        TMP_Text rightLabel = UiKit.Text(right.transform, "SIGUIENTE", 32f, UiKit.LeagueColor(4));
+        UiKit.Outline(rightLabel, 0.15f);
+        UiKit.Size(rightLabel, height: 42f);
         nextEmblem = UiKit.Image(right.transform, "Emblema", Color.white, UiKit.RankEmblem(1));
-        UiKit.Size(nextEmblem, height: 190f);
-        nextName = UiKit.Text(right.transform, "...", 40f, Color.white, FontStyles.Bold);
-        UiKit.Size(nextName, height: 54f);
+        UiKit.Size(nextEmblem, height: 180f);
+        nextName = UiKit.Text(right.transform, "...", 44f, Color.white);
+        UiKit.Outline(nextName, 0.2f);
+        UiKit.Size(nextName, height: 56f);
     }
 
     private void BuildTiersTable(Transform parent)
     {
         Image card = UiKit.Card(parent, "Rangos");
-        const float rowHeight = 78f;
-        UiKit.Size(card, height: 70f + RankTiers.Leagues.Count * (rowHeight + 4f) + 60f);
-        UiKit.Vertical(card.gameObject, 30, 4f);
+        const float rowHeight = 70f;
+        UiKit.Size(card, height: 64f + 48f + RankTiers.Leagues.Count * (rowHeight + 6f) + 70f);
+        UiKit.Vertical(card.gameObject, 34, 6f);
 
-        TableRow(card.transform, null, "RANGO", "PUNTOS", "RECOMPENSA DE TEMPORADA", Color.white, 56f, true);
+        TMP_Text title = UiKit.Text(card.transform, "RANGOS", 42f, Color.white);
+        UiKit.Outline(title, 0.18f);
+        UiKit.Size(title, height: 58f);
+
+        Sprite gem = UiKit.LoadSprite("Minerals/amethyst");
+        Sprite coin = UiKit.LoadSprite("UI/coin");
+
+        GameObject headerRow = UiKit.Node(card.transform, "Cabecera");
+        UiKit.Horizontal(headerRow, 0, 10f).childForceExpandWidth = false;
+        UiKit.Size(headerRow.transform, height: 44f);
+        HeaderCell(headerRow.transform, "RANGO", 330f);
+        HeaderCell(headerRow.transform, "PUNTOS", 200f);
+        HeaderCell(headerRow.transform, "RECOMPENSA DE TEMPORADA", -1f);
 
         for (int i = RankTiers.Leagues.Count - 1; i >= 0; i--)
         {
             RankTiers.League league = RankTiers.Leagues[i];
             string range = league.MaxPoints == int.MaxValue ? $"{league.MinPoints}+" : $"{league.MinPoints} - {league.MaxPoints}";
-            TableRow(card.transform, UiKit.RankEmblem(i), league.Name.ToUpperInvariant(), range,
-                $"{league.SeasonGems} gemas · {league.SeasonCoins} monedas", UiKit.LeagueColor(i), rowHeight, false);
+
+            Image rowImage = UiKit.Row(card.transform, "Fila " + league.Name);
+            UiKit.Size(rowImage, height: rowHeight);
+            HorizontalLayoutGroup row = UiKit.Horizontal(rowImage.gameObject, 8, 10f);
+            row.childForceExpandWidth = false;
+
+            UiKit.Size(UiKit.Image(rowImage.transform, "Emblema", Color.white, UiKit.RankEmblem(i)), width: 70f);
+            TMP_Text name = UiKit.Text(rowImage.transform, league.Name.ToUpperInvariant(), 38f, UiKit.LeagueColor(i),
+                FontStyles.Normal, TextAlignmentOptions.Left);
+            UiKit.Outline(name, 0.18f);
+            UiKit.Size(name, width: 250f);
+            UiKit.Size(UiKit.Text(rowImage.transform, range, 34f, Color.white), width: 200f);
+
+            UiKit.Size(UiKit.Image(rowImage.transform, "Gema", Color.white, gem), width: 50f);
+            UiKit.Size(UiKit.Text(rowImage.transform, league.SeasonGems.ToString(), 32f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left), width: 90f);
+            UiKit.Size(UiKit.Image(rowImage.transform, "Moneda", Color.white, coin), width: 50f);
+            UiKit.Size(UiKit.Text(rowImage.transform, league.SeasonCoins.ToString(), 32f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left), flexibleWidth: 1f);
         }
     }
 
-    private static void TableRow(Transform parent, Sprite emblem, string name, string range, string reward,
-        Color nameColor, float height, bool header)
+    private static void HeaderCell(Transform parent, string text, float width)
     {
-        GameObject row = UiKit.Node(parent, "Fila " + name);
-        UiKit.Horizontal(row, 0, 12f);
-        UiKit.Size(row.transform, height: height);
-
-        Image icon = UiKit.Image(row.transform, "Icono", Color.white, emblem);
-        icon.enabled = emblem != null;
-        UiKit.Size(icon, width: 70f);
-
-        float size = header ? 26f : 34f;
-        Color other = header ? UiKit.Muted : Color.white;
-        UiKit.Size(UiKit.Text(row.transform, name, size, header ? UiKit.Muted : nameColor, FontStyles.Bold, TextAlignmentOptions.Left), width: 250f);
-        UiKit.Size(UiKit.Text(row.transform, range, size, other, FontStyles.Normal), width: 220f);
-        UiKit.Size(UiKit.Text(row.transform, reward, header ? 26f : 30f, other, FontStyles.Normal), flexibleWidth: 1f);
+        TMP_Text cell = UiKit.Text(parent, text, 26f, UiKit.Muted);
+        if (width > 0f) UiKit.Size(cell, width: width);
+        else UiKit.Size(cell, flexibleWidth: 1f);
     }
 
     /// <summary>Las temporadas duran un mes (terminan el último día del mes, en UTC).</summary>

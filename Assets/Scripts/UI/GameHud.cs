@@ -249,7 +249,7 @@ public class GameHud : MonoBehaviour
         badgeImage.enabled = true;
         if (badge == null) badgeImage.color = new Color(0.15f, 0.6f, 0.25f);
 
-        TMP_Text count = CreateText(badgeImage.transform, "0", 40f, Color.white, FontStyles.Bold, 0f);
+        TMP_Text count = CreateText(badgeImage.transform, "0", 40f, Color.white, FontStyles.Normal, 0f);
         var countRect = count.rectTransform;
         countRect.anchorMin = Vector2.zero;
         countRect.anchorMax = Vector2.one;
@@ -307,19 +307,19 @@ public class GameHud : MonoBehaviour
         Transform card = CreateCard(parent, "MOVIMIENTOS", 250f, 1f);
         if (rankedMatch == null)
         {
-            movesValue = CreateText(card, "0", 100f, Color.white, FontStyles.Bold, 120f);
+            movesValue = CreateText(card, "0", 100f, Color.white, FontStyles.Normal, 120f);
             return;
         }
 
-        movesValue = CreateText(card, "0", 80f, Color.white, FontStyles.Bold, 96f);
-        timerText = CreateText(card, "", 34f, LabelColor, FontStyles.Bold, 44f);
+        movesValue = CreateText(card, "0", 80f, Color.white, FontStyles.Normal, 96f);
+        timerText = CreateText(card, "", 34f, LabelColor, FontStyles.Normal, 44f);
     }
 
     private void BuildOpponentCard(Transform parent)
     {
         Transform card = CreateCard(parent, "RIVAL", 0f, 2f);
-        CreateText(card, rankedMatch.OpponentName, 38f, Color.white, FontStyles.Bold, 48f);
-        opponentScore = CreateText(card, "0", 60f, new Color(1f, 0.55f, 0.5f), FontStyles.Bold, 66f);
+        CreateText(card, rankedMatch.OpponentName, 38f, Color.white, FontStyles.Normal, 48f);
+        opponentScore = CreateText(card, "0", 60f, new Color(1f, 0.55f, 0.5f), FontStyles.Normal, 66f);
         opponentMoves = CreateText(card, $"Movimientos: {CrystalClash.Ranked.Logic.RankedRules.Moves}", 28f, Color.white, FontStyles.Normal, 36f);
     }
 
@@ -372,14 +372,14 @@ public class GameHud : MonoBehaviour
                 : LoadSprite("Minerals/" + MineralFile(progress.Objective.MineralType));
             CreateIcon(slotGO.transform, icon, 84f);
 
-            objectiveCounts.Add(CreateText(slotGO.transform, "", 40f, Color.white, FontStyles.Bold, 60f));
+            objectiveCounts.Add(CreateText(slotGO.transform, "", 40f, Color.white, FontStyles.Normal, 60f));
         }
     }
 
     private void BuildScoreCard(Transform parent)
     {
         Transform card = CreateCard(parent, "PUNTUACIÓN", 250f, 1f);
-        scoreValue = CreateText(card, "0", 56f, LabelColor, FontStyles.Bold, 70f);
+        scoreValue = CreateText(card, "0", 56f, LabelColor, FontStyles.Normal, 70f);
 
         var starsGO = new GameObject("Estrellas", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
         starsGO.transform.SetParent(card, false);
@@ -429,7 +429,7 @@ public class GameHud : MonoBehaviour
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
 
-        CreateText(go.transform, title, 30f, LabelColor, FontStyles.Bold, 40f);
+        CreateText(go.transform, title, 30f, LabelColor, FontStyles.Normal, 40f);
         return go.transform;
     }
 
@@ -440,6 +440,7 @@ public class GameHud : MonoBehaviour
         go.GetComponent<LayoutElement>().preferredHeight = height;
 
         var tmp = go.AddComponent<TextMeshProUGUI>();
+        UiKit.ApplyFont(tmp);
         tmp.text = text;
         tmp.fontSize = size;
         tmp.color = color;
@@ -450,6 +451,7 @@ public class GameHud : MonoBehaviour
         tmp.enableAutoSizing = true;
         tmp.fontSizeMin = 18f;
         tmp.fontSizeMax = size;
+        UiKit.Outline(tmp, 0.15f);
         return tmp;
     }
 

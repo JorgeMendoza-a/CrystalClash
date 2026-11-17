@@ -18,8 +18,131 @@ public static class UiKit
     public static readonly Color Dark = new Color(0.04f, 0.05f, 0.09f, 0.97f);
     public static readonly Color CardFallback = new Color(0.08f, 0.12f, 0.2f, 0.95f);
 
+    public enum ButtonStyle { Green, Blue, Gray, Red }
+
     private const int FrameBorderPixels = 48;
     private static Sprite cardSprite;
+    private static TMP_FontAsset gameFont;
+    private static bool fontLoaded;
+    private static readonly System.Collections.Generic.Dictionary<string, Sprite> slicedCache =
+        new System.Collections.Generic.Dictionary<string, Sprite>();
+
+    /// <summary>Fuente del juego (Lilita One, Resources/Fonts). Null si no está: se usa la de TMP.</summary>
+    public static TMP_FontAsset GameFont
+    {
+        get
+        {
+            if (fontLoaded) return gameFont;
+            fontLoaded = true;
+
+            Font font = Resources.Load<Font>("Fonts/LilitaOne-Regular");
+            if (font == null) return null;
+
+            gameFont = TMP_FontAsset.CreateFontAsset(font);
+            if (gameFont != null)
+            {
+                gameFont.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                // Si falta algún carácter, usar la fuente por defecto de TMP.
+                if (TMP_Settings.defaultFontAsset != null)
+                {
+                    gameFont.fallbackFontAssetTable = new System.Collections.Generic.List<TMP_FontAsset> { TMP_Settings.defaultFontAsset };
+                }
+            }
+            return gameFont;
+        }
+    }
+
+    public static void ApplyFont(TMP_Text text)
+    {
+        TMP_FontAsset font = GameFont;
+        if (font != null) text.font = font;
+    }
+
+    /// <summary>Contorno oscuro (para títulos y textos de botones).</summary>
+    public static void Outline(TMP_Text text, float width = 0.18f)
+    {
+        text.outlineWidth = width;
+        text.outlineColor = new Color32(30, 18, 5, 255);
+    }
+
+    /// <summary>Título dorado con degradado y contorno, como en el diseño.</summary>
+    public static TMP_Text Title(Transform parent, string text, float size)
+    {
+        TMP_Text tmp = Text(parent, text, size, Color.white, FontStyles.Normal);
+        tmp.enableVertexGradient = true;
+        tmp.colorGradient = new VertexGradient(
+            new Color(1f, 0.93f, 0.55f), new Color(1f, 0.93f, 0.55f),
+            new Color(0.95f, 0.6f, 0.12f), new Color(0.95f, 0.6f, 0.12f));
+        Outline(tmp, 0.22f);
+        return tmp;
+    }
+
+    /// <summary>Sprite 9-slice desde Resources (borde en píxeles de la textura).</summary>
+    public static Sprite LoadSliced(string path, int borderPixels, float pixelsPerUnit)
+    {
+        string key = path + "|" + borderPixels + "|" + pixelsPerUnit;
+        if (slicedCache.TryGetValue(key, out Sprite cached) && cached != null) return cached;
+
+        Texture2D texture = Resources.Load<Texture2D>(path);
+        if (texture == null) return null;
+
+        var border = new Vector4(borderPixels, borderPixels, borderPixels, borderPixels);
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f),
+            pixelsPerUnit, 0, SpriteMeshType.FullRect, border);
+        sprite.hideFlags = HideFlags.DontUnloadUnusedAsset;
+        texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
+        slicedCache[key] = sprite;
+        return sprite;
+    }
+
+    /// <summary>Panel ornamentado (Resources/UI/panel.png); si no está, el marco del tablero.</summary>
+    public static Sprite PanelSprite()
+    {
+        return LoadSliced("UI/panel", 80, 160f) ?? CardSprite();
+    }
+
+    public static Sprite ButtonSprite(ButtonStyle style)
+    {
+        string file;
+        switch (style)
+        {
+            case ButtonStyle.Green: file = "UI/btn_green"; break;
+            case ButtonStyle.Blue: file = "UI/btn_blue"; break;
+            case ButtonStyle.Red: file = "UI/btn_red"; break;
+            default: file = "UI/btn_gray"; break;
+        }
+        return LoadSliced(file, 56, 110f);
+    }
+
+    /// <summary>El fondo de la mina de la escena (Image llamada "Background"), para los menús.</summary>
+    public static Sprite SceneBackground()
+    {
+        foreach (Image image in UnityEngine.Object.FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (image.name == "Background" && image.sprite != null) return image.sprite;
+        }
+        return null;
+    }
+
+    /// <summary>Fondo a pantalla completa: la mina de la escena oscurecida (o un color si no hay).</summary>
+    public static void FullscreenBackground(Transform parent, float darkness = 0.55f)
+    {
+        Image solid = Image(parent, "FondoSolido", new Color(0.03f, 0.04f, 0.08f, 1f));
+        Stretch(solid.rectTransform);
+
+        Sprite art = SceneBackground();
+        if (art != null)
+        {
+            Image picture = Image(parent, "FondoMina", Color.white, art);
+            picture.preserveAspect = false;
+            var fitter = picture.gameObject.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fitter.aspectRatio = art.rect.width / art.rect.height;
+        }
+
+        Image shade = Image(parent, "Oscurecer", new Color(0.02f, 0.02f, 0.05f, darkness));
+        Stretch(shade.rectTransform);
+    }
 
     /// <summary>Canvas a pantalla completa por encima de todo (orden mayor = más arriba).</summary>
     public static Canvas CreateCanvas(string name, int sortingOrder)
@@ -61,12 +184,12 @@ public static class UiKit
         return image;
     }
 
-    /// <summary>Tarjeta con el marco dorado del tablero (9-slice).</summary>
+    /// <summary>Tarjeta con marco dorado ornamentado (9-slice).</summary>
     public static Image Card(Transform parent, string name)
     {
         GameObject go = Node(parent, name);
         var image = go.AddComponent<Image>();
-        Sprite sprite = CardSprite();
+        Sprite sprite = PanelSprite();
         if (sprite != null)
         {
             image.sprite = sprite;
@@ -85,6 +208,7 @@ public static class UiKit
     {
         GameObject go = Node(parent, "Text");
         var tmp = go.AddComponent<TextMeshProUGUI>();
+        ApplyFont(tmp);
         tmp.text = text;
         tmp.fontSize = size;
         tmp.color = color;
@@ -98,16 +222,60 @@ public static class UiKit
         return tmp;
     }
 
-    public static Button Button(Transform parent, string label, Color color, Action onClick, float fontSize = 46f)
+    public static Button Button(Transform parent, string label, ButtonStyle style, Action onClick, float fontSize = 46f)
     {
-        Image image = Image(parent, "Button " + label, color);
+        Sprite sprite = ButtonSprite(style);
+        Color fallback = style == ButtonStyle.Green ? Green : style == ButtonStyle.Blue ? Blue : style == ButtonStyle.Red ? Red : new Color(0.3f, 0.3f, 0.36f);
+        Image image = Image(parent, "Button " + label, sprite != null ? Color.white : fallback, sprite);
+        if (sprite != null)
+        {
+            image.type = UnityEngine.UI.Image.Type.Sliced;
+            image.preserveAspect = false;
+        }
+
         var button = image.gameObject.AddComponent<Button>();
         button.targetGraphic = image;
         if (onClick != null) button.onClick.AddListener(() => onClick());
 
-        TMP_Text text = Text(image.transform, label, fontSize, Color.white, FontStyles.Bold);
-        Stretch(text.rectTransform, 10f);
+        TMP_Text text = Text(image.transform, label, fontSize, Color.white, FontStyles.Normal);
+        Outline(text);
+        Stretch(text.rectTransform, 18f);
+        text.rectTransform.offsetMin = new Vector2(24f, 22f);
+        text.rectTransform.offsetMax = new Vector2(-24f, -14f);
         return button;
+    }
+
+    /// <summary>Barra de progreso con relieve. Devuelve el RectTransform del relleno (anchorMax.x = fracción).</summary>
+    public static RectTransform ProgressBar(Transform parent, float height, out TMP_Text label)
+    {
+        Sprite bgSprite = LoadSliced("UI/bar_bg", 40, 160f);
+        Sprite fillSprite = LoadSliced("UI/bar_fill", 40, 160f);
+
+        Image bar = Image(parent, "Barra", bgSprite != null ? Color.white : new Color(0.05f, 0.07f, 0.12f), bgSprite);
+        if (bgSprite != null) { bar.type = UnityEngine.UI.Image.Type.Sliced; bar.preserveAspect = false; }
+        Size(bar, height: height);
+
+        Image fill = Image(bar.transform, "Relleno", fillSprite != null ? Color.white : new Color(0.15f, 0.5f, 0.95f), fillSprite);
+        if (fillSprite != null) { fill.type = UnityEngine.UI.Image.Type.Sliced; fill.preserveAspect = false; }
+        RectTransform rect = fill.rectTransform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        label = Text(bar.transform, "", height * 0.6f, Color.white);
+        Outline(label, 0.2f);
+        Stretch(label.rectTransform);
+        return rect;
+    }
+
+    /// <summary>Fondo de fila de tabla.</summary>
+    public static Image Row(Transform parent, string name)
+    {
+        Sprite sprite = LoadSliced("UI/row", 24, 160f);
+        Image image = Image(parent, name, sprite != null ? Color.white : new Color(0.12f, 0.16f, 0.26f, 0.9f), sprite);
+        if (sprite != null) { image.type = UnityEngine.UI.Image.Type.Sliced; image.preserveAspect = false; }
+        return image;
     }
 
     public static VerticalLayoutGroup Vertical(GameObject go, int padding, float spacing,
