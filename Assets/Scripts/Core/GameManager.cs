@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        GameHud.Create(Session);
         RefreshUI();
 
         if (showLevelIntro && LevelCatalog.Count > 0)
@@ -70,6 +71,11 @@ public class GameManager : MonoBehaviour
         if (GameUI.Instance != null)
         {
             GameUI.Instance.UpdateMoves(Session.MovesLeft);
+        }
+
+        if (GameHud.Instance != null)
+        {
+            GameHud.Instance.SetMoves(Session.MovesLeft);
         }
     }
 
@@ -178,6 +184,12 @@ public class GameManager : MonoBehaviour
 
     private void RefreshUI()
     {
+        if (GameHud.Instance != null)
+        {
+            GameHud.Instance.SetMoves(Session.MovesLeft);
+            GameHud.Instance.SetObjectives(Session);
+        }
+
         if (GameUI.Instance == null) return;
 
         GameUI.Instance.UpdateMoves(Session.MovesLeft);

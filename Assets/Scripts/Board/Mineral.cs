@@ -36,6 +36,9 @@ public class Mineral : MonoBehaviour
     private static Sprite drillVSprite;
     private static Sprite bombSprite;
 
+    /// <summary>Orden de dibujo de los minerales (encima del marco y las casillas del tablero).</summary>
+    public const int SortingOrder = 30;
+
     private SpriteRenderer spriteRenderer;
     private Sprite fallbackSprite;
     private SpriteRenderer marker;
@@ -61,6 +64,7 @@ public class Mineral : MonoBehaviour
     {
         LoadSprites();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.sortingOrder = SortingOrder;
         fallbackSprite = spriteRenderer.sprite;
         board = GetComponentInParent<BoardManager>();
         normalScale = transform.localScale;

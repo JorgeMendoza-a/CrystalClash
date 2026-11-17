@@ -257,7 +257,7 @@ def main(out):
     bomb(f"{out}/bomb.png")
 
 
-if __name__ == "__main__" and sys.argv[1] != "--board":
+if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui"):
     main(sys.argv[1])
 
 
@@ -322,3 +322,30 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--board":
     board_frame(f"{out}/board_frame.png")
     board_cell(f"{out}/board_cell.png", (24, 32, 52))
     board_cell(f"{out}/board_cell_alt.png", (32, 42, 66))
+
+
+# ======================================================================
+# Íconos de la UI (Assets/Resources/UI)
+# Uso: python3 Tools/gen_gems.py --ui Assets/Resources/UI
+# ======================================================================
+
+def star_icon(path, filled):
+    img, d = new()
+    pts = []
+    for i in range(10):
+        r = 230 if i % 2 == 0 else 100
+        a = -math.pi / 2 + i * math.pi / 5
+        pts.append((C + math.cos(a) * r, C + 15 + math.sin(a) * r))
+    if filled:
+        faceted_gem(d, pts, (245, 185, 30), table_k=0.5, outline=False)
+        d.polygon(pts, outline=(120, 70, 0), width=14)
+        highlight(img, C - 40, C - 50, 45, 22)
+    else:
+        d.polygon(pts, fill=(40, 44, 58, 255), outline=(110, 115, 130, 255), width=14)
+    finish(img, path)
+
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui":
+    out = sys.argv[2]
+    star_icon(f"{out}/star_full.png", True)
+    star_icon(f"{out}/star_empty.png", False)

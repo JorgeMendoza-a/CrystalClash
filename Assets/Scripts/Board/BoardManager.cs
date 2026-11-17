@@ -79,9 +79,10 @@ public class BoardManager : MonoBehaviour
         FitCamera();
     }
 
-    // Orden de dibujo: fondo de la UI (-100) < marco (-20) < casillas (-10) < minerales (0).
-    private const int FrameSortingOrder = -20;
-    private const int CellSortingOrder = -10;
+    // Orden de dibujo: fondo de la UI (negativo) < marco < casillas < minerales (Mineral.SortingOrder).
+    // Son positivos para que el tablero quede encima del fondo aunque el Canvas cambie.
+    private const int FrameSortingOrder = 10;
+    private const int CellSortingOrder = 20;
     private const int FrameBorderPixels = 48; // igual que FRAME_BORDER en Tools/gen_gems.py
 
     void BuildBoardBackground()

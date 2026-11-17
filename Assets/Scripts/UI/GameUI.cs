@@ -41,6 +41,11 @@ public class GameUI : MonoBehaviour
         {
             scoreText.text = "Puntos: " + score;
         }
+
+        if (GameHud.Instance != null)
+        {
+            GameHud.Instance.SetScore(score);
+        }
     }
 
     public void UpdateMoves(int moves)
