@@ -5,12 +5,13 @@ using UnityEngine;
 /// Vista de un mineral. Solo muestra el color/especial y avisa al tablero
 /// cuando se hace clic. El tipo lo decide BoardLogic, nunca el propio mineral.
 ///
-/// Los especiales se dibujan con una marca encima (un hijo con el mismo sprite)
-/// hasta que tengamos arte propio:
-/// - Taladro horizontal: barra blanca horizontal.
-/// - Taladro vertical:   barra blanca vertical.
-/// - Dinamita:           cuadro oscuro en el centro.
-/// - Prisma:             blanco con colores que van cambiando.
+/// Sprites: se cargan de Resources/Minerals/ (sapphire.png, emerald.png...,
+/// prism.png y las marcas drill_h.png, drill_v.png, bomb.png). Para cambiar
+/// el arte basta con reemplazar esos PNG por otros con el mismo nombre.
+/// Si no están, se usa el sprite del prefab pintado de color.
+///
+/// Especiales: una marca encima del mineral (Taladro = flechas, Dinamita =
+/// mecha); el Prisma tiene su propio sprite y va cambiando de color.
 /// </summary>
 public class Mineral : MonoBehaviour
 {
@@ -19,7 +20,24 @@ public class Mineral : MonoBehaviour
     public MineralType mineralType;
     public SpecialKind special;
 
+    // Nombres de archivo en Resources/Minerals, mismo orden que MineralType.
+    private static readonly string[] gemFiles =
+    {
+        "sapphire", "emerald", "amethyst", "ruby", "gold", "carbon", "copper", "silver", "diamond"
+    };
+
+    /// <summary>Tamaño del sprite en unidades (el prefab lo escala a 0.8 de la celda).</summary>
+    private const float GemSizeInUnits = 1.12f;
+
+    private static bool spritesLoaded;
+    private static Sprite[] gemSprites;
+    private static Sprite prismSprite;
+    private static Sprite drillHSprite;
+    private static Sprite drillVSprite;
+    private static Sprite bombSprite;
+
     private SpriteRenderer spriteRenderer;
+    private Sprite fallbackSprite;
     private SpriteRenderer marker;
     private BoardManager board;
     private Vector3 normalScale;
@@ -41,7 +59,9 @@ public class Mineral : MonoBehaviour
 
     void Awake()
     {
+        LoadSprites();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        fallbackSprite = spriteRenderer.sprite;
         board = GetComponentInParent<BoardManager>();
         normalScale = transform.localScale;
         selectedScale = normalScale * 1.2f;
@@ -100,19 +120,82 @@ public class Mineral : MonoBehaviour
         if (type >= 0 && type < colors.Length)
         {
             mineralType = (MineralType)type;
-            spriteRenderer.color = colors[type];
+        }
+
+        Sprite gem = GetGemSprite(type, newSpecial);
+        if (gem != null)
+        {
+            spriteRenderer.sprite = gem;
+            spriteRenderer.color = Color.white;
         }
         else
         {
-            spriteRenderer.color = Color.white;
+            spriteRenderer.sprite = fallbackSprite;
+            spriteRenderer.color = type >= 0 && type < colors.Length ? colors[type] : Color.white;
         }
 
         UpdateMarker();
     }
 
+    static void LoadSprites()
+    {
+        if (spritesLoaded) return;
+        spritesLoaded = true;
+
+        gemSprites = new Sprite[gemFiles.Length];
+        for (int i = 0; i < gemFiles.Length; i++)
+        {
+            gemSprites[i] = LoadSprite(gemFiles[i]);
+        }
+
+        prismSprite = LoadSprite("prism");
+        drillHSprite = LoadSprite("drill_h");
+        drillVSprite = LoadSprite("drill_v");
+        bombSprite = LoadSprite("bomb");
+    }
+
+    /// <summary>
+    /// Carga la textura (funciona la importes como Sprite o como Default) y
+    /// crea el sprite con un tamaño fijo en unidades, sin depender de los
+    /// Pixels Per Unit de la importación.
+    /// </summary>
+    static Sprite LoadSprite(string file)
+    {
+        Texture2D texture = Resources.Load<Texture2D>("Minerals/" + file);
+        if (texture == null) return null;
+
+        float pixelsPerUnit = texture.width / GemSizeInUnits;
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), pixelsPerUnit);
+
+        // Creado por código: que no se descargue al recargar la escena (cambio de nivel).
+        sprite.hideFlags = HideFlags.DontUnloadUnusedAsset;
+        texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
+        return sprite;
+    }
+
+    static Sprite GetGemSprite(int type, SpecialKind kind)
+    {
+        if (kind == SpecialKind.Prism) return prismSprite;
+        return gemSprites != null && type >= 0 && type < gemSprites.Length ? gemSprites[type] : null;
+    }
+
+    static Sprite GetMarkerSprite(SpecialKind kind)
+    {
+        switch (kind)
+        {
+            case SpecialKind.LineH: return drillHSprite;
+            case SpecialKind.LineV: return drillVSprite;
+            case SpecialKind.Bomb: return bombSprite;
+            default: return null;
+        }
+    }
+
     void UpdateMarker()
     {
-        if (special == SpecialKind.None)
+        Sprite overlay = GetMarkerSprite(special);
+        bool usePlaceholder = overlay == null && !(special == SpecialKind.Prism && prismSprite != null);
+
+        if (special == SpecialKind.None || (overlay == null && !usePlaceholder))
         {
             if (marker != null) marker.enabled = false;
             return;
@@ -123,12 +206,22 @@ public class Mineral : MonoBehaviour
             var child = new GameObject("SpecialMarker");
             child.transform.SetParent(transform, false);
             marker = child.AddComponent<SpriteRenderer>();
-            marker.sprite = spriteRenderer.sprite;
             marker.sortingLayerID = spriteRenderer.sortingLayerID;
             marker.sortingOrder = spriteRenderer.sortingOrder + 1;
         }
 
         marker.enabled = true;
+
+        if (overlay != null)
+        {
+            marker.sprite = overlay;
+            marker.color = Color.white;
+            marker.transform.localScale = Vector3.one;
+            return;
+        }
+
+        // Sin PNG de marcas: dibujamos formas simples con el sprite del prefab.
+        marker.sprite = fallbackSprite;
 
         switch (special)
         {
