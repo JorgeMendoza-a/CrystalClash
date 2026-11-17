@@ -118,11 +118,9 @@ public static class UiKit
     /// <summary>El fondo de la mina de la escena (Image llamada "Background"), para los menús.</summary>
     public static Sprite SceneBackground()
     {
-        foreach (Image image in UnityEngine.Object.FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-        {
-            if (image.name == "Background" && image.sprite != null) return image.sprite;
-        }
-        return null;
+        GameObject background = GameObject.Find("Background");
+        Image image = background != null ? background.GetComponent<Image>() : null;
+        return image != null ? image.sprite : null;
     }
 
     /// <summary>Fondo a pantalla completa: la mina de la escena oscurecida (o un color si no hay).</summary>
