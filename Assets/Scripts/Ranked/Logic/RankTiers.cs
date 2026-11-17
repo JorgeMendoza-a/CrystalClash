@@ -9,7 +9,7 @@ namespace CrystalClash.Ranked.Logic
         /// <summary>Liga: Bronce, Plata, Oro, Platino, Diamante, Maestro, Campeón.</summary>
         public string League { get; }
 
-        /// <summary>0 = sin división; 1 = I; 2 = II.</summary>
+        /// <summary>0 = sin división (Campeón); 1..5 = división (1 es la más baja).</summary>
         public int Division { get; }
 
         public int MinPoints { get; }
@@ -20,7 +20,7 @@ namespace CrystalClash.Ranked.Logic
         /// <summary>Índice de la liga (0 = Bronce ... 6 = Campeón). Sirve para elegir ícono y color.</summary>
         public int LeagueIndex { get; }
 
-        public string Name => Division == 0 ? League : $"{League} {(Division == 1 ? "I" : "II")}";
+        public string Name => Division == 0 ? League : $"{League} {Division}";
 
         internal RankTier(string league, int leagueIndex, int division, int min, int max)
         {
@@ -33,8 +33,10 @@ namespace CrystalClash.Ranked.Logic
     }
 
     /// <summary>
-    /// Tabla de rangos (la misma del diseño de la pantalla de Clasificatoria).
-    /// Las ligas de 1000 puntos o más se dividen en I y II.
+    /// Tabla de rangos (la del diseño de la pantalla de Clasificatoria).
+    /// Cada liga se divide en 5 divisiones iguales (Bronce 1 ... Bronce 5),
+    /// salvo Campeón, que es la cima. En las ligas bajas se sube rápido (se
+    /// gana mucho y se pierde poco) y en las altas cuesta más.
     /// </summary>
     public static class RankTiers
     {
@@ -45,22 +47,31 @@ namespace CrystalClash.Ranked.Logic
             public int MaxPoints;   // int.MaxValue = sin tope
             public int SeasonGems;  // recompensa de fin de temporada
             public int SeasonCoins;
+            public double WinMultiplier;   // multiplica lo que se gana al vencer
+            public double LossMultiplier;  // multiplica lo que se pierde al caer
         }
+
+        public const int DivisionsPerLeague = 5;
 
         public static readonly IReadOnlyList<League> Leagues = new[]
         {
-            new League { Name = "Bronce",   MinPoints = 0,    MaxPoints = 499,          SeasonGems = 50,   SeasonCoins = 500 },
-            new League { Name = "Plata",    MinPoints = 500,  MaxPoints = 999,          SeasonGems = 100,  SeasonCoins = 1000 },
-            new League { Name = "Oro",      MinPoints = 1000, MaxPoints = 1999,         SeasonGems = 200,  SeasonCoins = 2000 },
-            new League { Name = "Platino",  MinPoints = 2000, MaxPoints = 3999,         SeasonGems = 300,  SeasonCoins = 3000 },
-            new League { Name = "Diamante", MinPoints = 4000, MaxPoints = 5999,         SeasonGems = 500,  SeasonCoins = 5000 },
-            new League { Name = "Maestro",  MinPoints = 6000, MaxPoints = 7999,         SeasonGems = 750,  SeasonCoins = 7500 },
-            new League { Name = "Campeón",  MinPoints = 8000, MaxPoints = int.MaxValue, SeasonGems = 1000, SeasonCoins = 10000 },
+            new League { Name = "Bronce",   MinPoints = 0,    MaxPoints = 499,          SeasonGems = 50,   SeasonCoins = 500,   WinMultiplier = 2.0, LossMultiplier = 0.5 },
+            new League { Name = "Plata",    MinPoints = 500,  MaxPoints = 999,          SeasonGems = 100,  SeasonCoins = 1000,  WinMultiplier = 1.6, LossMultiplier = 0.6 },
+            new League { Name = "Oro",      MinPoints = 1000, MaxPoints = 1999,         SeasonGems = 200,  SeasonCoins = 2000,  WinMultiplier = 1.3, LossMultiplier = 0.75 },
+            new League { Name = "Platino",  MinPoints = 2000, MaxPoints = 3999,         SeasonGems = 300,  SeasonCoins = 3000,  WinMultiplier = 1.0, LossMultiplier = 0.9 },
+            new League { Name = "Diamante", MinPoints = 4000, MaxPoints = 5999,         SeasonGems = 500,  SeasonCoins = 5000,  WinMultiplier = 0.8, LossMultiplier = 1.0 },
+            new League { Name = "Maestro",  MinPoints = 6000, MaxPoints = 7999,         SeasonGems = 750,  SeasonCoins = 7500,  WinMultiplier = 0.6, LossMultiplier = 1.0 },
+            new League { Name = "Campeón",  MinPoints = 8000, MaxPoints = int.MaxValue, SeasonGems = 1000, SeasonCoins = 10000, WinMultiplier = 0.5, LossMultiplier = 1.0 },
         };
 
         private static readonly List<RankTier> tiers = BuildTiers();
 
         public static IReadOnlyList<RankTier> All => tiers;
+
+        public static League LeagueForPoints(int points)
+        {
+            return Leagues[ForPoints(points).LeagueIndex];
+        }
 
         public static RankTier ForPoints(int points)
         {
@@ -85,17 +96,20 @@ namespace CrystalClash.Ranked.Logic
             for (int i = 0; i < Leagues.Count; i++)
             {
                 League league = Leagues[i];
-                bool split = league.MaxPoints != int.MaxValue && league.MaxPoints - league.MinPoints + 1 >= 1000;
-
-                if (!split)
+                if (league.MaxPoints == int.MaxValue)
                 {
+                    // Campeón: la cima, sin divisiones.
                     list.Add(new RankTier(league.Name, i, 0, league.MinPoints, league.MaxPoints));
                     continue;
                 }
 
-                int half = league.MinPoints + (league.MaxPoints - league.MinPoints + 1) / 2;
-                list.Add(new RankTier(league.Name, i, 1, league.MinPoints, half - 1));
-                list.Add(new RankTier(league.Name, i, 2, half, league.MaxPoints));
+                int size = (league.MaxPoints - league.MinPoints + 1) / DivisionsPerLeague;
+                for (int d = 0; d < DivisionsPerLeague; d++)
+                {
+                    int min = league.MinPoints + d * size;
+                    int max = d == DivisionsPerLeague - 1 ? league.MaxPoints : min + size - 1;
+                    list.Add(new RankTier(league.Name, i, d + 1, min, max));
+                }
             }
             return list;
         }

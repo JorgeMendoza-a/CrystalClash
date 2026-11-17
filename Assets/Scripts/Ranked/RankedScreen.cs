@@ -28,6 +28,7 @@ public class RankedScreen : MonoBehaviour
     private Image nextEmblem;
     private TMP_Text nextName;
     private TMP_Text recordText;
+    private TMP_Text perMatchText;
     private Button searchButton;
 
     private CancellationTokenSource searchCancel;
@@ -84,6 +85,8 @@ public class RankedScreen : MonoBehaviour
         currentName.color = UiKit.LeagueColor(tier.LeagueIndex);
         pointsText.text = profile.Points.ToString();
         recordText.text = $"Victorias {profile.Wins}  ·  Derrotas {profile.Losses}  ·  Empates {profile.Draws}";
+        RankedRules.TypicalChange(profile.Points, out int win, out int loss);
+        perMatchText.text = $"En {tier.League}: ganar <color=#66FF77>+{win}</color>  ·  perder <color=#FF7070>{loss}</color> (aprox.)";
 
         if (next == null)
         {
@@ -234,12 +237,14 @@ public class RankedScreen : MonoBehaviour
         UiKit.Size(searchButton, height: 170f);
 
         Image info = UiKit.Card(column.transform, "Info");
-        UiKit.Size(info, height: 120f);
-        UiKit.Vertical(info.gameObject, 30, 0f, TextAnchor.MiddleCenter);
-        TMP_Text season = UiKit.Text(info.transform, SeasonText(), 36f, UiKit.Gold);
-        UiKit.Size(season, height: 44f);
-        recordText = UiKit.Text(info.transform, "", 30f, UiKit.Muted);
-        UiKit.Size(recordText, height: 36f);
+        UiKit.Size(info, height: 150f);
+        UiKit.Vertical(info.gameObject, 24, 0f, TextAnchor.MiddleCenter);
+        TMP_Text season = UiKit.Text(info.transform, SeasonText(), 34f, UiKit.Gold);
+        UiKit.Size(season, height: 38f);
+        perMatchText = UiKit.Text(info.transform, "", 30f, Color.white);
+        UiKit.Size(perMatchText, height: 34f);
+        recordText = UiKit.Text(info.transform, "", 28f, UiKit.Muted);
+        UiKit.Size(recordText, height: 32f);
 
         BuildTiersTable(column.transform);
 
@@ -308,11 +313,11 @@ public class RankedScreen : MonoBehaviour
     private void BuildTiersTable(Transform parent)
     {
         Image card = UiKit.Card(parent, "Rangos");
-        const float rowHeight = 70f;
+        const float rowHeight = 66f;
         UiKit.Size(card, height: 64f + 48f + RankTiers.Leagues.Count * (rowHeight + 6f) + 70f);
         UiKit.Vertical(card.gameObject, 34, 6f);
 
-        TMP_Text title = UiKit.Text(card.transform, "RANGOS", 42f, Color.white);
+        TMP_Text title = UiKit.Text(card.transform, "RANGOS  <size=60%>(5 divisiones cada uno)</size>", 42f, Color.white);
         UiKit.Outline(title, 0.18f);
         UiKit.Size(title, height: 58f);
 

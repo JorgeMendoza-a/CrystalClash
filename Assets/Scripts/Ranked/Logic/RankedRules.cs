@@ -36,18 +36,37 @@ namespace CrystalClash.Ranked.Logic
 
         /// <summary>
         /// Puntos de ranking que gana (positivo) o pierde (negativo) un jugador.
-        /// Ganarle a alguien con más puntos da más; perder contra alguien con
-        /// menos quita más. Nunca baja de 0.
+        /// Base Elo: ganarle a alguien con más puntos da más; perder contra
+        /// alguien con menos quita más. Luego se ajusta por liga (ver
+        /// RankTiers.Leagues). Nunca baja de 0.
         /// </summary>
         public static int PointsChange(int myPoints, int opponentPoints, MatchOutcome outcome)
         {
             double expected = 1.0 / (1.0 + Math.Pow(10.0, (opponentPoints - myPoints) / 400.0));
             double actual = outcome == MatchOutcome.Win ? 1.0 : outcome == MatchOutcome.Draw ? 0.5 : 0.0;
-            int delta = (int)Math.Round(K * (actual - expected), MidpointRounding.AwayFromZero);
+            double raw = K * (actual - expected);
 
-            if (outcome == MatchOutcome.Win) delta = Math.Max(delta, MinWinPoints);
+            // Según la liga del jugador: abajo se gana mucho y se pierde poco; arriba, al revés.
+            RankTiers.League league = RankTiers.LeagueForPoints(myPoints);
+            double multiplier = raw >= 0 ? league.WinMultiplier : league.LossMultiplier;
+            int delta = (int)Math.Round(raw * multiplier, MidpointRounding.AwayFromZero);
+
+            if (outcome == MatchOutcome.Win)
+            {
+                int minimum = (int)Math.Round(MinWinPoints * league.WinMultiplier, MidpointRounding.AwayFromZero);
+                delta = Math.Max(delta, Math.Max(1, minimum));
+            }
             if (myPoints + delta < 0) delta = -myPoints;
             return delta;
+        }
+
+        /// <summary>Cuánto se gana y se pierde (aprox.) contra un rival de tus mismos puntos.</summary>
+        public static void TypicalChange(int myPoints, out int win, out int loss)
+        {
+            win = PointsChange(myPoints, myPoints, MatchOutcome.Win);
+            // La pérdida típica sin el tope de 0 (para mostrarla aunque tengas pocos puntos).
+            RankTiers.League league = RankTiers.LeagueForPoints(myPoints);
+            loss = -(int)Math.Round(K * 0.5 * league.LossMultiplier, MidpointRounding.AwayFromZero);
         }
 
         public static MatchOutcome Compare(int myScore, int opponentScore)

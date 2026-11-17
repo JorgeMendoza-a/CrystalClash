@@ -6,21 +6,26 @@ using NUnit.Framework;
 public class RankedLogicTests
 {
     [Test]
-    public void Tiers_MatchTheDesignTable()
+    public void Tiers_HaveFiveDivisionsPerLeague()
     {
-        Assert.AreEqual("Bronce", RankTiers.ForPoints(0).Name);
-        Assert.AreEqual("Bronce", RankTiers.ForPoints(499).Name);
-        Assert.AreEqual("Plata", RankTiers.ForPoints(500).Name);
-        Assert.AreEqual("Oro I", RankTiers.ForPoints(1000).Name);
-        Assert.AreEqual("Oro II", RankTiers.ForPoints(1500).Name);
-        Assert.AreEqual("Platino I", RankTiers.ForPoints(2999).Name);
-        Assert.AreEqual("Platino II", RankTiers.ForPoints(3000).Name);
-        Assert.AreEqual("Diamante I", RankTiers.ForPoints(4000).Name);
-        Assert.AreEqual("Diamante II", RankTiers.ForPoints(5999).Name);
-        Assert.AreEqual("Maestro II", RankTiers.ForPoints(7999).Name);
+        Assert.AreEqual("Bronce 1", RankTiers.ForPoints(0).Name);
+        Assert.AreEqual("Bronce 1", RankTiers.ForPoints(99).Name);
+        Assert.AreEqual("Bronce 2", RankTiers.ForPoints(100).Name);
+        Assert.AreEqual("Bronce 5", RankTiers.ForPoints(499).Name);
+        Assert.AreEqual("Plata 1", RankTiers.ForPoints(500).Name);
+        Assert.AreEqual("Plata 5", RankTiers.ForPoints(999).Name);
+        Assert.AreEqual("Oro 1", RankTiers.ForPoints(1000).Name);
+        Assert.AreEqual("Oro 2", RankTiers.ForPoints(1200).Name);
+        Assert.AreEqual("Platino 1", RankTiers.ForPoints(2000).Name);
+        Assert.AreEqual("Platino 2", RankTiers.ForPoints(2400).Name);
+        Assert.AreEqual("Diamante 5", RankTiers.ForPoints(5999).Name);
+        Assert.AreEqual("Maestro 3", RankTiers.ForPoints(6800).Name);
         Assert.AreEqual("Campeón", RankTiers.ForPoints(8000).Name);
         Assert.AreEqual("Campeón", RankTiers.ForPoints(50000).Name);
-        Assert.AreEqual("Bronce", RankTiers.ForPoints(-10).Name);
+        Assert.AreEqual("Bronce 1", RankTiers.ForPoints(-10).Name);
+
+        // 6 ligas x 5 divisiones + Campeón
+        Assert.AreEqual(31, RankTiers.All.Count);
     }
 
     [Test]
@@ -37,24 +42,46 @@ public class RankedLogicTests
     }
 
     [Test]
-    public void PointsChange_EqualPlayers_IsSymmetric()
+    public void PointsChange_MatchesTheLeagueTable()
     {
-        int win = RankedRules.PointsChange(1000, 1000, MatchOutcome.Win);
-        int loss = RankedRules.PointsChange(1000, 1000, MatchOutcome.Loss);
+        // Contra un rival de tus mismos puntos (base Elo: +20 / -20).
+        Assert.AreEqual(40, RankedRules.PointsChange(200, 200, MatchOutcome.Win));     // Bronce x2
+        Assert.AreEqual(-10, RankedRules.PointsChange(200, 200, MatchOutcome.Loss));   // Bronce x0.5
+        Assert.AreEqual(32, RankedRules.PointsChange(700, 700, MatchOutcome.Win));     // Plata
+        Assert.AreEqual(26, RankedRules.PointsChange(1500, 1500, MatchOutcome.Win));   // Oro
+        Assert.AreEqual(-15, RankedRules.PointsChange(1500, 1500, MatchOutcome.Loss));
+        Assert.AreEqual(20, RankedRules.PointsChange(3000, 3000, MatchOutcome.Win));   // Platino
+        Assert.AreEqual(16, RankedRules.PointsChange(5000, 5000, MatchOutcome.Win));   // Diamante
+        Assert.AreEqual(-20, RankedRules.PointsChange(5000, 5000, MatchOutcome.Loss));
+        Assert.AreEqual(12, RankedRules.PointsChange(7000, 7000, MatchOutcome.Win));   // Maestro
+        Assert.AreEqual(10, RankedRules.PointsChange(9000, 9000, MatchOutcome.Win));   // Campeón
+        Assert.AreEqual(0, RankedRules.PointsChange(3000, 3000, MatchOutcome.Draw));
+    }
 
-        Assert.AreEqual(20, win);
-        Assert.AreEqual(-20, loss);
-        Assert.AreEqual(0, RankedRules.PointsChange(1000, 1000, MatchOutcome.Draw));
+    [Test]
+    public void PointsChange_LowRanksClimbFaster()
+    {
+        int bronze = RankedRules.PointsChange(200, 200, MatchOutcome.Win);
+        int gold = RankedRules.PointsChange(1500, 1500, MatchOutcome.Win);
+        int diamond = RankedRules.PointsChange(5000, 5000, MatchOutcome.Win);
+        Assert.Greater(bronze, gold);
+        Assert.Greater(gold, diamond);
+
+        int bronzeLoss = -RankedRules.PointsChange(200, 200, MatchOutcome.Loss);
+        int diamondLoss = -RankedRules.PointsChange(5000, 5000, MatchOutcome.Loss);
+        Assert.Less(bronzeLoss, diamondLoss);
     }
 
     [Test]
     public void PointsChange_BeatingStrongerPlayer_GivesMore()
     {
-        int vsStronger = RankedRules.PointsChange(1000, 1600, MatchOutcome.Win);
-        int vsWeaker = RankedRules.PointsChange(1600, 1000, MatchOutcome.Win);
+        int vsStronger = RankedRules.PointsChange(2000, 2600, MatchOutcome.Win);
+        int vsEqual = RankedRules.PointsChange(2000, 2000, MatchOutcome.Win);
+        int vsWeaker = RankedRules.PointsChange(2600, 2000, MatchOutcome.Win);
 
-        Assert.Greater(vsStronger, 30);
-        Assert.AreEqual(RankedRules.MinWinPoints, vsWeaker);
+        Assert.Greater(vsStronger, vsEqual);
+        Assert.Greater(vsEqual, vsWeaker);
+        Assert.GreaterOrEqual(vsWeaker, 1);
     }
 
     [Test]
