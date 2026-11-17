@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "CrystalClash.Board.Logic",
+        "CrystalClash.Story.Logic",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

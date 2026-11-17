@@ -309,6 +309,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameUI
   movesText: {fileID: 1783642935}
   scoreText: {fileID: 372263976}
+  objectivesText: {fileID: 323789169}
 --- !u!4 &74267990
 Transform:
   m_ObjectHideFlags: 0

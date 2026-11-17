@@ -288,6 +288,7 @@ namespace CrystalClash.Board.Logic
 
             foreach (GridPos pos in ctx.Step.Cleared)
             {
+                ctx.Step.ClearedTypes.Add(types[pos.X, pos.Y]);
                 types[pos.X, pos.Y] = Empty;
                 specials[pos.X, pos.Y] = SpecialKind.None;
             }

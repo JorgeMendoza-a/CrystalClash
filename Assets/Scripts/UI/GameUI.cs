@@ -1,4 +1,5 @@
 using System.Collections;
+using CrystalClash.Story.Logic;
 using TMPro;
 using UnityEngine;
 
@@ -8,6 +9,9 @@ public class GameUI : MonoBehaviour
 
     public TMP_Text scoreText;
     public TMP_Text movesText;
+
+    [Tooltip("Texto con los objetivos del nivel (\"Zafiro 3/15\"...).")]
+    public TMP_Text objectivesText;
 
     [Tooltip("Opcional: texto para mostrar \"¡Cascada x2!\". Si se deja vacío, no se muestra nada.")]
     public TMP_Text cascadeText;
@@ -44,6 +48,14 @@ public class GameUI : MonoBehaviour
         if (movesText != null)
         {
             movesText.text = "Movimientos: " + moves;
+        }
+    }
+
+    public void UpdateObjectives(LevelSession session)
+    {
+        if (objectivesText != null && session != null)
+        {
+            objectivesText.text = GameManager.DescribeObjectives(session, true);
         }
     }
 

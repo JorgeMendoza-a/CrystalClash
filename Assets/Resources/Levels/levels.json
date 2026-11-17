@@ -1,0 +1,85 @@
+{
+    "levels": [
+        {
+            "name": "La entrada de la mina",
+            "width": 8, "height": 8, "mineralTypes": 5, "seed": 0, "moves": 20,
+            "objectives": [ { "type": "score", "count": 1200 } ],
+            "stars": [1200, 2200, 2800]
+        },
+        {
+            "name": "Brillo azul",
+            "width": 8, "height": 8, "mineralTypes": 5, "seed": 0, "moves": 20,
+            "objectives": [ { "type": "collect", "mineral": "Sapphire", "count": 20 } ],
+            "stars": [1500, 2300, 3300]
+        },
+        {
+            "name": "Veta doble",
+            "width": 8, "height": 8, "mineralTypes": 5, "seed": 0, "moves": 24,
+            "objectives": [
+                { "type": "collect", "mineral": "Emerald", "count": 25 },
+                { "type": "collect", "mineral": "Ruby", "count": 25 }
+            ],
+            "stars": [2400, 3100, 4200]
+        },
+        {
+            "name": "Túnel estrecho",
+            "width": 7, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 22,
+            "objectives": [ { "type": "score", "count": 1400 } ],
+            "stars": [1400, 1850, 2300]
+        },
+        {
+            "name": "Corazón de la mina",
+            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 27,
+            "objectives": [
+                { "type": "collect", "mineral": "Sapphire", "count": 15 },
+                { "type": "collect", "mineral": "Carbon", "count": 20 },
+                { "type": "collect", "mineral": "Gold", "count": 10 }
+            ],
+            "stars": [1700, 2200, 3100]
+        },
+        {
+            "name": "Cueva de amatista",
+            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 23,
+            "objectives": [
+                { "type": "collect", "mineral": "Amethyst", "count": 18 },
+                { "type": "score", "count": 1600 }
+            ],
+            "stars": [1700, 2150, 2700]
+        },
+        {
+            "name": "Fiebre del oro",
+            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 23,
+            "objectives": [
+                { "type": "collect", "mineral": "Ruby", "count": 18 },
+                { "type": "collect", "mineral": "Gold", "count": 18 }
+            ],
+            "stars": [1600, 2100, 2800]
+        },
+        {
+            "name": "Tres tesoros",
+            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 26,
+            "objectives": [
+                { "type": "collect", "mineral": "Sapphire", "count": 20 },
+                { "type": "collect", "mineral": "Emerald", "count": 20 },
+                { "type": "collect", "mineral": "Amethyst", "count": 20 }
+            ],
+            "stars": [2000, 2500, 3400]
+        },
+        {
+            "name": "Derrumbe",
+            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 18,
+            "objectives": [ { "type": "score", "count": 1550 } ],
+            "stars": [1550, 1900, 2400]
+        },
+        {
+            "name": "El gran filón",
+            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 26,
+            "objectives": [
+                { "type": "collect", "mineral": "Carbon", "count": 24 },
+                { "type": "collect", "mineral": "Gold", "count": 24 },
+                { "type": "score", "count": 2200 }
+            ],
+            "stars": [2200, 2800, 3800]
+        }
+    ]
+}

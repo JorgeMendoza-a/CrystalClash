@@ -25,16 +25,17 @@ public class Mineral : MonoBehaviour
     private Vector3 normalScale;
     private Vector3 selectedScale;
 
+    // Mismo orden que el enum MineralType.
     private static readonly Color[] colors =
     {
-        new Color(0.15f, 0.15f, 0.15f), // Carbon
+        new Color(0.15f, 0.45f, 1f),    // Sapphire
+        new Color(0.15f, 0.8f, 0.25f),  // Emerald
+        new Color(0.65f, 0.2f, 0.95f),  // Amethyst
+        new Color(0.9f, 0.1f, 0.15f),   // Ruby
+        new Color(1f, 0.78f, 0.1f),     // Gold
+        new Color(0.4f, 0.4f, 0.45f),   // Carbon
         new Color(0.72f, 0.35f, 0.12f), // Copper
-        new Color(0.75f, 0.75f, 0.75f), // Silver
-        new Color(1f, 0.75f, 0.05f),    // Gold
-        Color.green,                    // Emerald
-        Color.blue,                     // Sapphire
-        Color.red,                      // Ruby
-        new Color(0.7f, 0f, 1f),        // Amethyst
+        new Color(0.85f, 0.85f, 0.85f), // Silver
         Color.cyan                      // Diamond
     };
 

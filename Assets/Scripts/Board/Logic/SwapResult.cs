@@ -76,6 +76,12 @@ namespace CrystalClash.Board.Logic
         public int Level { get; }
 
         public List<GridPos> Cleared { get; } = new List<GridPos>();
+
+        /// <summary>
+        /// Tipo que tenía cada celda de Cleared (mismo índice). Sirve para los
+        /// objetivos del modo historia ("rompe 15 zafiros"). Colorless = Prisma.
+        /// </summary>
+        public List<int> ClearedTypes { get; } = new List<int>();
         public List<SpecialActivation> Activations { get; } = new List<SpecialActivation>();
         public List<SpecialCreation> Created { get; } = new List<SpecialCreation>();
         public List<MineralFall> Falls { get; } = new List<MineralFall>();
