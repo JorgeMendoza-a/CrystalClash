@@ -24,6 +24,13 @@ public class BoardManager : MonoBehaviour
 
     public GameObject mineralPrefab;
 
+    [Header("Cámara")]
+    [Tooltip("Ajusta la cámara para que el tablero entero quepa en pantalla (vertical u horizontal).")]
+    public bool fitCameraToBoard = true;
+
+    [Tooltip("Espacio extra alrededor del tablero, en celdas.")]
+    public float cameraPadding = 0.75f;
+
     [Header("Animaciones (segundos)")]
     public float swapDuration = 0.15f;
     public float clearDuration = 0.15f;
@@ -60,6 +67,22 @@ public class BoardManager : MonoBehaviour
         {
             GameUI.Instance.UpdateScore(Logic.Score);
         }
+
+        FitCamera();
+    }
+
+    void FitCamera()
+    {
+        if (!fitCameraToBoard) return;
+
+        Camera cam = Camera.main;
+        if (cam == null || !cam.orthographic) return;
+
+        float neededHalfHeight = height / 2f + cameraPadding;
+        float neededHalfWidth = width / 2f + cameraPadding;
+
+        cam.orthographicSize = Mathf.Max(neededHalfHeight, neededHalfWidth / cam.aspect);
+        cam.transform.position = new Vector3(0f, 0f, cam.transform.position.z);
     }
 
     // ------------------------------------------------------------------
