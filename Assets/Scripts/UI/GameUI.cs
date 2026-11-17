@@ -7,6 +7,7 @@ public class GameUI : MonoBehaviour
     public static GameUI Instance;
 
     public TMP_Text scoreText;
+    public TMP_Text movesText;
 
     [Tooltip("Opcional: texto para mostrar \"¡Cascada x2!\". Si se deja vacío, no se muestra nada.")]
     public TMP_Text cascadeText;
@@ -35,6 +36,14 @@ public class GameUI : MonoBehaviour
         if (scoreText != null)
         {
             scoreText.text = "Puntos: " + score;
+        }
+    }
+
+    public void UpdateMoves(int moves)
+    {
+        if (movesText != null)
+        {
+            movesText.text = "Movimientos: " + moves;
         }
     }
 

@@ -92,6 +92,7 @@ public class BoardManager : MonoBehaviour
     public void SelectMineral(Mineral mineral)
     {
         if (IsBusy || mineral == null) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsOutOfMoves) return;
 
         if (selectedMineral == null)
         {
@@ -142,6 +143,11 @@ public class BoardManager : MonoBehaviour
             yield return AnimateSwap(first, second);
             IsBusy = false;
             yield break;
+        }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UseMove();
         }
 
         views[a.X, a.Y] = second;
