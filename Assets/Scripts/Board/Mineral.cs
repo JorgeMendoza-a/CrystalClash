@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// Vista de un mineral. Solo muestra el color y avisa al tablero cuando se
+/// hace clic. El tipo lo decide BoardLogic, nunca el propio mineral.
+/// </summary>
 public class Mineral : MonoBehaviour
 {
     public int x;
@@ -7,10 +11,11 @@ public class Mineral : MonoBehaviour
     public MineralType mineralType;
 
     private SpriteRenderer spriteRenderer;
+    private BoardManager board;
     private Vector3 normalScale;
     private Vector3 selectedScale;
 
-    private Color[] colors =
+    private static readonly Color[] colors =
     {
         new Color(0.15f, 0.15f, 0.15f), // Carbon
         new Color(0.72f, 0.35f, 0.12f), // Copper
@@ -19,19 +24,16 @@ public class Mineral : MonoBehaviour
         Color.green,                    // Emerald
         Color.blue,                     // Sapphire
         Color.red,                      // Ruby
-        new Color(0.7f, 0f, 1f),         // Amethyst
+        new Color(0.7f, 0f, 1f),        // Amethyst
         Color.cyan                      // Diamond
     };
 
-    void Start()
+    void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-
+        board = GetComponentInParent<BoardManager>();
         normalScale = transform.localScale;
         selectedScale = normalScale * 1.2f;
-
-       int randomIndex = Random.Range(0, colors.Length);
-SetMineralType((MineralType)randomIndex);
     }
 
     public void SetPosition(int newX, int newY)
@@ -42,7 +44,11 @@ SetMineralType((MineralType)randomIndex);
 
     private void OnMouseDown()
     {
-        BoardManager board = FindFirstObjectByType<BoardManager>();
+        if (board == null)
+        {
+            board = FindFirstObjectByType<BoardManager>();
+        }
+
         board.SelectMineral(this);
     }
 
@@ -57,14 +63,14 @@ SetMineralType((MineralType)randomIndex);
     }
 
     public void SetMineralType(MineralType newType)
-{
-    mineralType = newType;
-
-    if (spriteRenderer == null)
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-    }
+        mineralType = newType;
 
-    spriteRenderer.color = colors[(int)mineralType];
-}
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+
+        spriteRenderer.color = colors[(int)mineralType];
+    }
 }

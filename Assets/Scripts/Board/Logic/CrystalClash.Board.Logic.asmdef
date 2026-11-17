@@ -1,0 +1,14 @@
+{
+    "name": "CrystalClash.Board.Logic",
+    "rootNamespace": "CrystalClash.Board.Logic",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
