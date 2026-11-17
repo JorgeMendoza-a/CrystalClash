@@ -222,6 +222,65 @@ namespace CrystalClash.Board.Logic
             return result;
         }
 
+        /// <summary>
+        /// Usa un potenciador en una celda (Mezclar ignora la celda). No cuenta
+        /// como movimiento. Devuelve el resultado igual que TrySwap (A = B = celda),
+        /// así la vista lo anima con el mismo código. IsValid es false si la
+        /// celda no es válida.
+        /// </summary>
+        public SwapResult UseBooster(BoosterKind kind, GridPos target)
+        {
+            var result = new SwapResult(target, target);
+
+            if (kind == BoosterKind.Shuffle)
+            {
+                Shuffle();
+                result.IsValid = true;
+                result.WasShuffled = true;
+                return result;
+            }
+
+            if (!IsInside(target) || types[target.X, target.Y] == Empty) return result;
+
+            result.IsValid = true;
+
+            var ctx = new StepContext(new CascadeStep(1), Width, Height);
+            switch (kind)
+            {
+                case BoosterKind.Hammer:
+                    Mark(ctx, target);
+                    break;
+
+                case BoosterKind.Bomb:
+                    MarkArea(ctx, target, 1);
+                    break;
+
+                case BoosterKind.Lightning:
+                    MarkRow(ctx, target.Y);
+                    MarkColumn(ctx, target.X);
+                    break;
+            }
+            FinishStep(ctx, new List<SpecialCreation>());
+            AddStep(result, ctx.Step);
+
+            int level = 1;
+            List<Run> runs = FindRuns();
+            while (runs.Count > 0)
+            {
+                level++;
+                AddStep(result, ExecuteMatchStep(level, runs, null, null));
+                runs = FindRuns();
+            }
+
+            if (!HasAvailableMoves())
+            {
+                Shuffle();
+                result.WasShuffled = true;
+            }
+
+            return result;
+        }
+
         // ------------------------------------------------------------------
         // Resolución de una ola
         // ------------------------------------------------------------------

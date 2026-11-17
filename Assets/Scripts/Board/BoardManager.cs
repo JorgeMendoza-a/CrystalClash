@@ -163,6 +163,17 @@ public class BoardManager : MonoBehaviour
         if (GameManager.Instance != null && !GameManager.Instance.CanPlay) return;
         if (StoryPopup.IsOpen) return;
 
+        // Si hay un potenciador elegido (Martillo, Bomba, Rayo), este clic lo usa.
+        if (GameManager.Instance != null && GameManager.Instance.TryConsumePendingBooster(new GridPos(mineral.x, mineral.y)))
+        {
+            if (selectedMineral != null)
+            {
+                selectedMineral.Deselect();
+                selectedMineral = null;
+            }
+            return;
+        }
+
         if (selectedMineral == null)
         {
             selectedMineral = mineral;
@@ -224,6 +235,60 @@ public class BoardManager : MonoBehaviour
         first.SetPosition(b.X, b.Y);
         second.SetPosition(a.X, a.Y);
 
+        yield return AnimateSteps(result);
+
+        IsBusy = false;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnMoveFinished();
+        }
+    }
+
+    /// <summary>Usa un potenciador y lo anima. Devuelve false si no se pudo (tablero ocupado).</summary>
+    public bool PlayBooster(BoosterKind kind, GridPos target)
+    {
+        if (IsBusy || Logic == null) return false;
+
+        if (selectedMineral != null)
+        {
+            selectedMineral.Deselect();
+            selectedMineral = null;
+        }
+
+        StartCoroutine(BoosterRoutine(kind, target));
+        return true;
+    }
+
+    IEnumerator BoosterRoutine(BoosterKind kind, GridPos target)
+    {
+        IsBusy = true;
+
+        SwapResult result = Logic.UseBooster(kind, target);
+        if (!result.IsValid)
+        {
+            IsBusy = false;
+            yield break;
+        }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterBooster(kind, result);
+        }
+
+        yield return AnimateSteps(result);
+
+        IsBusy = false;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnMoveFinished();
+        }
+    }
+
+    /// <summary>Anima las olas de una jugada o potenciador (romper, crear especiales, caer) y la reorganización.</summary>
+    IEnumerator AnimateSteps(SwapResult result)
+    {
         foreach (CascadeStep step in result.Steps)
         {
             if (step.Level > 1 && GameUI.Instance != null)
@@ -239,16 +304,37 @@ public class BoardManager : MonoBehaviour
 
         if (result.WasShuffled)
         {
-            Debug.Log("No había movimientos. Tablero reorganizado.");
-            SyncAllTypesFromLogic();
+            yield return AnimateShuffle();
         }
+    }
 
-        IsBusy = false;
-
-        if (GameManager.Instance != null)
+    IEnumerator AnimateShuffle()
+    {
+        // Se encogen, cambian y vuelven a crecer.
+        float half = 0.12f;
+        var scales = new Dictionary<Mineral, Vector3>();
+        foreach (Mineral mineral in views)
         {
-            GameManager.Instance.OnMoveFinished();
+            if (mineral != null) scales[mineral] = mineral.transform.localScale;
         }
+
+        for (float t = 0f; t < half; t += Time.deltaTime)
+        {
+            float k = 1f - t / half;
+            foreach (var pair in scales) pair.Key.transform.localScale = pair.Value * k;
+            yield return null;
+        }
+
+        SyncAllTypesFromLogic();
+
+        for (float t = 0f; t < half; t += Time.deltaTime)
+        {
+            float k = t / half;
+            foreach (var pair in scales) pair.Key.transform.localScale = pair.Value * k;
+            yield return null;
+        }
+
+        foreach (var pair in scales) pair.Key.transform.localScale = pair.Value;
     }
 
     IEnumerator AnimateSwap(Mineral first, Mineral second)

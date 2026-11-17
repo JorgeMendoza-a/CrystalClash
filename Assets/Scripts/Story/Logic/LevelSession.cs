@@ -65,9 +65,20 @@ namespace CrystalClash.Story.Logic
         /// <summary>Aplica el resultado de una jugada. Las jugadas inválidas no gastan movimiento.</summary>
         public void ApplyMove(SwapResult result)
         {
+            Apply(result, spendMove: true);
+        }
+
+        /// <summary>Aplica el resultado de un potenciador: suma puntos y objetivos, pero no gasta movimiento.</summary>
+        public void ApplyBooster(SwapResult result)
+        {
+            Apply(result, spendMove: false);
+        }
+
+        private void Apply(SwapResult result, bool spendMove)
+        {
             if (result == null || !result.IsValid || !CanPlay) return;
 
-            MovesLeft--;
+            if (spendMove) MovesLeft--;
             Score += result.PointsGained;
 
             foreach (CascadeStep step in result.Steps)

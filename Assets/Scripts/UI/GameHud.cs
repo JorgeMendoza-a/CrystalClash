@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CrystalClash.Board.Logic;
 using CrystalClash.Story.Logic;
 using TMPro;
 using UnityEngine;
@@ -6,7 +7,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Panel superior de la partida, construido por código:
-/// [ MOVIMIENTOS ]  [ OBJETIVOS (ícono + 7/20) ]  [ PUNTUACIÓN + 3 estrellas ]
+/// arriba:  [ MOVIMIENTOS ]  [ OBJETIVOS (ícono + cuántos faltan) ]  [ PUNTUACIÓN + 3 estrellas ]
+/// abajo:   [ 🔨 ] [ 💣 ] [ ⚡ ] [ 🔄 ]  potenciadores con su cantidad
 /// Usa el marco del tablero (Resources/Board/board_frame.png) como fondo de las
 /// tarjetas, los PNG de los minerales como íconos y Resources/UI/star_*.png.
 /// </summary>
@@ -27,6 +29,25 @@ public class GameHud : MonoBehaviour
     private TMP_Text scoreValue;
     private readonly List<Image> stars = new List<Image>();
     private readonly List<TMP_Text> objectiveCounts = new List<TMP_Text>();
+
+    private const float BoosterBarBottom = 40f;
+    private const float BoosterButtonSize = 190f;
+
+    private static readonly Color SelectedColor = new Color(1f, 0.85f, 0.35f);
+    private static readonly Color DisabledColor = new Color(1f, 1f, 1f, 0.35f);
+
+    private class BoosterButton
+    {
+        public BoosterKind Kind;
+        public Button Button;
+        public Image Background;
+        public Image Icon;
+        public TMP_Text Count;
+    }
+
+    private readonly List<BoosterButton> boosterButtons = new List<BoosterButton>();
+    private TMP_Text boosterHint;
+    private BoosterKind? pendingBooster;
 
     private Sprite cardSprite;
     private Sprite starFull;
@@ -107,9 +128,130 @@ public class GameHud : MonoBehaviour
         }
     }
 
+    /// <summary>Resalta el potenciador armado y muestra la ayuda (null = ninguno).</summary>
+    public void SetPendingBooster(BoosterKind? kind)
+    {
+        pendingBooster = kind;
+        RefreshBoosters();
+
+        if (boosterHint == null) return;
+        boosterHint.gameObject.SetActive(kind != null);
+        if (kind != null)
+        {
+            boosterHint.text = $"Toca un mineral para usar el <b>{GameManager.BoosterName(kind.Value)}</b>\n<size=75%>(toca el botón otra vez para cancelar)</size>";
+        }
+    }
+
+    /// <summary>Actualiza cantidades y estado de los botones de potenciadores.</summary>
+    public void RefreshBoosters()
+    {
+        foreach (BoosterButton b in boosterButtons)
+        {
+            int count = SaveManager.Progress.GetBoosters(b.Kind);
+            bool selected = pendingBooster == b.Kind;
+
+            b.Count.text = count.ToString();
+            b.Button.interactable = count > 0;
+            b.Icon.color = count > 0 ? Color.white : DisabledColor;
+            b.Background.color = selected ? SelectedColor : Color.white;
+            b.Button.transform.localScale = selected ? Vector3.one * 1.08f : Vector3.one;
+        }
+    }
+
     // ------------------------------------------------------------------
     // Construcción
     // ------------------------------------------------------------------
+
+    private void BuildBoosterBar()
+    {
+        var barGO = new GameObject("Potenciadores", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        barGO.transform.SetParent(transform, false);
+        var bar = (RectTransform)barGO.transform;
+        bar.anchorMin = new Vector2(0f, 0f);
+        bar.anchorMax = new Vector2(1f, 0f);
+        bar.pivot = new Vector2(0.5f, 0f);
+        bar.anchoredPosition = new Vector2(0f, BoosterBarBottom);
+        bar.sizeDelta = new Vector2(-60f, BoosterButtonSize);
+
+        var layout = barGO.GetComponent<HorizontalLayoutGroup>();
+        layout.spacing = 24f;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        Sprite badge = LoadSprite("UI/badge");
+        string[] icons = { "UI/booster_hammer", "UI/booster_bomb", "UI/booster_lightning", "UI/booster_shuffle" };
+
+        for (int i = 0; i < icons.Length; i++)
+        {
+            var kind = (BoosterKind)i;
+            boosterButtons.Add(CreateBoosterButton(barGO.transform, kind, LoadSprite(icons[i]), badge));
+        }
+
+        // Texto de ayuda encima de la barra, visible solo con un potenciador armado.
+        boosterHint = CreateText(transform, "", 40f, Color.white, FontStyles.Normal, 110f);
+        var hintRect = boosterHint.rectTransform;
+        hintRect.anchorMin = new Vector2(0f, 0f);
+        hintRect.anchorMax = new Vector2(1f, 0f);
+        hintRect.pivot = new Vector2(0.5f, 0f);
+        hintRect.anchoredPosition = new Vector2(0f, BoosterBarBottom + BoosterButtonSize + 20f);
+        hintRect.sizeDelta = new Vector2(-80f, 110f);
+        boosterHint.gameObject.SetActive(false);
+
+        RefreshBoosters();
+    }
+
+    private BoosterButton CreateBoosterButton(Transform parent, BoosterKind kind, Sprite icon, Sprite badge)
+    {
+        var go = new GameObject("Boton " + kind, typeof(RectTransform), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        ((RectTransform)go.transform).sizeDelta = new Vector2(BoosterButtonSize, BoosterButtonSize);
+
+        var background = go.GetComponent<Image>();
+        if (cardSprite != null)
+        {
+            background.sprite = cardSprite;
+            background.type = Image.Type.Sliced;
+        }
+        else
+        {
+            background.color = new Color(0.08f, 0.12f, 0.2f, 0.95f);
+        }
+
+        var button = go.GetComponent<Button>();
+        button.targetGraphic = background;
+        button.onClick.AddListener(() =>
+        {
+            if (GameManager.Instance != null) GameManager.Instance.OnBoosterButton(kind);
+        });
+
+        Image iconImage = CreateIcon(go.transform, icon, 0f);
+        var iconRect = (RectTransform)iconImage.transform;
+        iconRect.anchorMin = Vector2.zero;
+        iconRect.anchorMax = Vector2.one;
+        iconRect.offsetMin = new Vector2(30f, 30f);
+        iconRect.offsetMax = new Vector2(-30f, -30f);
+
+        Image badgeImage = CreateIcon(go.transform, badge, 0f);
+        var badgeRect = (RectTransform)badgeImage.transform;
+        badgeRect.anchorMin = badgeRect.anchorMax = new Vector2(1f, 0f);
+        badgeRect.pivot = new Vector2(0.5f, 0.5f);
+        badgeRect.anchoredPosition = new Vector2(-28f, 28f);
+        badgeRect.sizeDelta = new Vector2(76f, 76f);
+        badgeImage.enabled = true;
+        if (badge == null) badgeImage.color = new Color(0.15f, 0.6f, 0.25f);
+
+        TMP_Text count = CreateText(badgeImage.transform, "0", 40f, Color.white, FontStyles.Bold, 0f);
+        var countRect = count.rectTransform;
+        countRect.anchorMin = Vector2.zero;
+        countRect.anchorMax = Vector2.one;
+        countRect.offsetMin = Vector2.zero;
+        countRect.offsetMax = Vector2.zero;
+
+        return new BoosterButton { Kind = kind, Button = button, Background = background, Icon = iconImage, Count = count };
+    }
 
     private void Build(LevelSession current)
     {
@@ -138,6 +280,7 @@ public class GameHud : MonoBehaviour
         BuildMovesCard(row);
         BuildObjectivesCard(row, current);
         BuildScoreCard(row);
+        BuildBoosterBar();
 
         SetMoves(current.MovesLeft);
         SetObjectives(current);

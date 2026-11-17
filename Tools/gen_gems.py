@@ -345,7 +345,74 @@ def star_icon(path, filled):
     finish(img, path)
 
 
+def hammer_icon(path):
+    img, d = new()
+    # mango de madera en diagonal
+    d.line([(C - 150, C + 170), (C + 60, C - 40)], fill=(90, 50, 20, 255), width=58)
+    d.line([(C - 150, C + 170), (C + 60, C - 40)], fill=(170, 105, 50, 255), width=40)
+    # cabeza de metal (rotada 45°)
+    head = [(C - 10, C - 190), (C + 190, C + 10), (C + 120, C + 80), (C - 80, C - 120)]
+    head = [(x + 10, y - 20) for x, y in head]
+    d.polygon(head, fill=(120, 130, 150, 255), outline=(40, 45, 55, 255), width=10)
+    d.polygon([head[0], head[1], ((head[1][0] + head[2][0]) / 2, (head[1][1] + head[2][1]) / 2),
+               ((head[0][0] + head[3][0]) / 2, (head[0][1] + head[3][1]) / 2)], fill=(185, 195, 215, 255))
+    highlight(img, C + 30, C - 120, 40, 18)
+    finish(img, path)
+
+
+def bomb_icon(path):
+    img, d = new()
+    d.ellipse([C - 170, C - 120, C + 150, C + 200], fill=(30, 30, 36, 255), outline=(10, 10, 12, 255), width=10)
+    d.rectangle([C + 40, C - 150, C + 110, C - 90], fill=(90, 90, 100, 255))
+    d.line([(C + 75, C - 150), (C + 120, C - 205), (C + 170, C - 190)], fill=(200, 160, 90, 255), width=14)
+    highlight(img, C - 70, C - 30, 55, 35, alpha=120)
+    sparkle(img, C + 175, C - 195, 60)
+    finish(img, path)
+
+
+def lightning_icon(path):
+    img, d = new()
+    bolt = [(C + 40, C - 230), (C - 130, C + 30), (C - 10, C + 30), (C - 60, C + 230), (C + 140, C - 50),
+            (C + 15, C - 50), (C + 80, C - 230)]
+    glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(glow).polygon(bolt, fill=(255, 220, 60, 160))
+    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(18)))
+    d.polygon(bolt, fill=(255, 210, 40, 255), outline=(150, 90, 0, 255), width=10)
+    d.polygon([bolt[0], bolt[1], bolt[2], (C + 10, C - 40)], fill=(255, 240, 150, 255))
+    finish(img, path)
+
+
+def shuffle_icon(path):
+    img, d = new()
+    r = 165
+    box = [C - r, C - r, C + r, C + r]
+    for start, end, col, tip_ang in [(200, 340, (60, 200, 90), 340), (20, 160, (240, 120, 40), 160)]:
+        d.arc(box, start, end, fill=col + (255,), width=52)
+        a = math.radians(tip_ang)
+        tx, ty = C + math.cos(a) * r, C + math.sin(a) * r
+        # punta de flecha tangente al arco
+        t = a + math.pi / 2
+        p1 = (tx + math.cos(t) * 70, ty + math.sin(t) * 70)
+        p2 = (tx + math.cos(a) * 60, ty + math.sin(a) * 60)
+        p3 = (tx - math.cos(a) * 60, ty - math.sin(a) * 60)
+        d.polygon([p1, p2, p3], fill=col + (255,))
+    finish(img, path)
+
+
+def badge_icon(path):
+    img, d = new()
+    d.ellipse([40, 40, S - 40, S - 40], fill=(20, 110, 40, 255), outline=(230, 190, 80, 255), width=28)
+    d.ellipse([80, 80, S - 80, S - 80], fill=(40, 160, 60, 255))
+    highlight(img, C - 60, C - 90, 90, 40, alpha=90)
+    finish(img, path)
+
+
 if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui":
     out = sys.argv[2]
     star_icon(f"{out}/star_full.png", True)
     star_icon(f"{out}/star_empty.png", False)
+    hammer_icon(f"{out}/booster_hammer.png")
+    bomb_icon(f"{out}/booster_bomb.png")
+    lightning_icon(f"{out}/booster_lightning.png")
+    shuffle_icon(f"{out}/booster_shuffle.png")
+    badge_icon(f"{out}/badge.png")

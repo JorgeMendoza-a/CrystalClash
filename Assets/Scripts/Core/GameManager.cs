@@ -27,6 +27,11 @@ public class GameManager : MonoBehaviour
 
     public LevelSession Session { get; private set; }
 
+    /// <summary>Potenciador elegido que espera a que el jugador toque un mineral (null = ninguno).</summary>
+    public BoosterKind? PendingBooster { get; private set; }
+
+    private BoardManager board;
+
     public int CurrentMoves => Session != null ? Session.MovesLeft : 0;
     public bool IsOutOfMoves => CurrentMoves <= 0;
 
@@ -80,10 +85,73 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // ------------------------------------------------------------------
+    // Potenciadores
+    // ------------------------------------------------------------------
+
+    public static string BoosterName(BoosterKind kind)
+    {
+        switch (kind)
+        {
+            case BoosterKind.Hammer: return "Martillo";
+            case BoosterKind.Bomb: return "Bomba";
+            case BoosterKind.Lightning: return "Rayo";
+            default: return "Mezclar";
+        }
+    }
+
+    /// <summary>
+    /// Botón de un potenciador. Mezclar se usa al instante; los demás quedan
+    /// "armados" hasta que el jugador toque un mineral. Tocar de nuevo cancela.
+    /// </summary>
+    public void OnBoosterButton(BoosterKind kind)
+    {
+        if (!CanPlay || board == null || board.IsBusy) return;
+        if (SaveManager.Progress.GetBoosters(kind) <= 0) return;
+
+        if (kind == BoosterKind.Shuffle)
+        {
+            SetPendingBooster(null);
+            board.PlayBooster(kind, default(GridPos));
+            return;
+        }
+
+        SetPendingBooster(PendingBooster == kind ? (BoosterKind?)null : kind);
+    }
+
+    /// <summary>Lo llama BoardManager al tocar un mineral. True si había un potenciador armado y se usó.</summary>
+    public bool TryConsumePendingBooster(GridPos target)
+    {
+        if (PendingBooster == null || board == null) return false;
+
+        BoosterKind kind = PendingBooster.Value;
+        SetPendingBooster(null);
+        board.PlayBooster(kind, target);
+        return true;
+    }
+
+    /// <summary>Justo después de usar un potenciador válido (antes de animarlo).</summary>
+    public void RegisterBooster(BoosterKind kind, SwapResult result)
+    {
+        SaveManager.Progress.TryUseBooster(kind);
+        SaveManager.Save();
+        Session.ApplyBooster(result);
+
+        if (GameHud.Instance != null) GameHud.Instance.RefreshBoosters();
+    }
+
+    private void SetPendingBooster(BoosterKind? kind)
+    {
+        PendingBooster = kind;
+        if (GameHud.Instance != null) GameHud.Instance.SetPendingBooster(kind);
+    }
+
     /// <summary>Cuando termina de animarse la jugada (y sus cascadas).</summary>
     public void OnMoveFinished()
     {
         RefreshUI();
+
+        if (Session.State != SessionState.Playing) SetPendingBooster(null);
 
         if (Session.State == SessionState.Won)
         {
@@ -170,7 +238,7 @@ public class GameManager : MonoBehaviour
 
     private void ConfigureBoard(LevelDefinition level)
     {
-        BoardManager board = FindFirstObjectByType<BoardManager>();
+        board = FindFirstObjectByType<BoardManager>();
         if (board == null)
         {
             Debug.LogError("GameManager: no hay BoardManager en la escena.");
@@ -210,9 +278,19 @@ public class GameManager : MonoBehaviour
     private void OnWin()
     {
         int levelNumber = Session.Level.Number;
+        string reward = "";
         if (levelNumber > 0)
         {
+            bool firstWin = SaveManager.Progress.GetStars(levelNumber) == 0;
             SaveManager.Progress.RecordWin(levelNumber, Session.Stars, LevelCatalog.Count);
+
+            if (firstWin)
+            {
+                BoosterKind prize = PlayerProgress.FirstWinReward(levelNumber);
+                SaveManager.Progress.AddBooster(prize, 1);
+                reward = $"\n\n<color=#66FF77>¡Premio: +1 {BoosterName(prize)}!</color>";
+            }
+
             SaveManager.Save();
         }
 
@@ -227,7 +305,7 @@ public class GameManager : MonoBehaviour
             $"Estrellas: <color=#FFD040><b>{Session.Stars}/3</b></color>\n\n" +
             $"Puntos: {Session.Score}\n" +
             $"Bonus por {Session.MovesLeft} movimientos: +{Session.MoveBonus}\n" +
-            $"<b>Total: {Session.FinalScore}</b>",
+            $"<b>Total: {Session.FinalScore}</b>" + reward,
             new StoryPopup.PopupButton(isLast ? "Ver niveles" : "Siguiente nivel", NextLevel),
             new StoryPopup.PopupButton("Repetir", RetryLevel));
     }
