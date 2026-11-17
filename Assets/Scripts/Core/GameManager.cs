@@ -91,9 +91,7 @@ public class GameManager : MonoBehaviour
         {
             int seconds = progress.SecondsToNextLife(now);
             StoryPopup.Show("Sin vidas",
-                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>
-
-También puedes llenarlas en la tienda.",
+                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>\n\nTambién puedes llenarlas en la tienda.",
                 new StoryPopup.PopupButton("Tienda", () => MenuScreens.Show(MenuScreens.Screen.Shop)),
                 new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
             return;
