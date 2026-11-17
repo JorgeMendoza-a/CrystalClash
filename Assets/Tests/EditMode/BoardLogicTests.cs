@@ -107,8 +107,7 @@ public class BoardLogicTests
         foreach (CascadeStep step in result.Steps)
         {
             Assert.GreaterOrEqual(step.Cleared.Count, 3);
-            Assert.AreEqual(step.Cleared.Count, step.Spawns.Count);
-            Assert.AreEqual(step.Cleared.Count * BoardLogic.PointsPerMineral, step.Points);
+            Assert.AreEqual(step.Cleared.Count - step.Created.Count, step.Spawns.Count);
         }
     }
 
@@ -120,7 +119,7 @@ public class BoardLogicTests
         var player = new BoardLogic(Size, Size, Types, 2024);
         var moves = new List<(GridPos, GridPos)>();
 
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 100; i++)
         {
             Assert.IsTrue(player.TryFindMove(out GridPos a, out GridPos b));
             Assert.IsTrue(player.TrySwap(a, b).IsValid);
@@ -152,6 +151,204 @@ public class BoardLogicTests
         }
     }
 
+    // ------------------------------------------------------------------
+    // Especiales y combos
+    // ------------------------------------------------------------------
+
+    // Tableros de prueba 6x6: fondo sin líneas con (x + 2y) % 5 (tipos 0..4)
+    // y el tipo 5 se usa para dibujar el escenario de cada test.
+    private const int LayoutSize = 6;
+    private const int LayoutTypes = 6;
+    private const int C = 5;
+
+    private static int[,] BackgroundTypes()
+    {
+        var types = new int[LayoutSize, LayoutSize];
+        for (int x = 0; x < LayoutSize; x++)
+        {
+            for (int y = 0; y < LayoutSize; y++) types[x, y] = (x + 2 * y) % 5;
+        }
+        return types;
+    }
+
+    [Test]
+    public void FourInLine_CreatesDrill_WhereThePlayerDropped()
+    {
+        int[,] types = BackgroundTypes();
+        types[0, 0] = C; types[1, 0] = C; types[3, 0] = C;
+        types[2, 1] = C;
+        var board = BoardLogic.FromLayout(types, null, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 1), new GridPos(2, 0));
+
+        Assert.IsTrue(result.IsValid);
+        CascadeStep first = result.Steps[0];
+        Assert.AreEqual(1, first.Created.Count);
+        Assert.AreEqual(SpecialKind.LineH, first.Created[0].Kind);
+        Assert.AreEqual(new GridPos(2, 0), first.Created[0].Position);
+        Assert.AreEqual(C, first.Created[0].Type);
+    }
+
+    [Test]
+    public void FiveInLine_CreatesPrism()
+    {
+        int[,] types = BackgroundTypes();
+        types[0, 0] = C; types[1, 0] = C; types[3, 0] = C; types[4, 0] = C;
+        types[2, 1] = C;
+        var board = BoardLogic.FromLayout(types, null, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 1), new GridPos(2, 0));
+
+        CascadeStep first = result.Steps[0];
+        Assert.AreEqual(1, first.Created.Count);
+        Assert.AreEqual(SpecialKind.Prism, first.Created[0].Kind);
+        Assert.AreEqual(BoardLogic.Colorless, first.Created[0].Type);
+    }
+
+    [Test]
+    public void LShape_CreatesBomb()
+    {
+        int[,] types = BackgroundTypes();
+        types[0, 0] = C; types[1, 0] = C;
+        types[2, 1] = C; types[2, 2] = C;
+        types[3, 0] = C;
+        var board = BoardLogic.FromLayout(types, null, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(3, 0), new GridPos(2, 0));
+
+        CascadeStep first = result.Steps[0];
+        Assert.AreEqual(1, first.Created.Count);
+        Assert.AreEqual(SpecialKind.Bomb, first.Created[0].Kind);
+        Assert.AreEqual(new GridPos(2, 0), first.Created[0].Position);
+        Assert.AreEqual(5, first.Cleared.Count);
+    }
+
+    [Test]
+    public void Drill_InMatch_ClearsWholeRow()
+    {
+        int[,] types = BackgroundTypes();
+        types[0, 0] = C; types[1, 0] = C;
+        types[2, 1] = C;
+        var specials = new SpecialKind[LayoutSize, LayoutSize];
+        specials[2, 1] = SpecialKind.LineH;
+        var board = BoardLogic.FromLayout(types, specials, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 1), new GridPos(2, 0));
+
+        CascadeStep first = result.Steps[0];
+        Assert.AreEqual(LayoutSize, first.Cleared.Count);
+        Assert.AreEqual(1, first.Activations.Count);
+        Assert.AreEqual(SpecialKind.LineH, first.Activations[0].Kind);
+        foreach (GridPos pos in first.Cleared) Assert.AreEqual(0, pos.Y);
+    }
+
+    [Test]
+    public void Prism_SwappedWithMineral_ClearsThatColor()
+    {
+        int[,] types = BackgroundTypes();
+        var specials = new SpecialKind[LayoutSize, LayoutSize];
+        specials[0, 0] = SpecialKind.Prism;
+        var board = BoardLogic.FromLayout(types, specials, LayoutTypes, 1);
+
+        int color = board.GetMineral(1, 0);
+        int count = 0;
+        for (int x = 0; x < LayoutSize; x++)
+        {
+            for (int y = 0; y < LayoutSize; y++)
+            {
+                if (board.GetMineral(x, y) == color) count++;
+            }
+        }
+
+        // No hace falta que forme línea: el Prisma siempre es un movimiento válido.
+        SwapResult result = board.TrySwap(new GridPos(0, 0), new GridPos(1, 0));
+
+        Assert.IsTrue(result.IsValid);
+        Assert.IsTrue(result.WasSpecialCombo);
+        Assert.AreEqual(count + 1, result.Steps[0].Cleared.Count);
+    }
+
+    [Test]
+    public void BombPlusBomb_Clears5x5_WithoutNeedingAMatch()
+    {
+        int[,] types = BackgroundTypes();
+        var specials = new SpecialKind[LayoutSize, LayoutSize];
+        specials[2, 2] = SpecialKind.Bomb;
+        specials[3, 2] = SpecialKind.Bomb;
+        var board = BoardLogic.FromLayout(types, specials, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 2), new GridPos(3, 2));
+
+        Assert.IsTrue(result.IsValid);
+        Assert.AreEqual(25, result.Steps[0].Cleared.Count);
+    }
+
+    [Test]
+    public void DrillPlusDrill_ClearsCross()
+    {
+        int[,] types = BackgroundTypes();
+        var specials = new SpecialKind[LayoutSize, LayoutSize];
+        specials[2, 2] = SpecialKind.LineH;
+        specials[3, 2] = SpecialKind.LineV;
+        var board = BoardLogic.FromLayout(types, specials, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 2), new GridPos(3, 2));
+
+        Assert.IsTrue(result.IsValid);
+        // Fila 2 completa + columna 3 completa (la celda del cruce cuenta una vez).
+        Assert.AreEqual(LayoutSize * 2 - 1, result.Steps[0].Cleared.Count);
+    }
+
+    [Test]
+    public void PrismPlusPrism_ClearsWholeBoard()
+    {
+        int[,] types = BackgroundTypes();
+        var specials = new SpecialKind[LayoutSize, LayoutSize];
+        specials[2, 2] = SpecialKind.Prism;
+        specials[2, 3] = SpecialKind.Prism;
+        var board = BoardLogic.FromLayout(types, specials, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 2), new GridPos(2, 3));
+
+        Assert.AreEqual(LayoutSize * LayoutSize, result.Steps[0].Cleared.Count);
+    }
+
+    [Test]
+    public void NormalMineralNextToDrill_WithoutMatch_IsInvalid()
+    {
+        int[,] types = BackgroundTypes();
+        var specials = new SpecialKind[LayoutSize, LayoutSize];
+        specials[2, 2] = SpecialKind.LineH;
+        var board = BoardLogic.FromLayout(types, specials, LayoutTypes, 1);
+
+        SwapResult result = board.TrySwap(new GridPos(2, 2), new GridPos(3, 2));
+
+        Assert.IsFalse(result.IsValid);
+        Assert.AreEqual(SpecialKind.LineH, board.GetSpecial(2, 2));
+    }
+
+    [Test]
+    public void CascadePoints_AreMultipliedByLevel([Values(1, 2, 3, 42, 999)] int seed)
+    {
+        var board = new BoardLogic(Size, Size, Types, seed);
+
+        for (int i = 0; i < 40; i++)
+        {
+            Assert.IsTrue(board.TryFindMove(out GridPos a, out GridPos b));
+            SwapResult result = board.TrySwap(a, b);
+
+            int total = 0;
+            for (int s = 0; s < result.Steps.Count; s++)
+            {
+                CascadeStep step = result.Steps[s];
+                Assert.AreEqual(s + 1, step.Level);
+                Assert.AreEqual(step.Cleared.Count * BoardLogic.PointsPerMineral * step.Level, step.Points);
+                total += step.Points;
+            }
+            Assert.AreEqual(total, result.PointsGained);
+        }
+    }
+
     private static void AssertBoardIsFullAndInRange(BoardLogic board)
     {
         for (int x = 0; x < board.Width; x++)
@@ -159,6 +356,11 @@ public class BoardLogicTests
             for (int y = 0; y < board.Height; y++)
             {
                 int type = board.GetMineral(x, y);
+                if (board.GetSpecial(x, y) == SpecialKind.Prism)
+                {
+                    Assert.AreEqual(BoardLogic.Colorless, type);
+                    continue;
+                }
                 Assert.GreaterOrEqual(type, 0);
                 Assert.Less(type, board.MineralTypeCount);
             }
@@ -167,14 +369,15 @@ public class BoardLogicTests
 
     private static string Snapshot(BoardLogic board)
     {
-        var chars = new char[board.Width * board.Height];
+        var chars = new char[board.Width * board.Height * 2];
         int i = 0;
         for (int y = 0; y < board.Height; y++)
         {
             for (int x = 0; x < board.Width; x++)
             {
                 int type = board.GetMineral(x, y);
-                chars[i++] = type == BoardLogic.Empty ? '.' : (char)('0' + type);
+                chars[i++] = type < 0 ? '*' : (char)('0' + type);
+                chars[i++] = (char)('0' + (int)board.GetSpecial(x, y));
             }
         }
         return new string(chars);

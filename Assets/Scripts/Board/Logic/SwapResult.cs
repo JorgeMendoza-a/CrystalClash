@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace CrystalClash.Board.Logic
 {
-    /// <summary>Un mineral que cae de una celda a otra durante el colapso.</summary>
+    /// <summary>Un mineral que cae de una celda a otra durante el colapso (con su especial, si tiene).</summary>
     public readonly struct MineralFall
     {
         public readonly GridPos From;
@@ -16,8 +16,8 @@ namespace CrystalClash.Board.Logic
     }
 
     /// <summary>
-    /// Un mineral nuevo que entra por arriba. StartY es la fila (por encima del
-    /// tablero) desde la que debería empezar a caer en la animación.
+    /// Un mineral nuevo (siempre normal) que entra por arriba. StartY es la fila
+    /// (por encima del tablero) desde la que debería empezar a caer en la animación.
     /// </summary>
     public readonly struct MineralSpawn
     {
@@ -33,14 +33,51 @@ namespace CrystalClash.Board.Logic
         }
     }
 
+    /// <summary>Un especial que se activó (para efectos visuales y sonido).</summary>
+    public readonly struct SpecialActivation
+    {
+        public readonly GridPos Position;
+        public readonly SpecialKind Kind;
+
+        public SpecialActivation(GridPos position, SpecialKind kind)
+        {
+            Position = position;
+            Kind = kind;
+        }
+    }
+
     /// <summary>
-    /// Una "ola" de la cascada: qué se rompió, qué cayó y qué apareció.
-    /// La vista la usa para animar; la lógica ya está aplicada.
+    /// Un especial nuevo creado por una combinación grande. Se coloca DESPUÉS
+    /// de limpiar las celdas de Cleared (su celda también está en Cleared).
+    /// Type es BoardLogic.Colorless para el Prisma.
+    /// </summary>
+    public readonly struct SpecialCreation
+    {
+        public readonly GridPos Position;
+        public readonly int Type;
+        public readonly SpecialKind Kind;
+
+        public SpecialCreation(GridPos position, int type, SpecialKind kind)
+        {
+            Position = position;
+            Type = type;
+            Kind = kind;
+        }
+    }
+
+    /// <summary>
+    /// Una "ola" de la cascada. Orden para animar:
+    /// 1) Cleared (y Activations como efecto), 2) Created, 3) Falls, 4) Spawns.
+    /// La lógica ya está aplicada cuando la vista lo recibe.
     /// </summary>
     public sealed class CascadeStep
     {
+        /// <summary>1 = la jugada del jugador, 2+ = cascadas. Multiplica los puntos.</summary>
         public int Level { get; }
+
         public List<GridPos> Cleared { get; } = new List<GridPos>();
+        public List<SpecialActivation> Activations { get; } = new List<SpecialActivation>();
+        public List<SpecialCreation> Created { get; } = new List<SpecialCreation>();
         public List<MineralFall> Falls { get; } = new List<MineralFall>();
         public List<MineralSpawn> Spawns { get; } = new List<MineralSpawn>();
         public int Points { get; internal set; }
@@ -57,6 +94,10 @@ namespace CrystalClash.Board.Logic
         public GridPos A { get; }
         public GridPos B { get; }
         public bool IsValid { get; internal set; }
+
+        /// <summary>True si fue un intercambio de especiales (Prisma o dos especiales juntos).</summary>
+        public bool WasSpecialCombo { get; internal set; }
+
         public List<CascadeStep> Steps { get; } = new List<CascadeStep>();
         public int PointsGained { get; internal set; }
 
