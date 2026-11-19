@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrystalClashRanked", "Project\CrystalClashRanked.csproj", "{C0CDF99F-51C5-4961-914D-3435DF4A96C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrystalClashRanked.Tests", "Tests\CrystalClashRanked.Tests.csproj", "{134863E9-3CEC-4B9A-8ECC-2B9FCBF7D211}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C0CDF99F-51C5-4961-914D-3435DF4A96C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0CDF99F-51C5-4961-914D-3435DF4A96C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0CDF99F-51C5-4961-914D-3435DF4A96C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0CDF99F-51C5-4961-914D-3435DF4A96C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{134863E9-3CEC-4B9A-8ECC-2B9FCBF7D211}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{134863E9-3CEC-4B9A-8ECC-2B9FCBF7D211}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{134863E9-3CEC-4B9A-8ECC-2B9FCBF7D211}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{134863E9-3CEC-4B9A-8ECC-2B9FCBF7D211}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

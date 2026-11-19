@@ -1,0 +1,520 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using CrystalClash.Ranked.Logic;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Unity.Services.CloudCode.Apis;
+using Unity.Services.CloudCode.Apis.Extensions;
+using Unity.Services.CloudCode.Core;
+using Unity.Services.CloudCode.Shared;
+using Unity.Services.CloudSave.Model;
+using Unity.Services.Leaderboards.Model;
+
+namespace CrystalClashRanked
+{
+    /// <summary>Registra el cliente de las APIs de Unity Gaming Services.</summary>
+    public class ModuleConfig : ICloudCodeSetup
+    {
+        public void Setup(ICloudCodeConfig config)
+        {
+            config.AddGameApiClient();
+        }
+    }
+
+    /// <summary>
+    /// Servidor de la clasificatoria de Crystal Clash (módulo de Cloud Code).
+    /// El juego solo envía MOVIMIENTOS; el servidor repite la partida con la
+    /// misma lógica del tablero y decide los puntos. Los perfiles se guardan
+    /// como datos protegidos (el jugador no los puede modificar).
+    /// </summary>
+    public class RankedModule
+    {
+        public const string LeaderboardId = "ranked_points";
+
+        private const string ProfileKey = "ranked_profile";
+        private const string QueueCustomId = "matchmaking";
+        private const string QueueKey = "queue";
+        private const string MatchKey = "state";
+        private const int MaxRetries = 5;
+        private const int HistorySize = 20;
+
+        private static readonly Random random = new Random();
+
+        private static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        // ==================================================================
+        // Funciones que llama el juego
+        // ==================================================================
+
+        [CloudCodeFunction("GetProfile")]
+        public async Task<ProfileDto> GetProfile(IExecutionContext context, IGameApiClient api)
+        {
+            var (profile, _) = await LoadProfile(context, api, context.PlayerId);
+            return ToDto(context.PlayerId, profile);
+        }
+
+        [CloudCodeFunction("FindMatch")]
+        public async Task<MatchmakingDto> FindMatch(IExecutionContext context, IGameApiClient api)
+        {
+            string me = context.PlayerId;
+            var (profile, _) = await LoadProfile(context, api, me);
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (queue, writeLock) = await LoadCustom<QueueState>(context, api, QueueCustomId, QueueKey);
+                long now = Now;
+                ServerLogic.CleanQueue(queue, now);
+
+                Ticket mine = queue.Tickets.FirstOrDefault(t => t.PlayerId == me);
+                if (mine != null)
+                {
+                    // Ya estaba buscando: seguimos con ese ticket.
+                    mine.LastPollUtc = now;
+                    if (await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock))
+                    {
+                        return await TicketStatus(context, api, mine);
+                    }
+                    continue;
+                }
+
+                Ticket opponent = ServerLogic.PickOpponent(queue, me, profile.Points, now);
+                if (opponent != null)
+                {
+                    MatchState match = NewMatch(
+                        new MatchPlayer { PlayerId = opponent.PlayerId, Name = opponent.Name, PointsAtStart = opponent.Points },
+                        new MatchPlayer { PlayerId = me, Name = profile.Name, PointsAtStart = profile.Points });
+
+                    opponent.MatchId = match.MatchId;
+                    opponent.LastPollUtc = now;
+                    if (!await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock)) continue;
+
+                    await SaveCustom(context, api, MatchCustomId(match.MatchId), MatchKey, match, null);
+                    return MatchFor(match, me, "");
+                }
+
+                var ticket = new Ticket
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    PlayerId = me,
+                    Name = profile.Name,
+                    Points = profile.Points,
+                    CreatedUtc = now,
+                    LastPollUtc = now
+                };
+                queue.Tickets.Add(ticket);
+                if (await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock))
+                {
+                    return new MatchmakingDto { TicketId = ticket.Id };
+                }
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        [CloudCodeFunction("PollMatch")]
+        public async Task<MatchmakingDto> PollMatch(IExecutionContext context, IGameApiClient api, string ticketId)
+        {
+            string me = context.PlayerId;
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (queue, writeLock) = await LoadCustom<QueueState>(context, api, QueueCustomId, QueueKey);
+                long now = Now;
+                Ticket ticket = queue.Tickets.FirstOrDefault(t => t.Id == ticketId && t.PlayerId == me);
+                if (ticket == null)
+                {
+                    // El ticket se perdió (p. ej. por inactividad): empezar de nuevo.
+                    return await FindMatch(context, api);
+                }
+
+                ticket.LastPollUtc = now;
+
+                if (ticket.MatchId != null)
+                {
+                    queue.Tickets.Remove(ticket);
+                    if (!await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock)) continue;
+                    return await TicketStatus(context, api, ticket);
+                }
+
+                if (now - ticket.CreatedUtc >= ServerLogic.BotAfterSeconds)
+                {
+                    // Nadie disponible: partida contra un bot.
+                    queue.Tickets.Remove(ticket);
+                    if (!await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock)) continue;
+
+                    MatchState match = NewMatch(
+                        new MatchPlayer { PlayerId = me, Name = ticket.Name, PointsAtStart = ticket.Points },
+                        new MatchPlayer
+                        {
+                            PlayerId = "bot",
+                            Name = ServerLogic.BotNamePrefix + "Minero" + random.Next(100, 999),
+                            PointsAtStart = ticket.Points,
+                            IsBot = true
+                        });
+                    await SaveCustom(context, api, MatchCustomId(match.MatchId), MatchKey, match, null);
+                    return MatchFor(match, me, ticket.Id);
+                }
+
+                if (await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock))
+                {
+                    return new MatchmakingDto { TicketId = ticket.Id };
+                }
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        [CloudCodeFunction("CancelMatchmaking")]
+        public async Task<bool> CancelMatchmaking(IExecutionContext context, IGameApiClient api, string ticketId)
+        {
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (queue, writeLock) = await LoadCustom<QueueState>(context, api, QueueCustomId, QueueKey);
+                int removed = queue.Tickets.RemoveAll(t => t.Id == ticketId && t.PlayerId == context.PlayerId && t.MatchId == null);
+                if (removed == 0) return false;
+                if (await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Guarda mi progreso (solo para mostrarlo) y devuelve el del rival.</summary>
+        [CloudCodeFunction("ReportProgress")]
+        public async Task<ProgressDto> ReportProgress(IExecutionContext context, IGameApiClient api, string matchId, int score, int movesLeft)
+        {
+            string me = context.PlayerId;
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (match, writeLock) = await LoadMatch(context, api, matchId);
+                MatchPlayer mine = Player(match, me);
+                MatchPlayer other = match.Players.First(p => p.PlayerId != me);
+
+                if (!mine.Submitted)
+                {
+                    mine.ReportedScore = Math.Max(0, score);
+                    mine.MovesLeft = Math.Max(0, Math.Min(RankedRules.Moves, movesLeft));
+                    if (!await TrySaveCustom(context, api, MatchCustomId(matchId), MatchKey, match, writeLock)) continue;
+                }
+
+                if (other.IsBot) return ServerLogic.BotProgress(match.Seed, match.CreatedUtc, Now);
+                return new ProgressDto
+                {
+                    Score = other.Submitted ? other.FinalScore : other.ReportedScore,
+                    MovesLeft = other.Submitted ? 0 : other.MovesLeft,
+                    Finished = other.Submitted
+                };
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        /// <summary>Recibe mis movimientos, los valida repitiendo la partida y, si se puede, decide el resultado.</summary>
+        [CloudCodeFunction("SubmitMatch")]
+        public async Task<ResultDto> SubmitMatch(IExecutionContext context, IGameApiClient api, string matchId, string moves)
+        {
+            string me = context.PlayerId;
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (match, writeLock) = await LoadMatch(context, api, matchId);
+                MatchPlayer mine = Player(match, me);
+
+                if (!mine.Submitted)
+                {
+                    bool valid = RankedRules.TryReplay(match.Seed, moves ?? "", out int score, out _);
+                    mine.Submitted = true;
+                    mine.Invalid = !valid;
+                    mine.FinalScore = valid ? score : 0;
+                    mine.MovesLeft = 0;
+                    if (!await TrySaveCustom(context, api, MatchCustomId(matchId), MatchKey, match, writeLock)) continue;
+                }
+
+                return await GetMatchResult(context, api, matchId);
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        [CloudCodeFunction("GetMatchResult")]
+        public async Task<ResultDto> GetMatchResult(IExecutionContext context, IGameApiClient api, string matchId)
+        {
+            string me = context.PlayerId;
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (match, writeLock) = await LoadMatch(context, api, matchId);
+                Player(match, me);
+
+                if (match.Finalized)
+                {
+                    return match.Results.TryGetValue(me, out ResultDto done) ? done : new ResultDto { Pending = true };
+                }
+
+                if (!ServerLogic.CanFinalize(match, Now)) return new ResultDto { Pending = true };
+
+                // Puntos actuales de cada jugador humano (para no bajar de 0).
+                var profiles = new Dictionary<string, RankedProfileState>();
+                foreach (MatchPlayer p in match.Players.Where(p => !p.IsBot))
+                {
+                    profiles[p.PlayerId] = (await LoadProfile(context, api, p.PlayerId)).profile;
+                }
+
+                match.Results = ServerLogic.ComputeResults(match, id => profiles[id].Points);
+                match.Finalized = true;
+
+                // Quien logre guardar "Finalized" es quien aplica los puntos (una sola vez).
+                if (!await TrySaveCustom(context, api, MatchCustomId(matchId), MatchKey, match, writeLock)) continue;
+
+                foreach (var pair in match.Results)
+                {
+                    await ApplyResult(context, api, pair.Key, pair.Value);
+                }
+
+                return match.Results.TryGetValue(me, out ResultDto result) ? result : new ResultDto { Pending = true };
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        [CloudCodeFunction("GetLeaderboard")]
+        public async Task<List<LeaderboardEntryDto>> GetLeaderboard(IExecutionContext context, IGameApiClient api, int limit)
+        {
+            limit = Math.Max(1, Math.Min(50, limit));
+            var entries = new List<LeaderboardEntryDto>();
+
+            try
+            {
+                var response = await api.Leaderboards.GetLeaderboardScoresAsync(
+                    context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, true, 0, limit);
+
+                foreach (LeaderboardEntry entry in response.Data.Results)
+                {
+                    entries.Add(new LeaderboardEntryDto
+                    {
+                        Rank = entry.Rank + 1,
+                        Name = NameFromMetadata(entry.Metadata) ?? entry.PlayerName,
+                        Points = (int)entry.Score,
+                        IsMe = entry.PlayerId == context.PlayerId
+                    });
+                }
+            }
+            catch (ApiException e) when (e.Response != null && e.Response.StatusCode == HttpStatusCode.NotFound)
+            {
+                // Tabla vacía todavía.
+            }
+
+            return entries;
+        }
+
+        [CloudCodeFunction("GetHistory")]
+        public async Task<List<HistoryEntryDto>> GetHistory(IExecutionContext context, IGameApiClient api)
+        {
+            var (profile, _) = await LoadProfile(context, api, context.PlayerId);
+            return profile.History;
+        }
+
+        // ==================================================================
+        // Ayudas
+        // ==================================================================
+
+        private static MatchState NewMatch(MatchPlayer first, MatchPlayer second)
+        {
+            first.MovesLeft = RankedRules.Moves;
+            second.MovesLeft = RankedRules.Moves;
+            return new MatchState
+            {
+                MatchId = Guid.NewGuid().ToString("N"),
+                Seed = ServerLogic.NewSeed(random),
+                CreatedUtc = Now,
+                Players = new List<MatchPlayer> { first, second }
+            };
+        }
+
+        private async Task<MatchmakingDto> TicketStatus(IExecutionContext context, IGameApiClient api, Ticket ticket)
+        {
+            if (ticket.MatchId == null) return new MatchmakingDto { TicketId = ticket.Id };
+            var (match, _) = await LoadMatch(context, api, ticket.MatchId);
+            return MatchFor(match, ticket.PlayerId, ticket.Id);
+        }
+
+        private static MatchmakingDto MatchFor(MatchState match, string me, string ticketId)
+        {
+            MatchPlayer other = match.Players.First(p => p.PlayerId != me);
+            return new MatchmakingDto
+            {
+                TicketId = ticketId,
+                Matched = true,
+                MatchId = match.MatchId,
+                Seed = match.Seed,
+                OpponentName = other.Name,
+                OpponentPoints = other.PointsAtStart,
+                OpponentIsBot = other.IsBot
+            };
+        }
+
+        private static MatchPlayer Player(MatchState match, string playerId)
+        {
+            MatchPlayer player = match.Players.FirstOrDefault(p => p.PlayerId == playerId);
+            if (player == null) throw new Exception("No participas en esta partida.");
+            return player;
+        }
+
+        private async Task ApplyResult(IExecutionContext context, IGameApiClient api, string playerId, ResultDto result)
+        {
+            RankedProfileState profile = null;
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (loaded, writeLock) = await LoadProfile(context, api, playerId);
+                profile = loaded;
+                profile.Points = Math.Max(0, profile.Points + result.PointsChange);
+                if (result.Outcome == (int)MatchOutcome.Win) profile.Wins++;
+                else if (result.Outcome == (int)MatchOutcome.Loss) profile.Losses++;
+                else profile.Draws++;
+
+                profile.History.Insert(0, new HistoryEntryDto
+                {
+                    OpponentName = result.OpponentName,
+                    MyScore = result.MyScore,
+                    OpponentScore = result.OpponentScore,
+                    Outcome = result.Outcome,
+                    PointsChange = result.PointsChange,
+                    TimestampUtc = Now
+                });
+                if (profile.History.Count > HistorySize) profile.History.RemoveRange(HistorySize, profile.History.Count - HistorySize);
+
+                if (await TrySaveProfile(context, api, playerId, profile, writeLock)) break;
+            }
+
+            if (profile == null) return;
+            try
+            {
+                await api.Leaderboards.AddLeaderboardPlayerScoreAsync(
+                    context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, playerId,
+                    new AddLeaderboardScore(profile.Points, new Dictionary<string, object> { { "name", profile.Name } }));
+            }
+            catch (ApiException)
+            {
+                // Si falla la tabla, el perfil ya quedó guardado; se corregirá en la próxima partida.
+            }
+        }
+
+        private static string NameFromMetadata(object metadata)
+        {
+            try
+            {
+                if (metadata == null) return null;
+                JToken token = metadata is string s ? JToken.Parse(s) : JToken.FromObject(metadata);
+                return token.Type == JTokenType.Object ? (string)token["name"] : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private static ProfileDto ToDto(string playerId, RankedProfileState profile)
+        {
+            return new ProfileDto
+            {
+                PlayerId = playerId,
+                Name = profile.Name,
+                Points = profile.Points,
+                Wins = profile.Wins,
+                Losses = profile.Losses,
+                Draws = profile.Draws
+            };
+        }
+
+        private static string MatchCustomId(string matchId) => "match_" + matchId;
+
+        // ------------------------------------------------------------------
+        // Cloud Save
+        // ------------------------------------------------------------------
+
+        private async Task<(RankedProfileState profile, string writeLock)> LoadProfile(IExecutionContext context, IGameApiClient api, string playerId)
+        {
+            var response = await api.CloudSaveData.GetProtectedItemsAsync(
+                context, context.ServiceToken, context.ProjectId, playerId, new List<string> { ProfileKey }, null, default);
+
+            Item item = response.Data.Results.FirstOrDefault(i => i.Key == ProfileKey);
+            if (item != null) return (Deserialize<RankedProfileState>(item.Value), item.WriteLock);
+
+            // Primera vez: perfil nuevo con un nombre de minero.
+            var profile = new RankedProfileState { Name = "Minero" + random.Next(1000, 9999), Points = RankedRules.StartingPoints };
+            await TrySaveProfile(context, api, playerId, profile, null);
+            var reloaded = await api.CloudSaveData.GetProtectedItemsAsync(
+                context, context.ServiceToken, context.ProjectId, playerId, new List<string> { ProfileKey }, null, default);
+            Item created = reloaded.Data.Results.FirstOrDefault(i => i.Key == ProfileKey);
+            return created != null ? (Deserialize<RankedProfileState>(created.Value), created.WriteLock) : (profile, null);
+        }
+
+        private async Task<bool> TrySaveProfile(IExecutionContext context, IGameApiClient api, string playerId, RankedProfileState profile, string writeLock)
+        {
+            try
+            {
+                await api.CloudSaveData.SetProtectedItemAsync(
+                    context, context.ServiceToken, context.ProjectId, playerId,
+                    new SetItemBody(ProfileKey, JsonConvert.SerializeObject(profile), writeLock), default);
+                return true;
+            }
+            catch (ApiException e) when (IsConflict(e))
+            {
+                return false;
+            }
+        }
+
+        private async Task<(MatchState match, string writeLock)> LoadMatch(IExecutionContext context, IGameApiClient api, string matchId)
+        {
+            if (string.IsNullOrEmpty(matchId) || matchId.Length > 40) throw new Exception("Partida inválida.");
+            var (match, writeLock) = await LoadCustom<MatchState>(context, api, MatchCustomId(matchId), MatchKey);
+            if (string.IsNullOrEmpty(match.MatchId)) throw new Exception("La partida no existe.");
+            return (match, writeLock);
+        }
+
+        private async Task<(T value, string writeLock)> LoadCustom<T>(IExecutionContext context, IGameApiClient api, string customId, string key)
+            where T : new()
+        {
+            var response = await api.CloudSaveData.GetCustomItemsAsync(
+                context, context.ServiceToken, context.ProjectId, customId, new List<string> { key }, null, default);
+            Item item = response.Data.Results.FirstOrDefault(i => i.Key == key);
+            return item == null ? (new T(), null) : (Deserialize<T>(item.Value), item.WriteLock);
+        }
+
+        private async Task SaveCustom<T>(IExecutionContext context, IGameApiClient api, string customId, string key, T value, string writeLock)
+        {
+            await api.CloudSaveData.SetCustomItemAsync(
+                context, context.ServiceToken, context.ProjectId, customId,
+                new SetItemBody(key, JsonConvert.SerializeObject(value), writeLock), default);
+        }
+
+        /// <summary>Guarda con bloqueo optimista: false si otro lo cambió antes (hay que reintentar).</summary>
+        private async Task<bool> TrySaveCustom<T>(IExecutionContext context, IGameApiClient api, string customId, string key, T value, string writeLock)
+        {
+            try
+            {
+                await SaveCustom(context, api, customId, key, value, writeLock);
+                return true;
+            }
+            catch (ApiException e) when (IsConflict(e))
+            {
+                return false;
+            }
+        }
+
+        private static bool IsConflict(ApiException e)
+        {
+            return e.Response != null && e.Response.StatusCode == HttpStatusCode.Conflict;
+        }
+
+        private static T Deserialize<T>(object value) where T : new()
+        {
+            if (value == null) return new T();
+            string json = value is string s ? s : (value is JToken token && token.Type == JTokenType.String ? (string)token : JsonConvert.SerializeObject(value));
+            return JsonConvert.DeserializeObject<T>(json) ?? new T();
+        }
+    }
+}

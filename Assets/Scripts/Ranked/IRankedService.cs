@@ -25,6 +25,7 @@ public class RankedMatchInfo
     public int Seed;
     public string OpponentName = "";
     public int OpponentPoints;
+    public bool OpponentIsBot;
 }
 
 public class OpponentProgress
@@ -115,10 +116,17 @@ public static class RankedServices
         {
             if (current == null)
             {
-                current = OnlineFactory != null ? OnlineFactory() : new TestRankedService();
+                // En línea si está disponible; si no (o si se eligió modo prueba), rival simulado.
+                current = (OnlineFactory != null ? OnlineFactory() : null) ?? new TestRankedService();
             }
             return current;
         }
+    }
+
+    /// <summary>Vuelve a elegir el servicio (al cambiar el modo en Ajustes).</summary>
+    public static void Reset()
+    {
+        current = null;
     }
 }
 

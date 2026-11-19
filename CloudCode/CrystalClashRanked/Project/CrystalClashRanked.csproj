@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Módulo de Cloud Code (servidor) de la clasificatoria de Crystal Clash.
+    Está FUERA de Assets para que Unity no lo compile.
+    Usa los mismos archivos de lógica que el juego (tablero y reglas del ranking),
+    así el servidor valida las partidas con exactamente el mismo código.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>CrystalClashRanked</AssemblyName>
+    <RootNamespace>CrystalClashRanked</RootNamespace>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Com.Unity.Services.CloudCode.Core" Version="0.0.9" />
+    <PackageReference Include="Com.Unity.Services.CloudCode.Apis" Version="0.0.27" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\Assets\Scripts\Board\Logic\*.cs" Link="Shared\Board\%(Filename)%(Extension)" />
+    <Compile Include="..\..\..\Assets\Scripts\Ranked\Logic\*.cs" Link="Shared\Ranked\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

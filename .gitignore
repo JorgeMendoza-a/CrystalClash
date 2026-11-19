@@ -12,3 +12,8 @@ MemoryCaptures/
 Obj/
 Build/
 Builds/
+# Servidor (Cloud Code): sí se versionan su proyecto, solución y el módulo empaquetado
+!CloudCode/**/*.csproj
+!CloudCode/**/*.sln
+!CloudCode/Build/
+!CloudCode/Build/*.ccm

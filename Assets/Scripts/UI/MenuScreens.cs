@@ -219,9 +219,16 @@ public static class MenuScreens
 
     public static void ShowSettings()
     {
+        bool testMode = UgsRankedService.TestModeEnabled;
         StoryPopup.Show("Ajustes",
+            $"Clasificatoria: <b>{(testMode ? "modo prueba (rival simulado)" : "en línea")}</b>\n\n" +
             "Crystal Clash\n<size=75%>Fuente: Lilita One (SIL Open Font License)</size>",
             new StoryPopup.PopupButton("Cerrar", null),
+            new StoryPopup.PopupButton(testMode ? "Usar clasificatoria en línea" : "Usar modo prueba", () =>
+            {
+                UgsRankedService.TestModeEnabled = !testMode;
+                Refresh();
+            }),
             new StoryPopup.PopupButton("Borrar progreso", ConfirmReset));
     }
 
