@@ -90,7 +90,7 @@ public class Mineral : MonoBehaviour
     {
         if (board == null)
         {
-            board = FindFirstObjectByType<BoardManager>();
+            board = FindAnyObjectByType<BoardManager>();
         }
 
         board.SelectMineral(this);

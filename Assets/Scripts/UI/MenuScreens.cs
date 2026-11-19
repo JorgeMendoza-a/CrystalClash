@@ -76,7 +76,7 @@ public static class MenuScreens
     /// <summary>Esconde/muestra el tablero y el HUD de la partida (para que no se vean detrás del menú).</summary>
     private static void SetGameVisible(bool visible)
     {
-        BoardManager board = Object.FindFirstObjectByType<BoardManager>(FindObjectsInactive.Include);
+        BoardManager board = Object.FindAnyObjectByType<BoardManager>(FindObjectsInactive.Include);
         if (board != null && board.gameObject.activeSelf != visible) board.gameObject.SetActive(visible);
 
         if (GameHud.Instance != null)

@@ -284,7 +284,7 @@ public class GameManager : MonoBehaviour
 
     private void ConfigureBoard(LevelDefinition level)
     {
-        board = FindFirstObjectByType<BoardManager>();
+        board = FindAnyObjectByType<BoardManager>();
         if (board == null)
         {
             Debug.LogError("GameManager: no hay BoardManager en la escena.");
