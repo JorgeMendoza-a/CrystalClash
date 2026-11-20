@@ -77,18 +77,7 @@ namespace CrystalClashRanked
                 if (!await TrySaveProfile(context, api, me, profile, writeLock)) continue;
 
                 // Si ya está en la tabla de posiciones, que salga con el nombre nuevo.
-                if (profile.Wins + profile.Losses + profile.Draws > 0)
-                {
-                    try
-                    {
-                        await api.Leaderboards.AddLeaderboardPlayerScoreAsync(
-                            context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, me,
-                            new AddLeaderboardScore(profile.Points, new Dictionary<string, object> { { "name", profile.Name } }));
-                    }
-                    catch (ApiException)
-                    {
-                    }
-                }
+                if (profile.Wins + profile.Losses + profile.Draws > 0) await UpdateLeaderboard(context, api, me, profile);
                 return ToDto(me, profile);
             }
 
@@ -323,21 +312,26 @@ namespace CrystalClashRanked
         {
             limit = Math.Max(1, Math.Min(50, limit));
             var entries = new List<LeaderboardEntryDto>();
+            int season = SeasonRules.CurrentSeason(Now);
 
             try
             {
+                // Pedimos de más y nos quedamos con los de esta temporada (los que no
+                // jugaron desde el reinicio aún tienen sus puntos viejos en la tabla).
                 var response = await api.Leaderboards.GetLeaderboardScoresAsync(
-                    context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, true, 0, limit);
+                    context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, true, 0, Math.Min(200, limit * 4));
 
                 foreach (LeaderboardEntry entry in response.Data.Results)
                 {
+                    if (SeasonFromMetadata(entry.Metadata) != season) continue;
                     entries.Add(new LeaderboardEntryDto
                     {
-                        Rank = entry.Rank + 1,
+                        Rank = entries.Count + 1,
                         Name = NameFromMetadata(entry.Metadata) ?? entry.PlayerName,
                         Points = (int)entry.Score,
                         IsMe = entry.PlayerId == context.PlayerId
                     });
+                    if (entries.Count >= limit) break;
                 }
             }
             catch (ApiException e) when (e.Response != null && e.Response.StatusCode == HttpStatusCode.NotFound)
@@ -424,19 +418,62 @@ namespace CrystalClashRanked
                 });
                 if (profile.History.Count > HistorySize) profile.History.RemoveRange(HistorySize, profile.History.Count - HistorySize);
 
+                ServerLogic.ApplyPeak(profile);
+
                 if (await TrySaveProfile(context, api, playerId, profile, writeLock)) break;
             }
 
             if (profile == null) return;
+            await UpdateLeaderboard(context, api, playerId, profile);
+        }
+
+        /// <summary>Pone los puntos del jugador en la tabla (con su nombre y temporada).</summary>
+        private async Task UpdateLeaderboard(IExecutionContext context, IGameApiClient api, string playerId, RankedProfileState profile)
+        {
             try
             {
                 await api.Leaderboards.AddLeaderboardPlayerScoreAsync(
                     context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, playerId,
-                    new AddLeaderboardScore(profile.Points, new Dictionary<string, object> { { "name", profile.Name } }));
+                    new AddLeaderboardScore(profile.Points, new Dictionary<string, object>
+                    {
+                        { "name", profile.Name },
+                        { "season", profile.Season }
+                    }));
             }
             catch (ApiException)
             {
                 // Si falla la tabla, el perfil ya quedó guardado; se corregirá en la próxima partida.
+            }
+        }
+
+        /// <summary>Entrega (y borra) las recompensas pendientes: subir de rango, fin de temporada.</summary>
+        [CloudCodeFunction("ClaimRewards")]
+        public async Task<List<SeasonReward>> ClaimRewards(IExecutionContext context, IGameApiClient api)
+        {
+            string me = context.PlayerId;
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (profile, writeLock) = await LoadProfile(context, api, me);
+                if (profile.PendingRewards.Count == 0) return new List<SeasonReward>();
+
+                var rewards = new List<SeasonReward>(profile.PendingRewards);
+                profile.PendingRewards.Clear();
+                if (await TrySaveProfile(context, api, me, profile, writeLock)) return rewards;
+            }
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        private static int SeasonFromMetadata(object metadata)
+        {
+            try
+            {
+                if (metadata == null) return 0;
+                JToken token = metadata is string s ? JToken.Parse(s) : JToken.FromObject(metadata);
+                return token.Type == JTokenType.Object && token["season"] != null ? (int)token["season"] : 0;
+            }
+            catch (Exception)
+            {
+                return 0;
             }
         }
 
@@ -460,6 +497,9 @@ namespace CrystalClashRanked
             {
                 PlayerId = playerId,
                 ShortId = profile.ShortId,
+                Season = profile.Season,
+                SeasonPeakPoints = profile.SeasonPeakPoints,
+                Badges = profile.Badges,
                 Name = profile.Name,
                 Points = profile.Points,
                 Wins = profile.Wins,
@@ -480,24 +520,31 @@ namespace CrystalClashRanked
             {
                 var (profile, writeLock) = await ReadProfile(context, api, playerId);
 
+                bool changed = false;
                 if (profile == null)
                 {
                     // Primera vez: perfil nuevo con su ID en orden y un nombre de minero.
                     int id = await NextPlayerId(context, api);
                     profile = new RankedProfileState { ShortId = id, Name = "Minero" + id, Points = RankedRules.StartingPoints };
+                    changed = true;
                 }
-                else if (profile.ShortId > 0)
-                {
-                    return (profile, writeLock);
-                }
-                else
+                else if (profile.ShortId == 0)
                 {
                     // Cuentas creadas antes de que existieran los IDs: se les asigna ahora.
                     profile.ShortId = await NextPlayerId(context, api);
+                    changed = true;
                 }
+
+                int seasonBefore = profile.Season;
+                if (ServerLogic.ApplySeason(profile, Now)) changed = true;
+
+                if (!changed) return (profile, writeLock);
 
                 if (await TrySaveProfile(context, api, playerId, profile, writeLock))
                 {
+                    // Temporada nueva: la tabla de posiciones muestra los puntos reiniciados.
+                    if (seasonBefore != 0 && seasonBefore != profile.Season) await UpdateLeaderboard(context, api, playerId, profile);
+
                     var (saved, savedLock) = await ReadProfile(context, api, playerId);
                     return (saved ?? profile, savedLock);
                 }

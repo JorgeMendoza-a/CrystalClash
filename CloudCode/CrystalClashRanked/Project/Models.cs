@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CrystalClash.Ranked.Logic;
 
 namespace CrystalClashRanked
 {
@@ -18,6 +19,16 @@ namespace CrystalClashRanked
         public int Losses { get; set; }
         public int Draws { get; set; }
         public List<HistoryEntryDto> History { get; set; } = new List<HistoryEntryDto>();
+
+        // Temporadas
+        public int Season { get; set; }
+        public int SeasonPeakPoints { get; set; }
+
+        /// <summary>Insignias exclusivas ganadas ("s1_oro", "s2_campeon"...).</summary>
+        public List<string> Badges { get; set; } = new List<string>();
+
+        /// <summary>Recompensas que el juego todavía no recogió (monedas/gemas y aviso).</summary>
+        public List<SeasonReward> PendingRewards { get; set; } = new List<SeasonReward>();
     }
 
     /// <summary>Contador global de IDs de jugador.</summary>
@@ -89,6 +100,9 @@ namespace CrystalClashRanked
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int Draws { get; set; }
+        public int Season { get; set; }
+        public int SeasonPeakPoints { get; set; }
+        public List<string> Badges { get; set; } = new List<string>();
     }
 
     public class MatchmakingDto

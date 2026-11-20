@@ -47,6 +47,21 @@ public static class StoryPopup
     /// <summary>True mientras hay un popup abierto (el tablero ignora los clics).</summary>
     public static bool IsOpen => current != null;
 
+    /// <summary>Como Show, con una insignia de temporada debajo del título (season 0 = sin insignia).</summary>
+    public static void ShowWithBadge(string title, string body, int season, int leagueIndex, params PopupButton[] buttons)
+    {
+        Transform panel = CreatePanel(title, body);
+        if (season > 0)
+        {
+            RectTransform badge = SeasonBadge.Create(panel, season, leagueIndex, 260f);
+            badge.SetSiblingIndex(1); // entre el título y el texto
+        }
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            CreateButton(panel, buttons[i], 130f, 50f, i == 0 ? UiKit.ButtonStyle.Green : UiKit.ButtonStyle.Blue);
+        }
+    }
+
     public static void Show(string title, string body, params PopupButton[] buttons)
     {
         Transform panel = CreatePanel(title, body);

@@ -66,6 +66,9 @@ public class UgsRankedService : IRankedService
         {
             PlayerId = dto.PlayerId,
             ShortId = dto.ShortId,
+            Season = dto.Season,
+            SeasonPeakPoints = dto.SeasonPeakPoints,
+            Badges = dto.Badges ?? new List<string>(),
             Name = dto.Name,
             Points = dto.Points,
             Wins = dto.Wins,
@@ -82,6 +85,9 @@ public class UgsRankedService : IRankedService
         {
             PlayerId = dto.PlayerId,
             ShortId = dto.ShortId,
+            Season = dto.Season,
+            SeasonPeakPoints = dto.SeasonPeakPoints,
+            Badges = dto.Badges ?? new List<string>(),
             Name = dto.Name,
             Points = dto.Points,
             Wins = dto.Wins,
@@ -178,6 +184,12 @@ public class UgsRankedService : IRankedService
         return entries;
     }
 
+    public async Task<List<SeasonReward>> ClaimRewardsAsync()
+    {
+        await SignInAsync();
+        return await Call<List<SeasonReward>>("ClaimRewards") ?? new List<SeasonReward>();
+    }
+
     public async Task<List<MatchHistoryEntry>> GetHistoryAsync()
     {
         await SignInAsync();
@@ -247,6 +259,9 @@ public class UgsRankedService : IRankedService
     {
         public string PlayerId;
         public int ShortId;
+        public int Season;
+        public int SeasonPeakPoints;
+        public List<string> Badges;
         public string Name;
         public int Points;
         public int Wins;

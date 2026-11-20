@@ -67,6 +67,9 @@ public class RankedScreen : MonoBehaviour
             status.text = service.IsTestMode
                 ? "<color=#FFB040>MODO PRUEBA: rival simulado, sin servidor</color>"
                 : $"Conectado como <b>{profile.Name}</b>";
+
+            // Recompensas pendientes (subir de rango, fin de temporada).
+            SeasonRewards.ClaimAndShow();
         }
         catch (Exception e)
         {
@@ -235,6 +238,9 @@ public class RankedScreen : MonoBehaviour
 
         Image info = UiKit.Card(column.transform, "Info");
         UiKit.Size(info, height: 150f);
+        var infoButton = info.gameObject.AddComponent<Button>();
+        infoButton.targetGraphic = info;
+        infoButton.onClick.AddListener(ShowSeasonEndRewards);
         UiKit.Vertical(info.gameObject, 24, 0f, TextAnchor.MiddleCenter);
         TMP_Text season = UiKit.Text(info.transform, SeasonText(), 34f, UiKit.Gold);
         UiKit.Size(season, height: 38f);
@@ -317,7 +323,6 @@ public class RankedScreen : MonoBehaviour
         UiKit.Outline(title, 0.18f);
         UiKit.Size(title, height: 58f);
 
-        Sprite gem = UiKit.LoadSprite("Minerals/amethyst");
         Sprite coin = UiKit.LoadSprite("UI/coin");
 
         GameObject headerRow = UiKit.Node(card.transform, "Cabecera");
@@ -325,7 +330,7 @@ public class RankedScreen : MonoBehaviour
         UiKit.Size(headerRow.transform, height: 44f);
         HeaderCell(headerRow.transform, "RANGO", 330f);
         HeaderCell(headerRow.transform, "PUNTOS", 200f);
-        HeaderCell(headerRow.transform, "RECOMPENSA DE TEMPORADA", -1f);
+        HeaderCell(headerRow.transform, $"AL LLEGAR (TEMPORADA {CurrentSeason})", -1f);
 
         for (int i = RankTiers.Leagues.Count - 1; i >= 0; i--)
         {
@@ -344,10 +349,28 @@ public class RankedScreen : MonoBehaviour
             UiKit.Size(name, width: 250f);
             UiKit.Size(UiKit.Text(rowImage.transform, range, 34f, Color.white), width: 200f);
 
-            UiKit.Size(UiKit.Image(rowImage.transform, "Gema", Color.white, gem), width: 50f);
-            UiKit.Size(UiKit.Text(rowImage.transform, league.SeasonGems.ToString(), 32f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left), width: 90f);
+            // Lo que se gana al llegar a esta liga en la temporada actual: insignia exclusiva + monedas.
+            RankTier firstTier = null;
+            foreach (RankTier t in RankTiers.All)
+            {
+                if (t.LeagueIndex == i) { firstTier = t; break; }
+            }
+            SeasonReward reach = SeasonRules.RewardForTier(firstTier, CurrentSeason);
+
+            if (!string.IsNullOrEmpty(reach.Badge))
+            {
+                GameObject badgeHolder = UiKit.Node(rowImage.transform, "Insignia");
+                UiKit.Size(badgeHolder.transform, width: 70f);
+                SeasonBadge.Create(badgeHolder.transform, CurrentSeason, i, 66f);
+            }
+            else
+            {
+                UiKit.Size(UiKit.Node(rowImage.transform, "SinInsignia").transform, width: 70f);
+            }
+
             UiKit.Size(UiKit.Image(rowImage.transform, "Moneda", Color.white, coin), width: 50f);
-            UiKit.Size(UiKit.Text(rowImage.transform, league.SeasonCoins.ToString(), 32f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left), flexibleWidth: 1f);
+            string coinsText = reach.Coins > 0 ? $"+{reach.Coins}" : "inicio";
+            UiKit.Size(UiKit.Text(rowImage.transform, coinsText, 32f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left), flexibleWidth: 1f);
         }
     }
 
@@ -358,13 +381,28 @@ public class RankedScreen : MonoBehaviour
         else UiKit.Size(cell, flexibleWidth: 1f);
     }
 
-    /// <summary>Las temporadas duran un mes (terminan el último día del mes, en UTC).</summary>
+    private static int CurrentSeason => SeasonRules.CurrentSeason(GameClock.NowUtc);
+
+    /// <summary>Temporadas de 60 días (las mismas para todos, las calcula SeasonRules).</summary>
     private static string SeasonText()
     {
-        DateTime now = DateTime.UtcNow;
-        var end = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1);
-        TimeSpan left = end - now;
-        int season = (now.Year - 2026) * 12 + now.Month;
-        return $"Temporada {Mathf.Max(1, season)}  ·  termina en {left.Days}d {left.Hours}h";
+        int season = CurrentSeason;
+        TimeSpan left = TimeSpan.FromSeconds(Math.Max(0, SeasonRules.SeasonEndUtc(season) - GameClock.NowUtc));
+        return $"Temporada {season}  ·  termina en {left.Days}d {left.Hours}h  <size=75%>(toca para ver premios)</size>";
+    }
+
+    private static void ShowSeasonEndRewards()
+    {
+        var sb = new StringBuilder();
+        for (int i = RankTiers.Leagues.Count - 1; i >= 0; i--)
+        {
+            RankTiers.League league = RankTiers.Leagues[i];
+            string color = ColorUtility.ToHtmlStringRGB(UiKit.LeagueColor(i));
+            sb.AppendLine($"<color=#{color}>{league.Name}</color>: {league.SeasonGems} gemas · {league.SeasonCoins} monedas");
+        }
+        StoryPopup.Show($"Fin de la Temporada {CurrentSeason}",
+            "Según tu rango final recibes:\n\n" + sb +
+            $"\nLuego empiezas la siguiente con la mitad de tus puntos.\nCada temporada dura {SeasonRules.SeasonDays} días.",
+            new StoryPopup.PopupButton("Entendido", null));
     }
 }

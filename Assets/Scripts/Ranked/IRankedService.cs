@@ -17,6 +17,11 @@ public class RankedProfile
     public int Wins;
     public int Losses;
     public int Draws;
+    public int Season;
+    public int SeasonPeakPoints;
+
+    /// <summary>Insignias exclusivas de temporada ganadas ("s1_oro"...).</summary>
+    public List<string> Badges = new List<string>();
 
     public RankTier Tier => RankTiers.ForPoints(Points);
 }
@@ -102,6 +107,9 @@ public interface IRankedService
     Task<RankedMatchResult> SubmitMatchAsync(RankedMatchInfo match, string encodedMoves, CancellationToken cancel);
 
     Task<List<LeaderboardEntry>> GetLeaderboardAsync(int count);
+
+    /// <summary>Recoge las recompensas pendientes (subir de rango, fin de temporada) y las borra del servidor.</summary>
+    Task<List<SeasonReward>> ClaimRewardsAsync();
     Task<List<MatchHistoryEntry>> GetHistoryAsync();
 }
 

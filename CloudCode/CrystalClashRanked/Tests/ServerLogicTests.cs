@@ -19,6 +19,9 @@ public static class ServerLogicTests
         Run(nameof(Results_Abandonment_Loses), Results_Abandonment_Loses);
         Run(nameof(Results_VsBot_HalfPoints), Results_VsBot_HalfPoints);
         Run(nameof(CanFinalize_WaitsForHumansOrTimeout), CanFinalize_WaitsForHumansOrTimeout);
+        Run(nameof(Season_NewProfile_StartsInCurrentSeason), Season_NewProfile_StartsInCurrentSeason);
+        Run(nameof(Season_Rollover_RewardsAndSoftReset), Season_Rollover_RewardsAndSoftReset);
+        Run(nameof(Peak_GivesRewardsAndBadgesOnce), Peak_GivesRewardsAndBadgesOnce);
         Console.WriteLine(failures == 0 ? "Todos los tests del servidor pasaron." : $"{failures} test(s) fallaron.");
         return failures;
     }
@@ -111,6 +114,40 @@ public static class ServerLogicTests
         Check(ServerLogic.CanFinalize(Match(true, 1, true, 1), 10), "ambos enviaron");
         Check(ServerLogic.CanFinalize(Match(true, 1, false, 0, bIsBot: true), 10), "contra bot basta conmigo");
         Check(ServerLogic.CanFinalize(Match(true, 1, false, 1), ServerLogic.MatchGraceSeconds + 1), "se acabó el margen");
+    }
+
+    private static long SeasonStart(int season) => SeasonRules.SeasonStartUtc(season);
+
+    private static void Season_NewProfile_StartsInCurrentSeason()
+    {
+        var p = new RankedProfileState { Points = 0 };
+        Check(ServerLogic.ApplySeason(p, SeasonStart(1) + 10), "cambia");
+        Check(p.Season == 1 && p.PendingRewards.Count == 0, "temporada 1 sin premio");
+        Check(!ServerLogic.ApplySeason(p, SeasonStart(1) + 100), "no vuelve a cambiar");
+    }
+
+    private static void Season_Rollover_RewardsAndSoftReset()
+    {
+        var p = new RankedProfileState { Season = 1, Points = 8400, Wins = 3, SeasonPeakPoints = 8400 };
+        Check(ServerLogic.ApplySeason(p, SeasonStart(2) + 5), "nueva temporada");
+        Check(p.Season == 2 && p.Points == 4200 && p.SeasonPeakPoints == 4200, "mitad de puntos");
+        Check(p.PendingRewards.Count == 1 && p.PendingRewards[0].Kind == (int)SeasonRewardKind.SeasonEnd, "premio de fin");
+        Check(p.PendingRewards[0].Gems == 1000 && p.PendingRewards[0].Season == 1, "premio de Campeón T1");
+
+        var idle = new RankedProfileState { Season = 1, Points = 8000 };
+        ServerLogic.ApplySeason(idle, SeasonStart(3) + 5);
+        Check(idle.Points == 2000 && idle.PendingRewards.Count == 0, "dos temporadas sin jugar: dos reinicios, sin premio");
+    }
+
+    private static void Peak_GivesRewardsAndBadgesOnce()
+    {
+        var p = new RankedProfileState { Season = 1, Points = 520, SeasonPeakPoints = 480 };
+        ServerLogic.ApplyPeak(p);
+        Check(p.Badges.Contains("s1_plata") && p.PendingRewards.Count == 1, "Plata 1 con insignia");
+
+        p.Points = 470; ServerLogic.ApplyPeak(p);
+        p.Points = 530; ServerLogic.ApplyPeak(p);
+        Check(p.PendingRewards.Count == 1 && p.Badges.Count == 1, "bajar y volver a subir no repite premios");
     }
 
     private static void Run(string name, Action test)

@@ -136,6 +136,52 @@ namespace CrystalClashRanked
         }
 
         // ------------------------------------------------------------------
+        // Temporadas
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Pone el perfil en la temporada actual. Si venía de una anterior: premio
+        /// de fin de temporada según sus puntos finales y reinicio suave (mitad
+        /// de los puntos por cada temporada que pasó). Devuelve true si cambió algo.
+        /// </summary>
+        public static bool ApplySeason(RankedProfileState profile, long now)
+        {
+            int current = SeasonRules.CurrentSeason(now);
+            if (profile.Season == current) return false;
+
+            if (profile.Season == 0)
+            {
+                // Perfil nuevo (o de antes de las temporadas): empieza en esta.
+                profile.Season = current;
+                profile.SeasonPeakPoints = Math.Max(profile.SeasonPeakPoints, profile.Points);
+                return true;
+            }
+
+            bool played = profile.Wins + profile.Losses + profile.Draws > 0;
+            if (played) profile.PendingRewards.Add(SeasonRules.SeasonEndReward(profile.Points, profile.Season));
+
+            for (int s = profile.Season; s < current; s++) profile.Points = SeasonRules.SoftReset(profile.Points);
+
+            profile.Season = current;
+            profile.SeasonPeakPoints = profile.Points;
+            return true;
+        }
+
+        /// <summary>Tras cambiar los puntos: recompensas por cada división nueva de la temporada.</summary>
+        public static List<SeasonReward> ApplyPeak(RankedProfileState profile)
+        {
+            List<SeasonReward> rewards = SeasonRules.RewardsForPeak(profile.SeasonPeakPoints, profile.Points, profile.Season);
+            if (profile.Points > profile.SeasonPeakPoints) profile.SeasonPeakPoints = profile.Points;
+
+            foreach (SeasonReward reward in rewards)
+            {
+                profile.PendingRewards.Add(reward);
+                if (!string.IsNullOrEmpty(reward.Badge) && !profile.Badges.Contains(reward.Badge)) profile.Badges.Add(reward.Badge);
+            }
+            return rewards;
+        }
+
+        // ------------------------------------------------------------------
         // Resultado
         // ------------------------------------------------------------------
 

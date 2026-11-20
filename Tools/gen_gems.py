@@ -257,7 +257,7 @@ def main(out):
     bomb(f"{out}/bomb.png")
 
 
-if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2", "--ui3", "--ui4"):
+if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2", "--ui3", "--ui4", "--ui5"):
     main(sys.argv[1])
 
 
@@ -823,3 +823,48 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui4":
     achievement_shield(f"{out}/ach_battles.png", (210, 60, 55), (70, 15, 15), _emb_swords)
     achievement_shield(f"{out}/ach_stars.png", (60, 130, 230), (15, 30, 80), _emb_trophy)
     achievement_shield(f"{out}/ach_champion.png", (150, 70, 230), (45, 15, 80), _emb_crown)
+
+
+# ======================================================================
+# Insignias de temporada: brillo y cinta (se tiñen por código según la temporada)
+# Uso: python3 Tools/gen_gems.py --ui5 Assets/Resources/UI
+# ======================================================================
+
+def season_glow(path):
+    n = 512
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(n):
+        for x in range(n):
+            dx, dy = (x - n / 2) / (n / 2), (y - n / 2) / (n / 2)
+            r = math.hypot(dx, dy)
+            # halo suave con rayos
+            a = max(0.0, 1 - r) ** 1.6
+            ang = math.atan2(dy, dx)
+            rays = 0.55 + 0.45 * max(0.0, math.cos(ang * 8)) ** 6
+            px[x, y] = (255, 255, 255, int(255 * min(1.0, a * rays * 1.25)))
+    img.save(path)
+
+
+def season_ribbon(path):
+    """Cinta 9-slice (borde 60 px) blanca/gris: el color lo pone el juego."""
+    k = 3
+    w, h = 320 * k, 120 * k
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    tail = 40 * k
+    # colas
+    for side in (0, 1):
+        x0 = 0 if side == 0 else w - tail * 2
+        pts = [(x0, 30 * k), (x0 + tail * 2, 30 * k), (x0 + tail * 2, h - 10 * k), (x0, h - 10 * k), (x0 + tail, h / 2 + 10 * k)] if side == 0 \
+            else [(x0, 30 * k), (x0 + tail * 2, 30 * k), (x0 + tail, h / 2 + 10 * k), (x0 + tail * 2, h - 10 * k), (x0, h - 10 * k)]
+        d.polygon(pts, fill=(150, 150, 150, 255), outline=(40, 40, 40, 255))
+    d.rounded_rectangle([tail, 10 * k, w - tail, h - 30 * k], radius=14 * k, fill=(235, 235, 235, 255), outline=(40, 40, 40, 255), width=4 * k)
+    d.rectangle([tail + 8 * k, 16 * k, w - tail - 8 * k, 40 * k], fill=(255, 255, 255, 255))
+    img.resize((w // k, h // k), Image.LANCZOS).save(path)
+
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui5":
+    out = sys.argv[2]
+    season_glow(f"{out}/season_glow.png")
+    season_ribbon(f"{out}/season_ribbon.png")

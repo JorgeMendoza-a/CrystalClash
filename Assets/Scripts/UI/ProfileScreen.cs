@@ -34,6 +34,8 @@ public static class ProfileScreen
         public TMP_Text Wins;
         public TMP_Text WinRate;
         public Transform AchievementsRow;
+        public Transform BadgesRow;
+        public TMP_Text BadgesEmpty;
         public RankedProfile Profile;
     }
 
@@ -47,6 +49,7 @@ public static class ProfileScreen
         BuildLevel(list, p);
         BuildStats(list, p, view);
         BuildAchievements(list, view);
+        BuildBadges(list, view);
 
         Image quoteCard = UiKit.Card(list, "Frase");
         UiKit.Size(quoteCard, height: 120f);
@@ -269,6 +272,58 @@ public static class ProfileScreen
     }
 
     // ------------------------------------------------------------------
+    // Insignias de temporada
+    // ------------------------------------------------------------------
+
+    private static void BuildBadges(Transform parent, View view)
+    {
+        Image card = UiKit.Card(parent, "Insignias");
+        UiKit.Size(card, height: 330f);
+        UiKit.Vertical(card.gameObject, 30, 6f);
+        UiKit.Size(UiKit.Title(card.transform, "Insignias de temporada", 50f), height: 70f);
+
+        GameObject row = UiKit.Node(card.transform, "Fila");
+        HorizontalLayoutGroup layout = UiKit.Horizontal(row, 0, 12f, TextAnchor.MiddleLeft);
+        layout.childForceExpandWidth = false;
+        UiKit.Size(row.transform, height: 190f);
+        view.BadgesRow = row.transform;
+
+        view.BadgesEmpty = UiKit.Text(row.transform,
+            "Sube de liga en la clasificatoria para ganar insignias exclusivas de cada temporada.", 32f, UiKit.Muted);
+        UiKit.Size(view.BadgesEmpty, flexibleWidth: 1f);
+    }
+
+    private static void FillBadges(View view, List<string> badges)
+    {
+        if (view.BadgesRow == null || badges == null || badges.Count == 0) return;
+        view.BadgesEmpty.gameObject.SetActive(false);
+
+        // Las más nuevas y altas primero; caben 5 a lo ancho.
+        var parsed = new List<(int season, int league)>();
+        foreach (string badge in badges)
+        {
+            if (SeasonRules.TryParseBadge(badge, out int season, out int league)) parsed.Add((season, league));
+        }
+        parsed.Sort((a, b) => a.season != b.season ? b.season.CompareTo(a.season) : b.league.CompareTo(a.league));
+
+        int shown = 0;
+        foreach (var (season, league) in parsed)
+        {
+            if (shown++ >= 5) break;
+            GameObject holder = UiKit.Node(view.BadgesRow, "Insignia");
+            UiKit.Size(holder.transform, width: 180f);
+            RectTransform badge = SeasonBadge.Create(holder.transform, season, league, 175f);
+            var button = badge.gameObject.AddComponent<Button>();
+            Image hit = badge.gameObject.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+            button.targetGraphic = hit;
+            int s = season, l = league;
+            button.onClick.AddListener(() => StoryPopup.ShowWithBadge($"{SeasonBadge.LeagueName(l)} · Temporada {s}",
+                "Insignia exclusiva por llegar a esta liga en esa temporada.", s, l, new StoryPopup.PopupButton("Cerrar", null)));
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Datos de clasificatoria (servidor)
     // ------------------------------------------------------------------
 
@@ -295,6 +350,8 @@ public static class ProfileScreen
             view.WinRate.text = played > 0 ? $"{100f * profile.Wins / played:0.#}%" : "-";
 
             FillAchievements(view, profile.Wins, profile.Points);
+            FillBadges(view, profile.Badges);
+            SeasonRewards.ClaimAndShow();
         }
         catch (Exception e)
         {

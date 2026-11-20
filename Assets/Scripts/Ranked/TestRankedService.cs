@@ -38,6 +38,7 @@ public class TestRankedService : IRankedService
     }
 
     private readonly Dictionary<string, BotMatch> bots = new Dictionary<string, BotMatch>();
+    private readonly List<SeasonReward> pendingRewards = new List<SeasonReward>();
     private RankedProfile profile;
 
     public string DisplayName => "Modo prueba (rival simulado)";
@@ -138,6 +139,12 @@ public class TestRankedService : IRankedService
         int change = RankedRules.PointsChange(profile.Points, match.OpponentPoints, outcome);
 
         profile.Points += change;
+        foreach (SeasonReward reward in SeasonRules.RewardsForPeak(profile.SeasonPeakPoints, profile.Points, profile.Season))
+        {
+            pendingRewards.Add(reward);
+            if (!string.IsNullOrEmpty(reward.Badge) && !profile.Badges.Contains(reward.Badge)) profile.Badges.Add(reward.Badge);
+        }
+        profile.SeasonPeakPoints = Mathf.Max(profile.SeasonPeakPoints, profile.Points);
         if (outcome == MatchOutcome.Win) profile.Wins++;
         else if (outcome == MatchOutcome.Loss) profile.Losses++;
         else profile.Draws++;
@@ -179,6 +186,13 @@ public class TestRankedService : IRankedService
         entries.Sort((a, b) => b.Points.CompareTo(a.Points));
         for (int i = 0; i < entries.Count; i++) entries[i].Rank = i + 1;
         return Task.FromResult(entries.GetRange(0, Math.Min(count, entries.Count)));
+    }
+
+    public Task<List<SeasonReward>> ClaimRewardsAsync()
+    {
+        var rewards = new List<SeasonReward>(pendingRewards);
+        pendingRewards.Clear();
+        return Task.FromResult(rewards);
     }
 
     public Task<List<MatchHistoryEntry>> GetHistoryAsync()
@@ -238,6 +252,24 @@ public class TestRankedService : IRankedService
                 Name = "Minero" + UnityEngine.Random.Range(1000, 9999),
                 Points = RankedRules.StartingPoints
             };
+            SaveProfile();
+        }
+
+        // Temporadas (igual que el servidor): reinicio suave al cambiar.
+        int current = SeasonRules.CurrentSeason(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        if (profile.Badges == null) profile.Badges = new List<string>();
+        if (profile.Season == 0)
+        {
+            profile.Season = current;
+            profile.SeasonPeakPoints = profile.Points;
+            SaveProfile();
+        }
+        else if (profile.Season < current)
+        {
+            if (profile.Wins + profile.Losses + profile.Draws > 0) pendingRewards.Add(SeasonRules.SeasonEndReward(profile.Points, profile.Season));
+            for (int s = profile.Season; s < current; s++) profile.Points = SeasonRules.SoftReset(profile.Points);
+            profile.Season = current;
+            profile.SeasonPeakPoints = profile.Points;
             SaveProfile();
         }
     }
