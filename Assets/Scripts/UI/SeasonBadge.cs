@@ -137,7 +137,8 @@ public static class SeasonRewards
             ? $"Terminaste en <b>{r.TierName}</b>\n\n{prizes}\n\nEn la nueva temporada empiezas con <b>{r.NewSeasonPoints}</b> puntos " +
               $"({RankTiers.ForPoints(r.NewSeasonPoints).Name})."
             : $"Llegaste a <b>{r.TierName}</b>\n\n{prizes}" +
-              (string.IsNullOrEmpty(r.Badge) ? "" : $"\n\n¡Insignia exclusiva <b>{SeasonBadge.LeagueName(r.LeagueIndex)} T{r.Season}</b>!");
+              (string.IsNullOrEmpty(r.Badge) ? "" :
+                  $"\n\n¡Insignia y foto de perfil exclusivas <b>{SeasonBadge.LeagueName(r.LeagueIndex)} T{r.Season}</b>!\n<size=80%>Póntela en tu Perfil tocando el lápiz del avatar.</size>");
 
         bool showBadge = end || !string.IsNullOrEmpty(r.Badge);
         StoryPopup.ShowWithBadge(title, body, showBadge ? r.Season : 0, r.LeagueIndex,

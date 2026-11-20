@@ -20,12 +20,16 @@ public static class StoryPopup
         /// <summary>Imagen opcional dentro del botón (p. ej. para elegir avatar).</summary>
         public Sprite Icon;
 
+        /// <summary>Contenido armado por código dentro del botón (p. ej. una insignia de temporada).</summary>
+        public Action<Transform> BuildContent;
+
         public PopupButton(string label, Action onClick, bool interactable = true)
         {
             Label = label;
             OnClick = onClick;
             Interactable = interactable;
             Icon = null;
+            BuildContent = null;
         }
 
         public PopupButton(Sprite icon, Action onClick, bool interactable = true)
@@ -34,6 +38,16 @@ public static class StoryPopup
             OnClick = onClick;
             Interactable = interactable;
             Icon = icon;
+            BuildContent = null;
+        }
+
+        public PopupButton(Action<Transform> buildContent, Action onClick)
+        {
+            Label = "";
+            OnClick = onClick;
+            Interactable = true;
+            Icon = null;
+            BuildContent = buildContent;
         }
     }
 
@@ -242,6 +256,12 @@ public static class StoryPopup
             Close();
             onClick?.Invoke();
         });
+
+        if (data.BuildContent != null)
+        {
+            data.BuildContent(image.transform);
+            return;
+        }
 
         if (data.Icon != null)
         {

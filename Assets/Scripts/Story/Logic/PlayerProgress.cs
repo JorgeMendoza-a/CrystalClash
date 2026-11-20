@@ -157,6 +157,9 @@ namespace CrystalClash.Story.Logic
         /// <summary>Avatar elegido (índice en ProfileAvatars del juego).</summary>
         public int avatar;
 
+        /// <summary>Insignia de temporada usada como foto de perfil ("s1_oro"); vacío = usar el avatar normal.</summary>
+        public string avatarBadge = "";
+
         /// <summary>Experiencia total (sube de nivel de jugador).</summary>
         public int xp;
 

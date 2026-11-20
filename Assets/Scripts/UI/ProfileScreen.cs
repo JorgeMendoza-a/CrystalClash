@@ -82,10 +82,20 @@ public static class ProfileScreen
         RectTransform frameRect = frame.rectTransform;
         frameRect.anchorMin = frameRect.anchorMax = new Vector2(0.5f, 0.5f);
         frameRect.sizeDelta = new Vector2(300f, 300f);
-        Image avatar = UiKit.Image(frame.transform, "Imagen", Color.white, AvatarSprite(p.avatar));
-        avatar.raycastTarget = false;
-        UiKit.Stretch(avatar.rectTransform, 42f);
-        SmallIconButton(frame.transform, "UI/icon_pencil", new Vector2(1f, 0f), new Vector2(-18f, 18f), 96f, ChooseAvatar);
+        if (SeasonRules.TryParseBadge(p.avatarBadge, out int badgeSeason, out int badgeLeague))
+        {
+            // Foto de perfil: una insignia de temporada ganada.
+            RectTransform badge = SeasonBadge.Create(frame.transform, badgeSeason, badgeLeague, 250f);
+            badge.anchorMin = badge.anchorMax = new Vector2(0.5f, 0.5f);
+            badge.anchoredPosition = Vector2.zero;
+        }
+        else
+        {
+            Image avatar = UiKit.Image(frame.transform, "Imagen", Color.white, AvatarSprite(p.avatar));
+            avatar.raycastTarget = false;
+            UiKit.Stretch(avatar.rectTransform, 42f);
+        }
+        SmallIconButton(frame.transform, "UI/icon_pencil", new Vector2(1f, 0f), new Vector2(-18f, 18f), 96f, () => ChooseAvatar(view));
 
         // Centro: nombre, ID, miembro desde
         GameObject middle = UiKit.Node(card.transform, "Datos");
@@ -440,7 +450,7 @@ public static class ProfileScreen
         return UiKit.LoadSprite(FallbackAvatars[i]);
     }
 
-    private static void ChooseAvatar()
+    private static void ChooseAvatar(View view)
     {
         int count = AvatarCount;
         var cells = new List<StoryPopup.PopupButton>();
@@ -450,10 +460,39 @@ public static class ProfileScreen
             cells.Add(new StoryPopup.PopupButton(AvatarSprite(i), () =>
             {
                 SaveManager.Progress.avatar = index;
+                SaveManager.Progress.avatarBadge = "";
                 SaveManager.Save();
                 MenuScreens.Refresh();
             }));
         }
-        StoryPopup.ShowGrid("Elige tu avatar", "", cells, 4, new StoryPopup.PopupButton("Cerrar", null));
+
+        // Insignias de temporada ganadas: también sirven como foto de perfil.
+        List<string> badges = view.Profile != null ? view.Profile.Badges : null;
+        int badgeCount = 0;
+        if (badges != null)
+        {
+            foreach (string badge in badges)
+            {
+                if (!SeasonRules.TryParseBadge(badge, out int season, out int league)) continue;
+                string id = badge;
+                cells.Add(new StoryPopup.PopupButton(t =>
+                {
+                    RectTransform b = SeasonBadge.Create(t, season, league, 120f);
+                    b.anchorMin = b.anchorMax = new Vector2(0.5f, 0.5f);
+                    b.anchoredPosition = Vector2.zero;
+                }, () =>
+                {
+                    SaveManager.Progress.avatarBadge = id;
+                    SaveManager.Save();
+                    MenuScreens.Refresh();
+                }));
+                badgeCount++;
+            }
+        }
+
+        string body = badgeCount > 0
+            ? "Avatares e insignias de temporada que ganaste"
+            : "Gana insignias en la clasificatoria para usarlas como foto de perfil";
+        StoryPopup.ShowGrid("Foto de perfil", body, cells, 4, new StoryPopup.PopupButton("Cerrar", null));
     }
 }
