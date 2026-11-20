@@ -81,7 +81,7 @@ public class RankedScreen : MonoBehaviour
         RankTier tier = profile.Tier;
         RankTier next = RankTiers.Next(tier);
 
-        currentEmblem.sprite = UiKit.RankEmblem(tier.LeagueIndex);
+        currentEmblem.sprite = UiKit.RankEmblem(tier);
         currentName.text = tier.Name.ToUpperInvariant();
         currentName.color = UiKit.LeagueColor(tier.LeagueIndex);
         pointsText.text = profile.Points.ToString();
@@ -94,7 +94,7 @@ public class RankedScreen : MonoBehaviour
             progressFill.anchorMax = new Vector2(1f, 1f);
             progressText.text = profile.Points.ToString();
             toNextText.text = "¡Rango máximo!";
-            nextEmblem.sprite = UiKit.RankEmblem(tier.LeagueIndex);
+            nextEmblem.sprite = UiKit.RankEmblem(tier);
             nextName.text = "—";
             return;
         }
@@ -104,7 +104,7 @@ public class RankedScreen : MonoBehaviour
         progressText.text = $"{profile.Points} / {next.MinPoints}";
         toNextText.text = $"Faltan {next.MinPoints - profile.Points} puntos para subir a " +
                           $"<color=#{ColorUtility.ToHtmlStringRGB(UiKit.LeagueColor(next.LeagueIndex))}>{next.Name}</color>";
-        nextEmblem.sprite = UiKit.RankEmblem(next.LeagueIndex);
+        nextEmblem.sprite = UiKit.RankEmblem(next);
         nextName.text = next.Name.ToUpperInvariant();
         nextName.color = UiKit.LeagueColor(next.LeagueIndex);
     }

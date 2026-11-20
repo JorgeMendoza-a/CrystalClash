@@ -381,12 +381,29 @@ public static class UiKit
         return cardSprite;
     }
 
-    /// <summary>Emblema de liga por índice (0 = Bronce ... 6 = Campeón).</summary>
+    private static readonly string[] LeagueFiles = { "bronce", "plata", "oro", "platino", "diamante", "maestro", "campeon" };
+
+    /// <summary>
+    /// Emblema de una división concreta (Resources/UI/Ranks/rango_plata_3.png,
+    /// rango_campeon.png). Si falta, usa el emblema provisional de la liga.
+    /// </summary>
+    public static Sprite RankEmblem(CrystalClash.Ranked.Logic.RankTier tier)
+    {
+        int league = Mathf.Clamp(tier.LeagueIndex, 0, LeagueFiles.Length - 1);
+        string file = tier.Division == 0
+            ? "UI/Ranks/rango_" + LeagueFiles[league]
+            : "UI/Ranks/rango_" + LeagueFiles[league] + "_" + tier.Division;
+        return LoadSprite(file) ?? LoadSprite("UI/rank_" + LeagueFiles[league]);
+    }
+
+    /// <summary>Emblema representativo de una liga (0 = Bronce ... 6 = Campeón): su división 1.</summary>
     public static Sprite RankEmblem(int leagueIndex)
     {
-        string[] files = { "bronce", "plata", "oro", "platino", "diamante", "maestro", "campeon" };
-        int i = Mathf.Clamp(leagueIndex, 0, files.Length - 1);
-        return LoadSprite("UI/rank_" + files[i]);
+        int league = Mathf.Clamp(leagueIndex, 0, LeagueFiles.Length - 1);
+        string file = league == LeagueFiles.Length - 1
+            ? "UI/Ranks/rango_campeon"
+            : "UI/Ranks/rango_" + LeagueFiles[league] + "_1";
+        return LoadSprite(file) ?? LoadSprite("UI/rank_" + LeagueFiles[league]);
     }
 
     /// <summary>Color del nombre de cada liga (como en el diseño).</summary>
