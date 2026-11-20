@@ -43,8 +43,8 @@ public static class MenuScreens
         CurrentScreen = screen;
         SetGameVisible(false);
 
-        Transform root = current.transform;
-        UiKit.FullscreenBackground(root, screen == Screen.Home ? 0.25f : 0.5f);
+        UiKit.FullscreenBackground(current.transform, screen == Screen.Home ? 0.25f : 0.5f);
+        Transform root = UiKit.SafeRoot(current.transform);
 
         // Zona de contenido entre las dos barras.
         GameObject content = UiKit.Node(root, "Contenido");

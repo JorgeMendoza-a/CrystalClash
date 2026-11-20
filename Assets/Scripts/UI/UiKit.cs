@@ -158,6 +158,15 @@ public static class UiKit
         return canvas;
     }
 
+    /// <summary>Contenedor ajustado al área segura (para no quedar bajo el notch).</summary>
+    public static Transform SafeRoot(Transform canvas)
+    {
+        GameObject root = Node(canvas, "AreaSegura");
+        Stretch((RectTransform)root.transform);
+        root.AddComponent<SafeAreaFitter>();
+        return root.transform;
+    }
+
     public static GameObject Node(Transform parent, string name)
     {
         var go = new GameObject(name, typeof(RectTransform));

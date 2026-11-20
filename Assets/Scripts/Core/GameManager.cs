@@ -3,6 +3,7 @@ using System.Text;
 using CrystalClash.Board.Logic;
 using CrystalClash.Story.Logic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -46,6 +47,10 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        // En celular: 60 FPS (Android viene a 30) y que la pantalla no se apague jugando.
+        Application.targetFrameRate = 60;
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
         LevelDefinition level = ChooseLevel();
         Session = new LevelSession(level);
@@ -109,6 +114,26 @@ public class GameManager : MonoBehaviour
             new StoryPopup.PopupButton("Reiniciar nivel", RetryLevel),
             new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap),
             new StoryPopup.PopupButton("Inicio", MenuScreens.ShowHome));
+    }
+
+    private void Update()
+    {
+        // Botón "atrás" de Android (o Escape en la PC).
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) OnBack();
+    }
+
+    private void OnBack()
+    {
+        if (StoryPopup.IsOpen) return; // los popups se cierran con sus botones
+
+        if (MenuScreens.IsOpen)
+        {
+            if (MenuScreens.CurrentScreen != MenuScreens.Screen.Home) MenuScreens.ShowHome();
+            return;
+        }
+
+        if (!IsRanked) ShowPause();
     }
 
     private void OnDestroy()

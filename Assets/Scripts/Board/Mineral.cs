@@ -42,7 +42,6 @@ public class Mineral : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Sprite fallbackSprite;
     private SpriteRenderer marker;
-    private BoardManager board;
     private Vector3 normalScale;
     private Vector3 selectedScale;
 
@@ -66,7 +65,6 @@ public class Mineral : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.sortingOrder = SortingOrder;
         fallbackSprite = spriteRenderer.sprite;
-        board = GetComponentInParent<BoardManager>();
         normalScale = transform.localScale;
         selectedScale = normalScale * 1.2f;
     }
@@ -86,15 +84,8 @@ public class Mineral : MonoBehaviour
         y = newY;
     }
 
-    private void OnMouseDown()
-    {
-        if (board == null)
-        {
-            board = FindAnyObjectByType<BoardManager>();
-        }
-
-        board.SelectMineral(this);
-    }
+    // Los toques/clics los lee BoardManager (Input System), que funciona igual
+    // con mouse y con pantalla táctil, y además permite deslizar.
 
     public void Select()
     {

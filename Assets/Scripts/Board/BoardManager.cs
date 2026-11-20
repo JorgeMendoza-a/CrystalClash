@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using CrystalClash.Board.Logic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Vista del tablero: crea los GameObject de los minerales, recibe los clics
@@ -23,6 +24,10 @@ public class BoardManager : MonoBehaviour
     public int seed = 0;
 
     public GameObject mineralPrefab;
+
+    [Header("Toques")]
+    [Tooltip("Cuánto hay que deslizar el dedo (en celdas) para cambiar un mineral con su vecino.")]
+    public float swipeThreshold = 0.35f;
 
     [Header("Marco del tablero")]
     [Tooltip("Dibuja un marco y casillas detrás de los minerales (Resources/Board/*.png).")]
@@ -154,8 +159,89 @@ public class BoardManager : MonoBehaviour
     }
 
     // ------------------------------------------------------------------
-    // Entrada
+    // Entrada (mouse y pantalla táctil, con el Input System)
     // ------------------------------------------------------------------
+
+    private Mineral pressedMineral;
+    private Vector2 pressWorld;
+    private bool swipeDone;
+    private bool tapToDeselect;
+
+    void Update()
+    {
+        Pointer pointer = Pointer.current;
+        Camera cam = Camera.main;
+        if (pointer == null || cam == null || Logic == null) return;
+
+        Vector2 world = cam.ScreenToWorldPoint(pointer.position.ReadValue());
+
+        if (pointer.press.wasPressedThisFrame)
+        {
+            OnPress(MineralAt(world), world);
+        }
+        else if (pointer.press.isPressed && pressedMineral != null && !swipeDone)
+        {
+            TrySwipe(world);
+        }
+
+        if (pointer.press.wasReleasedThisFrame)
+        {
+            // Tocar el mineral ya seleccionado (sin deslizar) lo deselecciona.
+            if (tapToDeselect && !swipeDone && pressedMineral != null && selectedMineral == pressedMineral)
+            {
+                SelectMineral(pressedMineral);
+            }
+            pressedMineral = null;
+            tapToDeselect = false;
+        }
+    }
+
+    void OnPress(Mineral mineral, Vector2 world)
+    {
+        pressedMineral = null;
+        swipeDone = false;
+        tapToDeselect = false;
+        if (mineral == null) return;
+
+        if (selectedMineral == mineral)
+        {
+            tapToDeselect = true;
+        }
+        else
+        {
+            SelectMineral(mineral);
+        }
+
+        // Si quedó seleccionado, se puede deslizar desde él.
+        if (selectedMineral == mineral)
+        {
+            pressedMineral = mineral;
+            pressWorld = world;
+        }
+    }
+
+    void TrySwipe(Vector2 world)
+    {
+        Vector2 delta = world - pressWorld;
+        if (delta.magnitude < swipeThreshold) return;
+
+        swipeDone = true;
+        int dx = Mathf.Abs(delta.x) >= Mathf.Abs(delta.y) ? (delta.x > 0 ? 1 : -1) : 0;
+        int dy = dx == 0 ? (delta.y > 0 ? 1 : -1) : 0;
+        int nx = pressedMineral.x + dx;
+        int ny = pressedMineral.y + dy;
+
+        if (selectedMineral != pressedMineral || nx < 0 || nx >= width || ny < 0 || ny >= height) return;
+
+        Mineral neighbor = views[nx, ny];
+        if (neighbor != null) SelectMineral(neighbor);
+    }
+
+    static Mineral MineralAt(Vector2 world)
+    {
+        Collider2D hit = Physics2D.OverlapPoint(world);
+        return hit != null ? hit.GetComponent<Mineral>() : null;
+    }
 
     public void SelectMineral(Mineral mineral)
     {

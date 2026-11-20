@@ -49,6 +49,7 @@ public class GameHud : MonoBehaviour
     private TMP_Text boosterHint;
     private BoosterKind? pendingBooster;
 
+    private Transform root;
     private Sprite cardSprite;
     private Sprite starFull;
     private Sprite starEmpty;
@@ -171,7 +172,7 @@ public class GameHud : MonoBehaviour
     private void BuildBoosterBar()
     {
         var barGO = new GameObject("Potenciadores", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        barGO.transform.SetParent(transform, false);
+        barGO.transform.SetParent(root, false);
         var bar = (RectTransform)barGO.transform;
         bar.anchorMin = new Vector2(0f, 0f);
         bar.anchorMax = new Vector2(1f, 0f);
@@ -197,7 +198,7 @@ public class GameHud : MonoBehaviour
         }
 
         // Texto de ayuda encima de la barra, visible solo con un potenciador armado.
-        boosterHint = CreateText(transform, "", 40f, Color.white, FontStyles.Normal, 110f);
+        boosterHint = CreateText(root, "", 40f, Color.white, FontStyles.Normal, 110f);
         var hintRect = boosterHint.rectTransform;
         hintRect.anchorMin = new Vector2(0f, 0f);
         hintRect.anchorMax = new Vector2(1f, 0f);
@@ -261,13 +262,14 @@ public class GameHud : MonoBehaviour
 
     private void Build(LevelSession current)
     {
+        root = UiKit.SafeRoot(transform);
         session = current;
         cardSprite = LoadSliced("Board/board_frame");
         starFull = LoadSprite("UI/star_full");
         starEmpty = LoadSprite("UI/star_empty");
 
         var rowGO = new GameObject("Panel", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        rowGO.transform.SetParent(transform, false);
+        rowGO.transform.SetParent(root, false);
         var row = (RectTransform)rowGO.transform;
         row.anchorMin = new Vector2(0f, 1f);
         row.anchorMax = new Vector2(1f, 1f);
@@ -306,7 +308,7 @@ public class GameHud : MonoBehaviour
     /// <summary>Fila superior: botón Menú (pausa) y nombre del nivel.</summary>
     private void BuildPauseRow(LevelSession current)
     {
-        GameObject rowGO = UiKit.Node(transform, "Pausa");
+        GameObject rowGO = UiKit.Node(root, "Pausa");
         var row = (RectTransform)rowGO.transform;
         row.anchorMin = new Vector2(0f, 1f);
         row.anchorMax = new Vector2(1f, 1f);
