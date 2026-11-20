@@ -257,7 +257,7 @@ def main(out):
     bomb(f"{out}/bomb.png")
 
 
-if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2", "--ui3"):
+if __name__ == "__main__" and sys.argv[1] not in ("--board", "--ui", "--ui2", "--ui3", "--ui4"):
     main(sys.argv[1])
 
 
@@ -713,3 +713,113 @@ if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui3":
     nav_shop_icon(f"{out}/nav_shop.png")
     nav_trophy_icon(f"{out}/nav_trophy.png")
     nav_profile_icon(f"{out}/nav_profile.png")
+
+
+# ======================================================================
+# Perfil: íconos y escudos de logros (Assets/Resources/UI)
+# Uso: python3 Tools/gen_gems.py --ui4 Assets/Resources/UI
+# ======================================================================
+
+def _sword(d, x0, y0, x1, y1):
+    d.line([(x0, y0), (x1, y1)], fill=(60, 65, 80, 255), width=46)
+    d.line([(x0, y0), (x1, y1)], fill=(215, 222, 235, 255), width=30)
+    # guarda y mango
+    mx, my = x0 + (x1 - x0) * 0.78, y0 + (y1 - y0) * 0.78
+    nx, ny = -(y1 - y0), (x1 - x0)
+    ln = math.hypot(nx, ny)
+    nx, ny = nx / ln * 70, ny / ln * 70
+    d.line([(mx - nx, my - ny), (mx + nx, my + ny)], fill=(200, 150, 50, 255), width=26)
+    d.line([(mx, my), (x1 + (x1 - x0) * 0.12, y1 + (y1 - y0) * 0.12)], fill=(120, 70, 30, 255), width=30)
+
+
+def swords_icon(path):
+    img, d = new()
+    _sword(d, C - 170, C - 170, C + 120, C + 120)
+    _sword(d, C + 170, C - 170, C - 120, C + 120)
+    finish(img, path)
+
+
+def target_icon(path):
+    img, d = new()
+    for r, col in [(210, (40, 90, 200)), (165, (235, 240, 255)), (120, (40, 90, 200)), (75, (235, 240, 255)), (35, (230, 60, 60))]:
+        d.ellipse([C - r, C - r, C + r, C + r], fill=col + (255,), outline=(15, 30, 80, 255), width=6)
+    d.line([(C + 10, C - 10), (C + 220, C - 220)], fill=(120, 80, 40, 255), width=18)
+    d.polygon([(C + 200, C - 240), (C + 250, C - 250), (C + 240, C - 200)], fill=(230, 60, 60, 255))
+    finish(img, path)
+
+
+def pencil_icon(path):
+    img, d = new()
+    d.line([(C - 150, C + 150), (C + 140, C - 140)], fill=(40, 25, 10, 255), width=110)
+    d.line([(C - 150, C + 150), (C + 140, C - 140)], fill=(250, 200, 70, 255), width=80)
+    d.polygon([(C - 205, C + 205), (C - 185, C + 105), (C - 105, C + 185)], fill=(240, 220, 180, 255), outline=(40, 25, 10, 255))
+    d.polygon([(C - 205, C + 205), (C - 195, C + 165), (C - 165, C + 195)], fill=(40, 40, 50, 255))
+    d.line([(C + 100, C - 180), (C + 180, C - 100)], fill=(230, 120, 140, 255), width=70)
+    finish(img, path)
+
+
+def copy_icon(path):
+    img, d = new()
+    d.rounded_rectangle([C - 150, C - 190, C + 90, C + 90], radius=30, fill=(150, 160, 185, 255), outline=(40, 45, 60, 255), width=14)
+    d.rounded_rectangle([C - 90, C - 110, C + 150, C + 190], radius=30, fill=(225, 230, 245, 255), outline=(40, 45, 60, 255), width=14)
+    finish(img, path)
+
+
+def achievement_shield(path, metal, inner, emblem):
+    img, d = new()
+    for side in (-1, 1):
+        wing = [(C + side * 130, C - 110), (C + side * 240, C - 170), (C + side * 215, C - 40),
+                (C + side * 245, C + 20), (C + side * 175, C + 90), (C + side * 125, C + 70)]
+        d.polygon(wing, fill=shade(metal, 0.8), outline=shade(metal, 0.35))
+    shield = [(C - 160, C - 200), (C + 160, C - 200), (C + 175, C - 20), (C + 95, C + 140), (C, C + 225),
+              (C - 95, C + 140), (C - 175, C - 20)]
+    faceted_gem(d, shield, metal, table_k=0.8)
+    inner_pts = scale_pts(shield, 0.72)
+    d.polygon(inner_pts, fill=inner + (255,), outline=shade(metal, 0.4))
+    emblem(img, d)
+    highlight(img, C - 60, C - 120, 55, 22)
+    finish(img, path)
+
+
+def _emb_star(img, d):
+    pts = []
+    for i in range(10):
+        r = 120 if i % 2 == 0 else 52
+        a = -math.pi / 2 + i * math.pi / 5
+        pts.append((C + math.cos(a) * r, C - 10 + math.sin(a) * r))
+    faceted_gem(d, pts, (170, 80, 240), table_k=0.5)
+
+
+def _emb_swords(img, d):
+    _sword(d, C - 100, C - 120, C + 80, C + 80)
+    _sword(d, C + 100, C - 120, C - 80, C + 80)
+
+
+def _emb_trophy(img, d):
+    gold = (245, 190, 40, 255)
+    d.arc([C - 125, C - 105, C - 35, C + 5], 90, 270, fill=gold, width=16)
+    d.arc([C + 35, C - 105, C + 125, C + 5], 270, 90, fill=gold, width=16)
+    d.polygon([(C - 85, C - 120), (C + 85, C - 120), (C + 65, C + 10), (C, C + 45), (C - 65, C + 10)], fill=gold, outline=(120, 70, 0, 255))
+    d.rectangle([C - 18, C + 40, C + 18, C + 90], fill=gold)
+    d.rectangle([C - 65, C + 88, C + 65, C + 120], fill=(150, 90, 40, 255))
+
+
+def _emb_crown(img, d):
+    crown = [(C - 120, C + 70), (C - 135, C - 70), (C - 60, C - 5), (C, C - 110), (C + 60, C - 5), (C + 135, C - 70), (C + 120, C + 70)]
+    d.polygon(crown, fill=(250, 200, 50, 255), outline=(130, 80, 0, 255))
+    for x in (C - 135, C, C + 135):
+        y = C - 70 if x != C else C - 110
+        d.ellipse([x - 16, y - 16, x + 16, y + 16], fill=(250, 220, 120, 255))
+    d.rectangle([C - 120, C + 60, C + 120, C + 95], fill=(220, 160, 30, 255), outline=(130, 80, 0, 255))
+
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--ui4":
+    out = sys.argv[2]
+    swords_icon(f"{out}/icon_swords.png")
+    target_icon(f"{out}/icon_target.png")
+    pencil_icon(f"{out}/icon_pencil.png")
+    copy_icon(f"{out}/icon_copy.png")
+    achievement_shield(f"{out}/ach_combos.png", (225, 175, 50), (60, 30, 90), _emb_star)
+    achievement_shield(f"{out}/ach_battles.png", (210, 60, 55), (70, 15, 15), _emb_swords)
+    achievement_shield(f"{out}/ach_stars.png", (60, 130, 230), (15, 30, 80), _emb_trophy)
+    achievement_shield(f"{out}/ach_champion.png", (150, 70, 230), (45, 15, 80), _emb_crown)

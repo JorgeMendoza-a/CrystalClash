@@ -57,6 +57,42 @@ namespace CrystalClashRanked
             return ToDto(context.PlayerId, profile);
         }
 
+        /// <summary>Cambia el nombre de clasificatoria (3-16 letras, números, _ y espacios).</summary>
+        [CloudCodeFunction("SetName")]
+        public async Task<ProfileDto> SetName(IExecutionContext context, IGameApiClient api, string name)
+        {
+            string clean = RankedRules.NormalizeName(name);
+            if (clean == null)
+            {
+                throw new Exception($"Nombre inválido: usa de {RankedRules.NameMinLength} a {RankedRules.NameMaxLength} letras, números o _.");
+            }
+
+            string me = context.PlayerId;
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (profile, writeLock) = await LoadProfile(context, api, me);
+                profile.Name = clean;
+                if (!await TrySaveProfile(context, api, me, profile, writeLock)) continue;
+
+                // Si ya está en la tabla de posiciones, que salga con el nombre nuevo.
+                if (profile.Wins + profile.Losses + profile.Draws > 0)
+                {
+                    try
+                    {
+                        await api.Leaderboards.AddLeaderboardPlayerScoreAsync(
+                            context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, me,
+                            new AddLeaderboardScore(profile.Points, new Dictionary<string, object> { { "name", profile.Name } }));
+                    }
+                    catch (ApiException)
+                    {
+                    }
+                }
+                return ToDto(me, profile);
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
         [CloudCodeFunction("FindMatch")]
         public async Task<MatchmakingDto> FindMatch(IExecutionContext context, IGameApiClient api)
         {

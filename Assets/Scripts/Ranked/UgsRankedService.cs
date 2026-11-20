@@ -73,6 +73,21 @@ public class UgsRankedService : IRankedService
         };
     }
 
+    public async Task<RankedProfile> SetNameAsync(string name)
+    {
+        await SignInAsync();
+        ProfileDto dto = await Call<ProfileDto>("SetName", new Dictionary<string, object> { { "name", name } });
+        return new RankedProfile
+        {
+            PlayerId = dto.PlayerId,
+            Name = dto.Name,
+            Points = dto.Points,
+            Wins = dto.Wins,
+            Losses = dto.Losses,
+            Draws = dto.Draws
+        };
+    }
+
     public async Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel)
     {
         await SignInAsync();

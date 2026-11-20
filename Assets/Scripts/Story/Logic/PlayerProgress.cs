@@ -150,6 +150,34 @@ namespace CrystalClash.Story.Logic
             return true;
         }
 
+        // ------------------------------------------------------------------
+        // Perfil: avatar, experiencia, fecha de inicio y estadísticas
+        // ------------------------------------------------------------------
+
+        /// <summary>Avatar elegido (índice en ProfileAvatars del juego).</summary>
+        public int avatar;
+
+        /// <summary>Experiencia total (sube de nivel de jugador).</summary>
+        public int xp;
+
+        /// <summary>Primera vez que se abrió el juego (segundos UTC). 0 = aún no se sabe.</summary>
+        public long createdUtc;
+
+        /// <summary>Especiales creados en total (para el logro "Maestro de Combos").</summary>
+        public int specialsCreated;
+
+        public const int XpStoryWin = 30;
+        public const int XpPerStar = 10;
+        public const int XpStoryLoss = 5;
+        public const int XpRankedWin = 40;
+        public const int XpRankedDraw = 25;
+        public const int XpRankedLoss = 15;
+
+        public void AddXp(int amount)
+        {
+            if (amount > 0) xp += amount;
+        }
+
         public bool IsUnlocked(int levelNumber)
         {
             return levelNumber >= 1 && levelNumber <= highestUnlocked;

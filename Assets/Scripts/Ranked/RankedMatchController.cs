@@ -184,14 +184,18 @@ public class RankedMatchController : MonoBehaviour
             default: title = "Empate"; break;
         }
 
-        // Premio local en gemas por ganar (con el servidor real lo dará el servidor).
+        // Premios locales: gemas por ganar y experiencia por jugar.
         string gemsLine = "";
         if (result.Outcome == MatchOutcome.Win)
         {
             SaveManager.Progress.gems += GemsPerWin;
-            SaveManager.Save();
             gemsLine = $"\n<color=#C080FF>+{GemsPerWin} gemas</color>";
         }
+        int xp = result.Outcome == MatchOutcome.Win ? PlayerProgress.XpRankedWin
+            : result.Outcome == MatchOutcome.Draw ? PlayerProgress.XpRankedDraw : PlayerProgress.XpRankedLoss;
+        SaveManager.Progress.AddXp(xp);
+        SaveManager.Save();
+        gemsLine += $"  <color=#80C8FF>+{xp} XP</color>";
 
         string change = result.PointsChange >= 0 ? $"<color=#66FF77>+{result.PointsChange}</color>" : $"<color=#FF7070>{result.PointsChange}</color>";
         RankTier tier = RankTiers.ForPoints(result.NewPoints);

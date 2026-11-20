@@ -151,6 +151,7 @@ public class GameManager : MonoBehaviour
     {
         Session.ApplyMove(result);
         if (ranked != null) ranked.RecordMove(result);
+        CountSpecials(result);
 
         if (GameUI.Instance != null)
         {
@@ -214,8 +215,16 @@ public class GameManager : MonoBehaviour
         SaveManager.Progress.TryUseBooster(kind);
         SaveManager.Save();
         Session.ApplyBooster(result);
+        CountSpecials(result);
 
         if (GameHud.Instance != null) GameHud.Instance.RefreshBoosters();
+    }
+
+    /// <summary>Suma los especiales creados (logro "Maestro de Combos"). Se guarda al terminar la partida.</summary>
+    private static void CountSpecials(SwapResult result)
+    {
+        if (result == null || !result.IsValid) return;
+        foreach (CascadeStep step in result.Steps) SaveManager.Progress.specialsCreated += step.Created.Count;
     }
 
     private void SetPendingBooster(BoosterKind? kind)
@@ -358,7 +367,9 @@ public class GameManager : MonoBehaviour
 
             int coins = PlayerProgress.CoinsForWin(Session.Stars);
             SaveManager.Progress.coins += coins;
-            reward += $"\n\n<color=#FFD040>+{coins} monedas</color>";
+            int xp = PlayerProgress.XpStoryWin + PlayerProgress.XpPerStar * Session.Stars;
+            SaveManager.Progress.AddXp(xp);
+            reward += $"\n\n<color=#FFD040>+{coins} monedas</color>  <color=#80C8FF>+{xp} XP</color>";
 
             if (firstWin)
             {
@@ -392,6 +403,7 @@ public class GameManager : MonoBehaviour
         PlayerProgress progress = SaveManager.Progress;
         long now = GameClock.NowUtc;
         progress.LoseLife(now);
+        progress.AddXp(PlayerProgress.XpStoryLoss);
         SaveManager.Save();
         int lives = progress.GetLives(now);
 

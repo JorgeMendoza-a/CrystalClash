@@ -81,6 +81,9 @@ public interface IRankedService
     Task SignInAsync();
     Task<RankedProfile> GetProfileAsync();
 
+    /// <summary>Cambia el nombre de clasificatoria. Lanza una excepción con el motivo si no es válido.</summary>
+    Task<RankedProfile> SetNameAsync(string name);
+
     /// <summary>Busca rival. Termina cuando hay partida o se cancela (OperationCanceledException).</summary>
     Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel);
 

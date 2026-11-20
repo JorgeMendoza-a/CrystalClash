@@ -55,6 +55,19 @@ public class TestRankedService : IRankedService
         return Task.FromResult(profile);
     }
 
+    public Task<RankedProfile> SetNameAsync(string name)
+    {
+        string clean = RankedRules.NormalizeName(name);
+        if (clean == null)
+        {
+            throw new ArgumentException($"Usa de {RankedRules.NameMinLength} a {RankedRules.NameMaxLength} letras, números o _.");
+        }
+        LoadProfile();
+        profile.Name = clean;
+        SaveProfile();
+        return Task.FromResult(profile);
+    }
+
     public async Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel)
     {
         LoadProfile();

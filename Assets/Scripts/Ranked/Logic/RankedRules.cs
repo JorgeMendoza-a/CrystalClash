@@ -76,6 +76,39 @@ namespace CrystalClash.Ranked.Logic
             return MatchOutcome.Draw;
         }
 
+        // ------------------------------------------------------------------
+        // Nombres de jugador
+        // ------------------------------------------------------------------
+
+        public const int NameMinLength = 3;
+        public const int NameMaxLength = 16;
+
+        /// <summary>
+        /// Limpia y valida un nombre: 3-16 caracteres, letras (con tildes y ñ),
+        /// números, guion bajo y espacios simples. Devuelve null si no es válido.
+        /// </summary>
+        public static string NormalizeName(string name)
+        {
+            if (name == null) return null;
+            var sb = new StringBuilder();
+            bool lastWasSpace = true;
+            foreach (char c in name.Trim())
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    if (!lastWasSpace) sb.Append(' ');
+                    lastWasSpace = true;
+                    continue;
+                }
+                if (!char.IsLetterOrDigit(c) && c != '_') return null;
+                sb.Append(c);
+                lastWasSpace = false;
+            }
+
+            string result = sb.ToString().Trim();
+            return result.Length >= NameMinLength && result.Length <= NameMaxLength ? result : null;
+        }
+
         public static BoardLogic CreateBoard(int seed)
         {
             return new BoardLogic(Width, Height, MineralTypes, seed);

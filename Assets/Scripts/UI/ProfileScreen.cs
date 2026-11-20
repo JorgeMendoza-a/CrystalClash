@@ -1,103 +1,395 @@
 using System;
-using CrystalClash.Board.Logic;
+using System.Collections.Generic;
 using CrystalClash.Ranked.Logic;
 using CrystalClash.Story.Logic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Perfil: estadísticas del modo historia y de la clasificatoria.</summary>
+/// <summary>
+/// Perfil del jugador: avatar, nombre (editable), ID, fecha de inicio,
+/// emblema de rango, nivel con experiencia, estadísticas y logros.
+/// </summary>
 public static class ProfileScreen
 {
+    // Avatares: si existen Resources/UI/Avatars/avatar_1..N se usan esos;
+    // si no, estos sprites provisionales.
+    private static readonly string[] FallbackAvatars =
+    {
+        "UI/nav_profile", "Minerals/sapphire", "Minerals/emerald", "Minerals/amethyst",
+        "Minerals/ruby", "Minerals/gold", "Minerals/diamond", "Minerals/prism"
+    };
+
+    private const int MaxCustomAvatars = 24;
+    private const string Quote = "“¡Sigue jugando y alcanza la cima!”";
+
+    // Elementos que se completan cuando llega el perfil de clasificatoria
+    private class View
+    {
+        public TMP_Text Name;
+        public TMP_Text Id;
+        public Image RankEmblem;
+        public TMP_Text RankName;
+        public TMP_Text Played;
+        public TMP_Text Wins;
+        public TMP_Text WinRate;
+        public Transform AchievementsRow;
+        public RankedProfile Profile;
+    }
+
     public static void Build(Transform root)
     {
         Transform list = UiKit.ScrollArea(root, 16f);
         PlayerProgress p = SaveManager.Progress;
-        int levels = LevelCatalog.Count;
+        var view = new View();
 
-        GameObject header = UiKit.Node(list, "Encabezado");
-        UiKit.Horizontal(header, 0, 20f).childForceExpandWidth = false;
-        UiKit.Size(header.transform, height: 200f);
-        UiKit.Size(UiKit.Image(header.transform, "Avatar", Color.white, UiKit.LoadSprite("UI/nav_profile")), width: 200f);
-        TMP_Text name = UiKit.Title(header.transform, "Minero", 80f);
-        UiKit.Size(name, flexibleWidth: 1f);
+        BuildHeader(list, p, view);
+        BuildLevel(list, p);
+        BuildStats(list, p, view);
+        BuildAchievements(list, view);
 
-        int completed = 0;
-        for (int n = 1; n <= levels; n++) if (p.GetStars(n) > 0) completed++;
+        Image quoteCard = UiKit.Card(list, "Frase");
+        UiKit.Size(quoteCard, height: 120f);
+        UiKit.Vertical(quoteCard.gameObject, 30, 0f, TextAnchor.MiddleCenter);
+        TMP_Text quote = UiKit.Text(quoteCard.transform, Quote, 40f, Color.white, FontStyles.Italic);
+        UiKit.Outline(quote, 0.15f);
+        UiKit.Size(quote, height: 60f);
 
-        Section(list, "MODO HISTORIA", new string[]
-        {
-            "Niveles superados", $"{completed} / {levels}",
-            "Estrellas", $"{p.TotalStars} / {levels * 3}",
-            "Monedas", p.coins.ToString(),
-            "Gemas", p.gems.ToString(),
-        });
-
-        Section(list, "POTENCIADORES", new string[]
-        {
-            GameManager.BoosterName(BoosterKind.Hammer), p.GetBoosters(BoosterKind.Hammer).ToString(),
-            GameManager.BoosterName(BoosterKind.Bomb), p.GetBoosters(BoosterKind.Bomb).ToString(),
-            GameManager.BoosterName(BoosterKind.Lightning), p.GetBoosters(BoosterKind.Lightning).ToString(),
-            GameManager.BoosterName(BoosterKind.Shuffle), p.GetBoosters(BoosterKind.Shuffle).ToString(),
-        });
-
-        TMP_Text[] ranked = Section(list, "CLASIFICATORIA", new string[]
-        {
-            "Rango", "...",
-            "Puntos", "...",
-            "Victorias / Derrotas", "...",
-        });
-
-        LoadRanked(name, ranked);
+        FillAchievements(view, 0, 0);
+        LoadRanked(view);
     }
 
-    private static async void LoadRanked(TMP_Text name, TMP_Text[] values)
+    // ------------------------------------------------------------------
+    // Cabecera
+    // ------------------------------------------------------------------
+
+    private static void BuildHeader(Transform parent, PlayerProgress p, View view)
+    {
+        Image card = UiKit.Card(parent, "Cabecera");
+        UiKit.Size(card, height: 430f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 36, 20f);
+        row.childForceExpandWidth = false;
+
+        // Avatar con marco y lápiz
+        GameObject avatarHolder = UiKit.Node(card.transform, "Avatar");
+        UiKit.Size(avatarHolder.transform, width: 300f);
+        Image frame = UiKit.Image(avatarHolder.transform, "Marco", Color.white, UiKit.PanelSprite());
+        frame.type = Image.Type.Sliced;
+        frame.preserveAspect = false;
+        RectTransform frameRect = frame.rectTransform;
+        frameRect.anchorMin = frameRect.anchorMax = new Vector2(0.5f, 0.5f);
+        frameRect.sizeDelta = new Vector2(300f, 300f);
+        Image avatar = UiKit.Image(frame.transform, "Imagen", Color.white, AvatarSprite(p.avatar));
+        avatar.raycastTarget = false;
+        UiKit.Stretch(avatar.rectTransform, 42f);
+        SmallIconButton(frame.transform, "UI/icon_pencil", new Vector2(1f, 0f), new Vector2(-18f, 18f), 96f, ChooseAvatar);
+
+        // Centro: nombre, ID, miembro desde
+        GameObject middle = UiKit.Node(card.transform, "Datos");
+        UiKit.Vertical(middle, 0, 10f, TextAnchor.MiddleLeft);
+        UiKit.Size(middle.transform, flexibleWidth: 1f);
+
+        GameObject nameRow = UiKit.Node(middle.transform, "Nombre");
+        HorizontalLayoutGroup nameLayout = UiKit.Horizontal(nameRow, 0, 12f, TextAnchor.MiddleLeft);
+        nameLayout.childForceExpandWidth = false;
+        UiKit.Size(nameRow.transform, height: 96f);
+        view.Name = UiKit.Text(nameRow.transform, "...", 62f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(view.Name, 0.2f);
+        UiKit.Size(view.Name, flexibleWidth: 1f);
+        UiKit.Size(SmallIconButton(nameRow.transform, "UI/icon_pencil", Vector2.zero, Vector2.zero, 0f, () => EditName(view)), width: 86f);
+
+        GameObject idRow = UiKit.Node(middle.transform, "Id");
+        HorizontalLayoutGroup idLayout = UiKit.Horizontal(idRow, 0, 12f, TextAnchor.MiddleLeft);
+        idLayout.childForceExpandWidth = false;
+        UiKit.Size(idRow.transform, height: 64f);
+        view.Id = UiKit.Text(idRow.transform, "ID: ...", 40f, UiKit.Muted, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(view.Id, 0.15f);
+        UiKit.Size(view.Id, flexibleWidth: 1f);
+        UiKit.Size(SmallIconButton(idRow.transform, "UI/icon_copy", Vector2.zero, Vector2.zero, 0f, () => CopyId(view)), width: 70f);
+
+        Image member = UiKit.Row(middle.transform, "Miembro");
+        UiKit.Size(member, height: 120f);
+        HorizontalLayoutGroup memberLayout = UiKit.Horizontal(member.gameObject, 16, 14f, TextAnchor.MiddleLeft);
+        memberLayout.childForceExpandWidth = false;
+        UiKit.Size(UiKit.Image(member.transform, "Corona", Color.white, UiKit.LoadSprite("UI/ach_champion")), width: 90f);
+        string since = p.createdUtc > 0
+            ? DateTimeOffset.FromUnixTimeSeconds(p.createdUtc).ToLocalTime().ToString("dd / MM / yyyy")
+            : DateTime.Now.ToString("dd / MM / yyyy");
+        TMP_Text memberText = UiKit.Text(member.transform, $"Miembro desde:\n<color=#FFFFFF>{since}</color>", 34f, UiKit.Muted,
+            FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(memberText, 0.12f);
+        UiKit.Size(memberText, flexibleWidth: 1f);
+
+        // Derecha: emblema de rango con cinta
+        GameObject rank = UiKit.Node(card.transform, "Rango");
+        UiKit.Vertical(rank, 0, -10f, TextAnchor.MiddleCenter);
+        UiKit.Size(rank.transform, width: 290f);
+        view.RankEmblem = UiKit.Image(rank.transform, "Emblema", Color.white, UiKit.RankEmblem(RankTiers.ForPoints(0)));
+        UiKit.Size(view.RankEmblem, height: 260f);
+
+        Image ribbon = UiKit.Image(rank.transform, "Cinta", Color.white, UiKit.ButtonSprite(UiKit.ButtonStyle.Blue));
+        ribbon.type = Image.Type.Sliced;
+        ribbon.preserveAspect = false;
+        UiKit.Size(ribbon, height: 92f);
+        view.RankName = UiKit.Text(ribbon.transform, "...", 42f, Color.white);
+        UiKit.Outline(view.RankName, 0.2f);
+        UiKit.Stretch(view.RankName.rectTransform, 16f);
+    }
+
+    private static Button SmallIconButton(Transform parent, string icon, Vector2 anchor, Vector2 position, float size, Action onClick)
+    {
+        Button button = UiKit.Button(parent, "", UiKit.ButtonStyle.Blue, onClick);
+        UnityEngine.Object.Destroy(button.GetComponentInChildren<TMP_Text>().gameObject);
+        Image image = UiKit.Image(button.transform, "Icono", Color.white, UiKit.LoadSprite(icon));
+        image.raycastTarget = false;
+        UiKit.Stretch(image.rectTransform, 20f);
+
+        if (size > 0f)
+        {
+            var rect = (RectTransform)button.transform;
+            rect.anchorMin = rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = new Vector2(size, size);
+        }
+        return button;
+    }
+
+    // ------------------------------------------------------------------
+    // Nivel y estadísticas
+    // ------------------------------------------------------------------
+
+    private static void BuildLevel(Transform parent, PlayerProgress p)
+    {
+        PlayerLevel.FromXp(p.xp, out int level, out int inLevel, out int next);
+
+        Image card = UiKit.Card(parent, "Nivel");
+        UiKit.Size(card, height: 160f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 36, 18f);
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = false;
+
+        UiKit.Size(UiKit.Image(card.transform, "Estrella", Color.white, UiKit.LoadSprite("UI/star_full")), width: 100f, height: 100f);
+        TMP_Text levelText = UiKit.Title(card.transform, $"<size=70%>Nivel</size> {level}", 64f);
+        UiKit.Size(levelText, width: 250f, height: 90f);
+
+        GameObject barHolder = UiKit.Node(card.transform, "Barra");
+        UiKit.Size(barHolder.transform, flexibleWidth: 1f, height: 60f);
+        UiKit.Vertical(barHolder, 0, 0f, TextAnchor.MiddleCenter);
+        RectTransform fill = UiKit.ProgressBar(barHolder.transform, 56f, out TMP_Text barLabel);
+        fill.anchorMax = new Vector2(Mathf.Clamp01(inLevel / (float)next), 1f);
+        barLabel.text = "";
+
+        TMP_Text xp = UiKit.Text(card.transform, $"{inLevel} / {next}", 40f, Color.white);
+        UiKit.Outline(xp, 0.18f);
+        UiKit.Size(xp, width: 210f, height: 60f);
+    }
+
+    private static void BuildStats(Transform parent, PlayerProgress p, View view)
+    {
+        Image card = UiKit.Card(parent, "Estadisticas");
+        UiKit.Size(card, height: 270f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 30, 6f);
+        row.childForceExpandWidth = true;
+
+        view.Played = Stat(card.transform, "UI/icon_swords", "Partidas jugadas", "...");
+        view.Wins = Stat(card.transform, "UI/nav_trophy", "Victorias", "...");
+        view.WinRate = Stat(card.transform, "UI/icon_target", "% de victorias", "...");
+        Stat(card.transform, "Minerals/amethyst", "Cristales", p.gems.ToString("N0"));
+    }
+
+    private static TMP_Text Stat(Transform parent, string icon, string label, string value)
+    {
+        GameObject column = UiKit.Node(parent, label);
+        UiKit.Vertical(column, 0, 2f, TextAnchor.MiddleCenter);
+        UiKit.Size(UiKit.Image(column.transform, "Icono", Color.white, UiKit.LoadSprite(icon)), height: 96f);
+        TMP_Text labelText = UiKit.Text(column.transform, label, 30f, Color.white);
+        UiKit.Outline(labelText, 0.12f);
+        UiKit.Size(labelText, height: 40f);
+        TMP_Text valueText = UiKit.Text(column.transform, value, 56f, Color.white);
+        UiKit.Outline(valueText, 0.2f);
+        UiKit.Size(valueText, height: 66f);
+        return valueText;
+    }
+
+    // ------------------------------------------------------------------
+    // Logros
+    // ------------------------------------------------------------------
+
+    private static void BuildAchievements(Transform parent, View view)
+    {
+        Image card = UiKit.Card(parent, "Logros");
+        UiKit.Size(card, height: 430f);
+        UiKit.Vertical(card.gameObject, 30, 6f);
+
+        GameObject title = UiKit.Node(card.transform, "Titulo");
+        HorizontalLayoutGroup titleRow = UiKit.Horizontal(title, 0, 14f);
+        titleRow.childForceExpandWidth = false;
+        UiKit.Size(title.transform, height: 76f);
+        UiKit.Size(UiKit.Image(title.transform, "Corona", Color.white, UiKit.LoadSprite("UI/coin")), width: 60f);
+        UiKit.Size(UiKit.Title(title.transform, "Logros destacados", 54f), width: 520f);
+
+        GameObject row = UiKit.Node(card.transform, "Fila");
+        UiKit.Horizontal(row, 0, 10f).childForceExpandWidth = true;
+        UiKit.Size(row.transform, height: 290f);
+        view.AchievementsRow = row.transform;
+    }
+
+    private static void FillAchievements(View view, int rankedWins, int rankedPoints)
+    {
+        if (view.AchievementsRow == null) return;
+        foreach (Transform child in view.AchievementsRow) UnityEngine.Object.Destroy(child.gameObject);
+
+        List<AchievementStatus> list = Achievements.Evaluate(SaveManager.Progress, LevelCatalog.Count, rankedWins, rankedPoints);
+        foreach (AchievementStatus a in list)
+        {
+            AchievementStatus achievement = a;
+            Image cell = UiKit.Image(view.AchievementsRow, achievement.Id, new Color(0f, 0f, 0f, 0f));
+            var button = cell.gameObject.AddComponent<Button>();
+            button.targetGraphic = cell;
+            button.onClick.AddListener(() => StoryPopup.Show(achievement.Name.Replace("\n", " "),
+                $"{achievement.Description}\n\nProgreso: <b>{achievement.Current} / {achievement.Target}</b>",
+                new StoryPopup.PopupButton("Cerrar", null)));
+
+            UiKit.Vertical(cell.gameObject, 0, 2f, TextAnchor.UpperCenter);
+            Image icon = UiKit.Image(cell.transform, "Escudo", achievement.Unlocked ? Color.white : new Color(0.35f, 0.35f, 0.4f, 0.8f),
+                UiKit.LoadSprite("UI/ach_" + achievement.Id));
+            icon.raycastTarget = false;
+            UiKit.Size(icon, height: 160f);
+
+            TMP_Text name = UiKit.Text(cell.transform, achievement.Name, 30f, achievement.Unlocked ? Color.white : UiKit.Muted);
+            UiKit.Outline(name, 0.15f);
+            UiKit.Size(name, height: 76f);
+
+            string state = achievement.Unlocked ? "<color=#66FF77>¡Logrado!</color>" : $"{achievement.Current} / {achievement.Target}";
+            TMP_Text progress = UiKit.Text(cell.transform, state, 28f, UiKit.Gold);
+            UiKit.Outline(progress, 0.15f);
+            UiKit.Size(progress, height: 40f);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Datos de clasificatoria (servidor)
+    // ------------------------------------------------------------------
+
+    private static async void LoadRanked(View view)
     {
         try
         {
             IRankedService service = RankedServices.Current;
             await service.SignInAsync();
             RankedProfile profile = await service.GetProfileAsync();
-            if (name == null) return; // la pantalla ya se cerró
+            if (view.Name == null) return; // la pantalla ya se cerró
 
-            name.text = profile.Name;
+            view.Profile = profile;
+            view.Name.text = profile.Name;
+            view.Id.text = "ID: #" + ShortId(profile.PlayerId);
+
             RankTier tier = profile.Tier;
-            values[0].text = $"<color=#{ColorUtility.ToHtmlStringRGB(UiKit.LeagueColor(tier.LeagueIndex))}>{tier.Name}</color>";
-            values[1].text = profile.Points.ToString();
-            values[2].text = $"{profile.Wins} / {profile.Losses}";
+            view.RankEmblem.sprite = UiKit.RankEmblem(tier);
+            view.RankName.text = tier.Name.ToUpperInvariant();
+
+            int played = profile.Wins + profile.Losses + profile.Draws;
+            view.Played.text = played.ToString("N0");
+            view.Wins.text = profile.Wins.ToString("N0");
+            view.WinRate.text = played > 0 ? $"{100f * profile.Wins / played:0.#}%" : "-";
+
+            FillAchievements(view, profile.Wins, profile.Points);
         }
         catch (Exception e)
         {
             Debug.LogWarning("Perfil: " + e.Message);
-            if (values[0] != null) values[0].text = "Sin conexión";
+            if (view.Name == null) return;
+            view.Name.text = "Sin conexión";
+            view.Played.text = view.Wins.text = view.WinRate.text = "-";
         }
     }
 
-    private static TMP_Text[] Section(Transform parent, string title, string[] pairs)
+    /// <summary>ID corto de 6 cifras a partir del ID del jugador (siempre el mismo).</summary>
+    public static string ShortId(string playerId)
     {
-        // pairs = { etiqueta1, valor1, etiqueta2, valor2, ... }
-        int count = pairs.Length / 2;
-        Image card = UiKit.Card(parent, title);
-        UiKit.Size(card, height: 110f + count * 70f);
-        UiKit.Vertical(card.gameObject, 34, 4f);
+        unchecked
+        {
+            int hash = 23;
+            foreach (char c in playerId ?? "") hash = hash * 31 + c;
+            return (100000 + (uint)hash % 900000).ToString();
+        }
+    }
 
-        TMP_Text header = UiKit.Text(card.transform, title, 42f, UiKit.Gold);
-        UiKit.Outline(header, 0.18f);
-        UiKit.Size(header, height: 56f);
+    private static void CopyId(View view)
+    {
+        if (view.Profile == null) return;
+        GUIUtility.systemCopyBuffer = "#" + ShortId(view.Profile.PlayerId);
+        StoryPopup.Show("ID copiado", $"#{ShortId(view.Profile.PlayerId)}", new StoryPopup.PopupButton("Genial", null));
+    }
 
-        var values = new TMP_Text[count];
+    private static void EditName(View view)
+    {
+        string current = view.Profile != null ? view.Profile.Name : "";
+        StoryPopup.ShowInput("Tu nombre",
+            $"De {RankedRules.NameMinLength} a {RankedRules.NameMaxLength} letras, números o _",
+            current, RankedRules.NameMaxLength, "Guardar", SaveName);
+    }
+
+    private static async void SaveName(string name)
+    {
+        if (RankedRules.NormalizeName(name) == null)
+        {
+            StoryPopup.Show("Nombre inválido",
+                $"Usa de {RankedRules.NameMinLength} a {RankedRules.NameMaxLength} letras, números o _ (sin símbolos).",
+                new StoryPopup.PopupButton("Entendido", null));
+            return;
+        }
+
+        try
+        {
+            await RankedServices.Current.SetNameAsync(name);
+            MenuScreens.Refresh();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Cambiar nombre: " + e.Message);
+            StoryPopup.Show("No se pudo cambiar el nombre", "Revisa tu conexión e inténtalo otra vez.",
+                new StoryPopup.PopupButton("Cerrar", null));
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Avatares
+    // ------------------------------------------------------------------
+
+    public static int AvatarCount
+    {
+        get
+        {
+            int custom = 0;
+            while (custom < MaxCustomAvatars && Resources.Load<Texture2D>($"UI/Avatars/avatar_{custom + 1}") != null) custom++;
+            return custom > 0 ? custom : FallbackAvatars.Length;
+        }
+    }
+
+    public static Sprite AvatarSprite(int index)
+    {
+        Sprite custom = UiKit.LoadSprite($"UI/Avatars/avatar_{index + 1}");
+        if (custom != null) return custom;
+        int i = Mathf.Clamp(index, 0, FallbackAvatars.Length - 1);
+        return UiKit.LoadSprite(FallbackAvatars[i]);
+    }
+
+    private static void ChooseAvatar()
+    {
+        int count = AvatarCount;
+        var cells = new List<StoryPopup.PopupButton>();
         for (int i = 0; i < count; i++)
         {
-            string labelText = pairs[i * 2];
-            string valueText = pairs[i * 2 + 1];
-            Image row = UiKit.Row(card.transform, labelText);
-            UiKit.Size(row, height: 64f);
-            UiKit.Horizontal(row.gameObject, 24, 10f).childForceExpandWidth = true;
-            TMP_Text label = UiKit.Text(row.transform, labelText, 34f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
-            UiKit.Outline(label, 0.12f);
-            values[i] = UiKit.Text(row.transform, valueText, 36f, UiKit.Gold, FontStyles.Normal, TextAlignmentOptions.Right);
-            UiKit.Outline(values[i], 0.15f);
+            int index = i;
+            cells.Add(new StoryPopup.PopupButton(AvatarSprite(i), () =>
+            {
+                SaveManager.Progress.avatar = index;
+                SaveManager.Save();
+                MenuScreens.Refresh();
+            }));
         }
-        return values;
+        StoryPopup.ShowGrid("Elige tu avatar", "", cells, 4, new StoryPopup.PopupButton("Cerrar", null));
     }
 }

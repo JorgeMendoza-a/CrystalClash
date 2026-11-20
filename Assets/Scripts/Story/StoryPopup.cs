@@ -17,11 +17,23 @@ public static class StoryPopup
         public Action OnClick;
         public bool Interactable;
 
+        /// <summary>Imagen opcional dentro del botón (p. ej. para elegir avatar).</summary>
+        public Sprite Icon;
+
         public PopupButton(string label, Action onClick, bool interactable = true)
         {
             Label = label;
             OnClick = onClick;
             Interactable = interactable;
+            Icon = null;
+        }
+
+        public PopupButton(Sprite icon, Action onClick, bool interactable = true)
+        {
+            Label = "";
+            OnClick = onClick;
+            Interactable = interactable;
+            Icon = icon;
         }
     }
 
@@ -72,6 +84,51 @@ public static class StoryPopup
         {
             CreateButton(panel, button, 120f, 46f, UiKit.ButtonStyle.Gray);
         }
+    }
+
+    /// <summary>Popup con un campo de texto (p. ej. para cambiar el nombre).</summary>
+    public static void ShowInput(string title, string body, string initialText, int maxLength, string confirmLabel, Action<string> onConfirm)
+    {
+        Transform panel = CreatePanel(title, body);
+
+        Image box = CreateImage("Campo", panel, new Color(0.03f, 0.05f, 0.1f, 1f));
+        box.gameObject.AddComponent<LayoutElement>().preferredHeight = 120f;
+
+        // Se arma desactivado para que el campo no se inicialice sin sus partes.
+        box.gameObject.SetActive(false);
+
+        var area = new GameObject("Area", typeof(RectTransform), typeof(RectMask2D));
+        area.transform.SetParent(box.transform, false);
+        var areaRect = (RectTransform)area.transform;
+        areaRect.anchorMin = Vector2.zero;
+        areaRect.anchorMax = Vector2.one;
+        areaRect.offsetMin = new Vector2(26f, 14f);
+        areaRect.offsetMax = new Vector2(-26f, -14f);
+
+        TMP_Text placeholder = CreateText("Placeholder", area.transform, "Escribe aquí...", 48f, new Color(1f, 1f, 1f, 0.35f), FontStyles.Normal);
+        TMP_Text text = CreateText("Texto", area.transform, "", 48f, Color.white, FontStyles.Normal);
+        foreach (TMP_Text t in new[] { placeholder, text })
+        {
+            t.enableAutoSizing = false;
+            RectTransform r = t.rectTransform;
+            r.anchorMin = Vector2.zero;
+            r.anchorMax = Vector2.one;
+            r.offsetMin = Vector2.zero;
+            r.offsetMax = Vector2.zero;
+        }
+
+        var field = box.gameObject.AddComponent<TMP_InputField>();
+        field.textViewport = areaRect;
+        field.textComponent = text;
+        field.placeholder = placeholder;
+        field.characterLimit = maxLength;
+        field.lineType = TMP_InputField.LineType.SingleLine;
+        field.fontAsset = UiKit.GameFont != null ? UiKit.GameFont : text.font;
+        field.text = initialText ?? "";
+        box.gameObject.SetActive(true);
+
+        CreateButton(panel, new PopupButton(confirmLabel, () => onConfirm?.Invoke(field.text)), 130f, 50f, UiKit.ButtonStyle.Green);
+        CreateButton(panel, new PopupButton("Cancelar", null), 120f, 46f, UiKit.ButtonStyle.Gray);
     }
 
     public static void Close()
@@ -170,6 +227,20 @@ public static class StoryPopup
             Close();
             onClick?.Invoke();
         });
+
+        if (data.Icon != null)
+        {
+            Image icon = CreateImage("Icono", image.transform, Color.white);
+            icon.sprite = data.Icon;
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            RectTransform iconRect = icon.rectTransform;
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            iconRect.offsetMin = new Vector2(16f, 18f);
+            iconRect.offsetMax = new Vector2(-16f, -12f);
+            if (string.IsNullOrEmpty(data.Label)) return;
+        }
 
         TMP_Text label = CreateText("Label", image.transform, data.Label, fontSize, Color.white, FontStyles.Normal);
         UiKit.Outline(label, 0.2f);

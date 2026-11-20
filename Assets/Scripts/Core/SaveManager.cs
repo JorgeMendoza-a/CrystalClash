@@ -36,5 +36,11 @@ public static class SaveManager
         string json = PlayerPrefs.GetString(ProgressKey, "");
         progress = string.IsNullOrEmpty(json) ? null : JsonUtility.FromJson<PlayerProgress>(json);
         if (progress == null) progress = new PlayerProgress();
+
+        if (progress.createdUtc == 0)
+        {
+            progress.createdUtc = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            Save();
+        }
     }
 }
