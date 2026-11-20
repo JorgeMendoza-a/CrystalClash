@@ -9,6 +9,9 @@ using CrystalClash.Ranked.Logic;
 public class RankedProfile
 {
     public string PlayerId = "";
+
+    /// <summary>ID público en orden de registro (100001, 100002...). 0 = sin asignar.</summary>
+    public int ShortId;
     public string Name = "";
     public int Points;
     public int Wins;

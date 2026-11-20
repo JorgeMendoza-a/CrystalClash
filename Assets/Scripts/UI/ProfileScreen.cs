@@ -283,7 +283,7 @@ public static class ProfileScreen
 
             view.Profile = profile;
             view.Name.text = profile.Name;
-            view.Id.text = "ID: #" + ShortId(profile.PlayerId);
+            view.Id.text = "ID: #" + DisplayId(profile);
 
             RankTier tier = profile.Tier;
             view.RankEmblem.sprite = UiKit.RankEmblem(tier);
@@ -305,7 +305,13 @@ public static class ProfileScreen
         }
     }
 
-    /// <summary>ID corto de 6 cifras a partir del ID del jugador (siempre el mismo).</summary>
+    /// <summary>ID que se muestra: el número en orden de registro (100001...) que da el servidor.</summary>
+    public static string DisplayId(RankedProfile profile)
+    {
+        return profile.ShortId > 0 ? profile.ShortId.ToString() : ShortId(profile.PlayerId);
+    }
+
+    /// <summary>Respaldo si el servidor todavía no dio un número: 6 cifras a partir del ID del jugador.</summary>
     public static string ShortId(string playerId)
     {
         unchecked
@@ -319,8 +325,9 @@ public static class ProfileScreen
     private static void CopyId(View view)
     {
         if (view.Profile == null) return;
-        GUIUtility.systemCopyBuffer = "#" + ShortId(view.Profile.PlayerId);
-        StoryPopup.Show("ID copiado", $"#{ShortId(view.Profile.PlayerId)}", new StoryPopup.PopupButton("Genial", null));
+        string id = "#" + DisplayId(view.Profile);
+        GUIUtility.systemCopyBuffer = id;
+        StoryPopup.Show("ID copiado", id, new StoryPopup.PopupButton("Genial", null));
     }
 
     private static void EditName(View view)

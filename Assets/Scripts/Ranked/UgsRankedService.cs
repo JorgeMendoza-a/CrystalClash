@@ -65,6 +65,7 @@ public class UgsRankedService : IRankedService
         return new RankedProfile
         {
             PlayerId = dto.PlayerId,
+            ShortId = dto.ShortId,
             Name = dto.Name,
             Points = dto.Points,
             Wins = dto.Wins,
@@ -80,6 +81,7 @@ public class UgsRankedService : IRankedService
         return new RankedProfile
         {
             PlayerId = dto.PlayerId,
+            ShortId = dto.ShortId,
             Name = dto.Name,
             Points = dto.Points,
             Wins = dto.Wins,
@@ -244,6 +246,7 @@ public class UgsRankedService : IRankedService
     public class ProfileDto
     {
         public string PlayerId;
+        public int ShortId;
         public string Name;
         public int Points;
         public int Wins;

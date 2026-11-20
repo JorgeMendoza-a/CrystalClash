@@ -37,6 +37,8 @@ namespace CrystalClashRanked
 
         private const string ProfileKey = "ranked_profile";
         private const string QueueCustomId = "matchmaking";
+        private const string CountersCustomId = "counters";
+        private const string CountersKey = "player_ids";
         private const string QueueKey = "queue";
         private const string MatchKey = "state";
         private const int MaxRetries = 5;
@@ -457,6 +459,7 @@ namespace CrystalClashRanked
             return new ProfileDto
             {
                 PlayerId = playerId,
+                ShortId = profile.ShortId,
                 Name = profile.Name,
                 Points = profile.Points,
                 Wins = profile.Wins,
@@ -473,19 +476,57 @@ namespace CrystalClashRanked
 
         private async Task<(RankedProfileState profile, string writeLock)> LoadProfile(IExecutionContext context, IGameApiClient api, string playerId)
         {
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (profile, writeLock) = await ReadProfile(context, api, playerId);
+
+                if (profile == null)
+                {
+                    // Primera vez: perfil nuevo con su ID en orden y un nombre de minero.
+                    int id = await NextPlayerId(context, api);
+                    profile = new RankedProfileState { ShortId = id, Name = "Minero" + id, Points = RankedRules.StartingPoints };
+                }
+                else if (profile.ShortId > 0)
+                {
+                    return (profile, writeLock);
+                }
+                else
+                {
+                    // Cuentas creadas antes de que existieran los IDs: se les asigna ahora.
+                    profile.ShortId = await NextPlayerId(context, api);
+                }
+
+                if (await TrySaveProfile(context, api, playerId, profile, writeLock))
+                {
+                    var (saved, savedLock) = await ReadProfile(context, api, playerId);
+                    return (saved ?? profile, savedLock);
+                }
+                // Otro pedido guardó el perfil al mismo tiempo: lo leemos de nuevo (y el ID
+                // que sacamos queda sin usar, que no es problema).
+            }
+
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        private async Task<(RankedProfileState profile, string writeLock)> ReadProfile(IExecutionContext context, IGameApiClient api, string playerId)
+        {
             var response = await api.CloudSaveData.GetProtectedItemsAsync(
                 context, context.ServiceToken, context.ProjectId, playerId, new List<string> { ProfileKey }, null, default);
-
             Item item = response.Data.Results.FirstOrDefault(i => i.Key == ProfileKey);
-            if (item != null) return (Deserialize<RankedProfileState>(item.Value), item.WriteLock);
+            return item == null ? (null, null) : (Deserialize<RankedProfileState>(item.Value), item.WriteLock);
+        }
 
-            // Primera vez: perfil nuevo con un nombre de minero.
-            var profile = new RankedProfileState { Name = "Minero" + random.Next(1000, 9999), Points = RankedRules.StartingPoints };
-            await TrySaveProfile(context, api, playerId, profile, null);
-            var reloaded = await api.CloudSaveData.GetProtectedItemsAsync(
-                context, context.ServiceToken, context.ProjectId, playerId, new List<string> { ProfileKey }, null, default);
-            Item created = reloaded.Data.Results.FirstOrDefault(i => i.Key == ProfileKey);
-            return created != null ? (Deserialize<RankedProfileState>(created.Value), created.WriteLock) : (profile, null);
+        /// <summary>Entrega el siguiente ID (100001, 100002...). Con bloqueo para que nunca se repita.</summary>
+        private async Task<int> NextPlayerId(IExecutionContext context, IGameApiClient api)
+        {
+            for (int attempt = 0; attempt < MaxRetries * 2; attempt++)
+            {
+                var (counter, writeLock) = await LoadCustom<CounterState>(context, api, CountersCustomId, CountersKey);
+                int id = Math.Max(counter.NextPlayerId, CounterState.FirstPlayerId);
+                counter.NextPlayerId = id + 1;
+                if (await TrySaveCustom(context, api, CountersCustomId, CountersKey, counter, writeLock)) return id;
+            }
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
         }
 
         private async Task<bool> TrySaveProfile(IExecutionContext context, IGameApiClient api, string playerId, RankedProfileState profile, string writeLock)

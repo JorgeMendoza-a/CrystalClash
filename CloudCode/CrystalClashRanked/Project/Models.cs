@@ -9,12 +9,24 @@ namespace CrystalClashRanked
     /// <summary>Perfil de clasificatoria (datos protegidos del jugador).</summary>
     public class RankedProfileState
     {
+        /// <summary>ID público en orden de registro (100001, 100002...). 0 = aún sin asignar.</summary>
+        public int ShortId { get; set; }
+
         public string Name { get; set; } = "";
         public int Points { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int Draws { get; set; }
         public List<HistoryEntryDto> History { get; set; } = new List<HistoryEntryDto>();
+    }
+
+    /// <summary>Contador global de IDs de jugador.</summary>
+    public class CounterState
+    {
+        public const int FirstPlayerId = 100001;
+
+        /// <summary>El próximo ID que se va a entregar.</summary>
+        public int NextPlayerId { get; set; } = FirstPlayerId;
     }
 
     /// <summary>Cola de emparejamiento (dato global del juego).</summary>
@@ -71,6 +83,7 @@ namespace CrystalClashRanked
     public class ProfileDto
     {
         public string PlayerId { get; set; } = "";
+        public int ShortId { get; set; }
         public string Name { get; set; } = "";
         public int Points { get; set; }
         public int Wins { get; set; }

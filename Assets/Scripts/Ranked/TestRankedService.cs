@@ -234,6 +234,7 @@ public class TestRankedService : IRankedService
             profile = new RankedProfile
             {
                 PlayerId = "test-" + Guid.NewGuid().ToString("N").Substring(0, 8),
+                ShortId = 100001,
                 Name = "Minero" + UnityEngine.Random.Range(1000, 9999),
                 Points = RankedRules.StartingPoints
             };
