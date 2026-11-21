@@ -219,7 +219,8 @@ public class LeaderboardScreen : MonoBehaviour
         else
         {
             BuildPodium(entries);
-            for (int i = 3; i < entries.Count; i++) BuildRow(list, entries[i], false);
+            // Debajo del podio, la tabla completa (incluidos los 3 primeros).
+            for (int i = 0; i < entries.Count; i++) BuildRow(list, entries[i], false);
         }
 
         LeaderboardEntry mine = entries.Find(e => e.IsMe);
@@ -285,9 +286,11 @@ public class LeaderboardScreen : MonoBehaviour
         UiKit.Outline(pts, 0.2f);
         UiKit.Size(pts, height: 46f);
 
-        Image block = UiKit.Image(column.transform, "Bloque", blockColors[place], UiKit.LoadSliced("UI/row", 24, 160f));
-        block.type = Image.Type.Sliced;
-        block.preserveAspect = false;
+        // Bloque del podio: color sólido (dorado, plateado, bronce) con borde claro.
+        Image block = UiKit.Image(column.transform, "Bloque", blockColors[place]);
+        var edge = block.gameObject.AddComponent<UnityEngine.UI.Outline>();
+        edge.effectColor = Color.Lerp(blockColors[place], Color.white, 0.5f);
+        edge.effectDistance = new Vector2(4f, -4f);
         UiKit.Size(block, height: blockHeights[place]);
         TMP_Text number = UiKit.Title(block.transform, (place + 1).ToString(), 90f);
         UiKit.Stretch(number.rectTransform, 6f);
