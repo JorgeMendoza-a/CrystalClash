@@ -76,17 +76,17 @@ public static class ProfileScreen
 
         // Avatar con marco y lápiz
         GameObject avatarHolder = UiKit.Node(card.transform, "Avatar");
-        UiKit.Size(avatarHolder.transform, width: 300f);
+        UiKit.Size(avatarHolder.transform, width: 250f);
         Image frame = UiKit.Image(avatarHolder.transform, "Marco", Color.white, UiKit.PanelSprite());
         frame.type = Image.Type.Sliced;
         frame.preserveAspect = false;
         RectTransform frameRect = frame.rectTransform;
         frameRect.anchorMin = frameRect.anchorMax = new Vector2(0.5f, 0.5f);
-        frameRect.sizeDelta = new Vector2(300f, 300f);
+        frameRect.sizeDelta = new Vector2(230f, 230f);
         if (SeasonRules.TryParseBadge(p.avatarBadge, out int badgeSeason, out int badgeLeague))
         {
             // Foto de perfil: una insignia de temporada ganada.
-            RectTransform badge = SeasonBadge.Create(frame.transform, badgeSeason, badgeLeague, 250f);
+            RectTransform badge = SeasonBadge.Create(frame.transform, badgeSeason, badgeLeague, 190f);
             badge.anchorMin = badge.anchorMax = new Vector2(0.5f, 0.5f);
             badge.anchoredPosition = Vector2.zero;
         }
@@ -94,9 +94,9 @@ public static class ProfileScreen
         {
             Image avatar = UiKit.Image(frame.transform, "Imagen", Color.white, AvatarSprite(p.avatar));
             avatar.raycastTarget = false;
-            UiKit.Stretch(avatar.rectTransform, 42f);
+            UiKit.Stretch(avatar.rectTransform, 38f);
         }
-        SmallIconButton(frame.transform, "UI/icon_pencil", new Vector2(1f, 0f), new Vector2(-18f, 18f), 96f, () => ChooseAvatar(view));
+        SmallIconButton(frame.transform, "UI/icon_pencil", new Vector2(1f, 0f), new Vector2(-10f, 10f), 76f, () => ChooseAvatar(view));
 
         // Centro: nombre, ID, miembro desde
         GameObject middle = UiKit.Node(card.transform, "Datos");
