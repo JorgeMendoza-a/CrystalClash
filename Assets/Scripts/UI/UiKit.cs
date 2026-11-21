@@ -349,11 +349,17 @@ public static class UiKit
     {
         LayoutElement element = component.GetComponent<LayoutElement>();
         if (element == null) element = component.gameObject.AddComponent<LayoutElement>();
-        if (width >= 0f) element.preferredWidth = width;
+        if (width >= 0f)
+        {
+            element.preferredWidth = width;
+            // Un ancho fijo no crece (si no, un layout hijo con "expand" lo estira).
+            if (flexibleWidth < 0f) element.flexibleWidth = 0f;
+        }
         if (height >= 0f)
         {
             element.preferredHeight = height;
             element.minHeight = height;
+            element.flexibleHeight = 0f;
         }
         if (flexibleWidth >= 0f) element.flexibleWidth = flexibleWidth;
         return element;

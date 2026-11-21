@@ -13,10 +13,10 @@ using UnityEngine.UI;
 public static class LevelMapScreen
 {
     private const int NodesPerRow = 4;
-    private const float NodeSize = 160f;
-    private const float ColumnSpacing = 235f;
-    private const float RowSpacing = 290f;
-    private const float MapTopPadding = 130f;
+    private const float NodeSize = 136f;
+    private const float ColumnSpacing = 225f;
+    private const float RowSpacing = 245f;
+    private const float MapTopPadding = 100f;
 
     /// <summary>Mundo que se está mirando (null = el del nivel más alto desbloqueado).</summary>
     private static int? viewedWorld;
@@ -40,23 +40,27 @@ public static class LevelMapScreen
         VerticalLayoutGroup columnLayout = UiKit.Vertical(column, 0, 14f);
         columnLayout.childForceExpandHeight = false;
 
-        // Encabezado: estrellas del mundo + título
+        // Encabezado compacto: pastilla de estrellas + placa con el título
         GameObject header = UiKit.Node(column.transform, "Encabezado");
-        UiKit.Horizontal(header, 0, 16f).childForceExpandWidth = false;
-        UiKit.Size(header.transform, height: 150f);
+        HorizontalLayoutGroup headerRow = UiKit.Horizontal(header, 0, 14f);
+        headerRow.childForceExpandWidth = false;
+        headerRow.childForceExpandHeight = false;
+        UiKit.Size(header.transform, height: 96f);
 
-        Image starsBox = UiKit.Card(header.transform, "Estrellas");
-        UiKit.Size(starsBox, width: 300f);
-        UiKit.Horizontal(starsBox.gameObject, 26, 6f).childForceExpandWidth = false;
-        UiKit.Size(UiKit.Image(starsBox.transform, "Estrella", Color.white, UiKit.LoadSprite("UI/star_full")), width: 80f);
-        TMP_Text stars = UiKit.Text(starsBox.transform, $"{worldStars}<size=60%>/{world.LevelCount * 3}</size>", 52f, Color.white);
+        Image starsBox = UiKit.Row(header.transform, "Estrellas");
+        UiKit.Size(starsBox, width: 230f, height: 84f);
+        HorizontalLayoutGroup starsRow = UiKit.Horizontal(starsBox.gameObject, 0, 6f);
+        starsRow.childForceExpandWidth = false;
+        starsRow.padding = new RectOffset(16, 16, 10, 10);
+        UiKit.Size(UiKit.Image(starsBox.transform, "Estrella", Color.white, UiKit.LoadSprite("UI/star_full")), width: 60f);
+        TMP_Text stars = UiKit.Text(starsBox.transform, $"{worldStars}<size=65%><color=#C8D0E0>/{world.LevelCount * 3}</color></size>", 44f, Color.white);
         UiKit.Outline(stars, 0.2f);
         UiKit.Size(stars, flexibleWidth: 1f);
 
-        Image titleBox = UiKit.Card(header.transform, "Titulo");
-        UiKit.Size(titleBox, flexibleWidth: 1f);
-        UiKit.Vertical(titleBox.gameObject, 20, 0f, TextAnchor.MiddleCenter);
-        UiKit.Size(UiKit.Title(titleBox.transform, "MAPA DE NIVELES", 64f), height: 90f);
+        Image titleBox = UiKit.Row(header.transform, "Titulo");
+        UiKit.Size(titleBox, flexibleWidth: 1f, height: 84f);
+        UiKit.Vertical(titleBox.gameObject, 8, 0f, TextAnchor.MiddleCenter);
+        UiKit.Size(UiKit.Title(titleBox.transform, "MAPA DE NIVELES", 50f), height: 64f);
 
         // Zona del mapa con desplazamiento (el Mundo 4 tiene 40 niveles)
         GameObject mapArea = UiKit.Node(column.transform, "Zona");
@@ -94,29 +98,36 @@ public static class LevelMapScreen
         var contentRect = (RectTransform)scrollContent;
         contentRect.anchoredPosition = new Vector2(0f, Mathf.Max(0f, currentRow * RowSpacing - 300f));
 
-        // Selector de mundo
+        // Selector de mundo compacto: ◀ MUNDO 4 · NOMBRE ▶
         GameObject selector = UiKit.Node(column.transform, "Mundo");
-        UiKit.Horizontal(selector, 0, 14f).childForceExpandWidth = false;
-        UiKit.Size(selector.transform, height: 140f);
+        HorizontalLayoutGroup selectorRow = UiKit.Horizontal(selector, 0, 10f);
+        selectorRow.childForceExpandWidth = false;
+        selectorRow.childForceExpandHeight = false;
+        UiKit.Size(selector.transform, height: 104f);
 
-        Button prev = UiKit.Button(selector.transform, "<", UiKit.ButtonStyle.Gray, () => ShowWorld(worldNumber - 1), 60f);
-        UiKit.Size(prev, width: 130f);
+        Button prev = UiKit.Button(selector.transform, "<", UiKit.ButtonStyle.Blue, () => ShowWorld(worldNumber - 1), 48f);
+        UiKit.Size(prev, width: 96f, height: 96f);
         prev.interactable = worldNumber > 1;
+        if (!prev.interactable) prev.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.35f);
 
-        Image worldBox = UiKit.Card(selector.transform, "Nombre");
-        UiKit.Size(worldBox, flexibleWidth: 1f);
-        UiKit.Vertical(worldBox.gameObject, 18, 0f, TextAnchor.MiddleCenter);
-        TMP_Text worldTitle = UiKit.Text(worldBox.transform, $"MUNDO {world.Number}  <size=70%>· niveles {world.FirstLevel}-{world.LastLevel}</size>", 44f, Color.white);
+        Image worldBox = UiKit.Row(selector.transform, "Nombre");
+        UiKit.Size(worldBox, flexibleWidth: 1f, height: 96f);
+        UiKit.Vertical(worldBox.gameObject, 6, -2f, TextAnchor.MiddleCenter);
+        TMP_Text worldTitle = UiKit.Text(worldBox.transform,
+            $"MUNDO {world.Number} <color=#FFD040>· {world.Name}</color>", 34f, Color.white);
         UiKit.Outline(worldTitle, 0.18f);
-        UiKit.Size(worldTitle, height: 52f);
-        string subtitle = worldUnlocked ? world.Name : $"BLOQUEADO · supera el nivel {world.FirstLevel - 1}";
-        TMP_Text worldName = UiKit.Text(worldBox.transform, subtitle, 34f, worldUnlocked ? UiKit.Gold : UiKit.Muted);
-        UiKit.Outline(worldName, 0.18f);
-        UiKit.Size(worldName, height: 42f);
+        UiKit.Size(worldTitle, height: 46f);
+        string subtitle = worldUnlocked
+            ? $"Niveles {world.FirstLevel}-{world.LastLevel}"
+            : $"Bloqueado · supera el nivel {world.FirstLevel - 1}";
+        TMP_Text worldName = UiKit.Text(worldBox.transform, subtitle, 26f, worldUnlocked ? UiKit.Muted : new Color(1f, 0.55f, 0.5f));
+        UiKit.Outline(worldName, 0.15f);
+        UiKit.Size(worldName, height: 32f);
 
-        Button next = UiKit.Button(selector.transform, ">", UiKit.ButtonStyle.Gray, () => ShowWorld(worldNumber + 1), 60f);
-        UiKit.Size(next, width: 130f);
+        Button next = UiKit.Button(selector.transform, ">", UiKit.ButtonStyle.Blue, () => ShowWorld(worldNumber + 1), 48f);
+        UiKit.Size(next, width: 96f, height: 96f);
         next.interactable = worldNumber < worlds.Count;
+        if (!next.interactable) next.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.35f);
     }
 
     private static void ShowWorld(int number)
@@ -159,7 +170,7 @@ public static class LevelMapScreen
         RectTransform rect = rail.rectTransform;
         rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
         rect.anchoredPosition = (from + to) / 2f;
-        rect.sizeDelta = new Vector2(delta.magnitude + 40f, 70f);
+        rect.sizeDelta = new Vector2(delta.magnitude + 30f, 58f);
         rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
     }
 
@@ -190,7 +201,7 @@ public static class LevelMapScreen
             if (GameManager.Instance != null) GameManager.Instance.PlayLevel(n);
         });
 
-        TMP_Text label = UiKit.Text(node.transform, number.ToString(), 70f, unlocked ? Color.white : new Color(0.75f, 0.75f, 0.8f));
+        TMP_Text label = UiKit.Text(node.transform, number.ToString(), 58f, unlocked ? Color.white : new Color(0.75f, 0.75f, 0.8f));
         UiKit.Outline(label, 0.25f);
         UiKit.Stretch(label.rectTransform, 20f);
 
@@ -200,7 +211,7 @@ public static class LevelMapScreen
         starsRect.anchorMin = starsRect.anchorMax = new Vector2(0.5f, 0f);
         starsRect.pivot = new Vector2(0.5f, 1f);
         starsRect.anchoredPosition = new Vector2(0f, 12f);
-        starsRect.sizeDelta = new Vector2(180f, 56f);
+        starsRect.sizeDelta = new Vector2(150f, 46f);
         HorizontalLayoutGroup starsLayout = UiKit.Horizontal(starsRow, 0, 2f);
         starsLayout.childForceExpandWidth = true;
 
