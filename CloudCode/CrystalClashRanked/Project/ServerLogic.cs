@@ -92,6 +92,79 @@ namespace CrystalClashRanked
             "entrada_mina", "noche_minera", "cripta_maldita", "abismo_dragon"
         };
 
+        // ------------------------------------------------------------------
+        // Amigos
+        // ------------------------------------------------------------------
+
+        public const int MaxFriends = 50;
+        public const int MaxIncoming = 30;
+
+        public enum FriendResult { Sent, BecameFriends, AlreadyFriends, AlreadySent, Self, Full }
+
+        public static string ResultCode(FriendResult result)
+        {
+            switch (result)
+            {
+                case FriendResult.Sent: return "sent";
+                case FriendResult.BecameFriends: return "friends";
+                case FriendResult.AlreadyFriends: return "already_friends";
+                case FriendResult.AlreadySent: return "already_sent";
+                case FriendResult.Self: return "self";
+                default: return "full";
+            }
+        }
+
+        /// <summary>
+        /// Yo (me) le mando solicitud a other. Si él ya me había mandado una, somos
+        /// amigos directamente. Es idempotente: repetirlo no cambia nada.
+        /// </summary>
+        public static FriendResult SendRequest(string me, FriendsState mine, string other, FriendsState theirs)
+        {
+            if (me == other) return FriendResult.Self;
+            if (mine.Friends.Contains(other)) return FriendResult.AlreadyFriends;
+            if (mine.Incoming.Contains(other))
+            {
+                return MakeFriends(me, mine, other, theirs) ? FriendResult.BecameFriends : FriendResult.Full;
+            }
+            if (mine.Outgoing.Contains(other)) return FriendResult.AlreadySent;
+            if (mine.Friends.Count >= MaxFriends || theirs.Friends.Count >= MaxFriends || theirs.Incoming.Count >= MaxIncoming)
+            {
+                return FriendResult.Full;
+            }
+
+            mine.Outgoing.Add(other);
+            if (!theirs.Incoming.Contains(me)) theirs.Incoming.Add(me);
+            return FriendResult.Sent;
+        }
+
+        /// <summary>Acepto o rechazo la solicitud que me mandó other.</summary>
+        public static bool Respond(string me, FriendsState mine, string other, FriendsState theirs, bool accept)
+        {
+            if (!mine.Incoming.Contains(other) && !theirs.Outgoing.Contains(me)) return false;
+            if (accept) return MakeFriends(me, mine, other, theirs);
+
+            mine.Incoming.Remove(other);
+            theirs.Outgoing.Remove(me);
+            return true;
+        }
+
+        /// <summary>Quita la amistad o cancela cualquier solicitud entre los dos.</summary>
+        public static void Remove(string me, FriendsState mine, string other, FriendsState theirs)
+        {
+            mine.Friends.Remove(other); mine.Incoming.Remove(other); mine.Outgoing.Remove(other);
+            theirs.Friends.Remove(me); theirs.Incoming.Remove(me); theirs.Outgoing.Remove(me);
+        }
+
+        private static bool MakeFriends(string me, FriendsState mine, string other, FriendsState theirs)
+        {
+            mine.Incoming.Remove(other); mine.Outgoing.Remove(other);
+            theirs.Incoming.Remove(me); theirs.Outgoing.Remove(me);
+            if (mine.Friends.Count >= MaxFriends || theirs.Friends.Count >= MaxFriends) return false;
+            if (!mine.Friends.Contains(other)) mine.Friends.Add(other);
+            if (!theirs.Friends.Contains(me)) theirs.Friends.Add(me);
+            return true;
+        }
+
         /// <summary>Banner vacío (ninguno) o uno de la tienda.</summary>
         public static bool IsValidBanner(string banner)
         {

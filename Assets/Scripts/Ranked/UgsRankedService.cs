@@ -220,6 +220,40 @@ public class UgsRankedService : IRankedService
         return await Call<List<SeasonReward>>("ClaimRewards") ?? new List<SeasonReward>();
     }
 
+    public async Task<FriendsList> GetFriendsAsync()
+    {
+        await SignInAsync();
+        return Clean(await Call<FriendsList>("GetFriends"));
+    }
+
+    public async Task<FriendsList> SendFriendRequestAsync(int shortId)
+    {
+        await SignInAsync();
+        return Clean(await Call<FriendsList>("SendFriendRequest", new Dictionary<string, object> { { "shortId", shortId } }));
+    }
+
+    public async Task<FriendsList> RespondFriendRequestAsync(string playerId, bool accept)
+    {
+        await SignInAsync();
+        return Clean(await Call<FriendsList>("RespondFriendRequest",
+            new Dictionary<string, object> { { "playerId", playerId }, { "accept", accept } }));
+    }
+
+    public async Task<FriendsList> RemoveFriendAsync(string playerId)
+    {
+        await SignInAsync();
+        return Clean(await Call<FriendsList>("RemoveFriend", new Dictionary<string, object> { { "playerId", playerId } }));
+    }
+
+    private static FriendsList Clean(FriendsList list)
+    {
+        list = list ?? new FriendsList();
+        list.Friends = list.Friends ?? new List<FriendInfo>();
+        list.Incoming = list.Incoming ?? new List<FriendInfo>();
+        list.Outgoing = list.Outgoing ?? new List<FriendInfo>();
+        return list;
+    }
+
     public async Task<List<MatchHistoryEntry>> GetHistoryAsync()
     {
         await SignInAsync();

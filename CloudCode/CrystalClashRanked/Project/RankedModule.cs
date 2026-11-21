@@ -42,6 +42,8 @@ namespace CrystalClashRanked
         private const string CountersCustomId = "counters";
         private const string CountersKey = "player_ids";
         private const string QueueKey = "queue";
+        private const string FriendsKey = "friends";
+        private const string PlayerIndexCustomId = "player_index";
         private const string MatchKey = "state";
         private const int MaxRetries = 5;
         private const int HistorySize = 20;
@@ -145,6 +147,150 @@ namespace CrystalClashRanked
                 if (await TrySaveProfile(context, api, me, profile, writeLock)) return ToDto(me, profile);
             }
             throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        // ==================================================================
+        // Amigos
+        // ==================================================================
+
+        /// <summary>Mis amigos y solicitudes (con nombre, foto, banner y puntos de cada uno).</summary>
+        [CloudCodeFunction("GetFriends")]
+        public async Task<FriendsDto> GetFriends(IExecutionContext context, IGameApiClient api)
+        {
+            await LoadProfile(context, api, context.PlayerId); // se asegura de que exista y esté en el índice
+            var (friends, _) = await LoadFriends(context, api, context.PlayerId);
+            return await ToFriendsDto(context, api, friends, "ok");
+        }
+
+        /// <summary>Manda solicitud al jugador con ese ID (100001...). Si él ya me la había mandado, quedamos como amigos.</summary>
+        [CloudCodeFunction("SendFriendRequest")]
+        public async Task<FriendsDto> SendFriendRequest(IExecutionContext context, IGameApiClient api, int shortId)
+        {
+            string me = context.PlayerId;
+            await LoadProfile(context, api, me);
+
+            string other = await FindPlayerByShortId(context, api, shortId);
+            if (other == null)
+            {
+                var (mine, _) = await LoadFriends(context, api, me);
+                return await ToFriendsDto(context, api, mine, "not_found");
+            }
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (mine, myLock) = await LoadFriends(context, api, me);
+                if (other == me) return await ToFriendsDto(context, api, mine, "self");
+                var (theirs, theirLock) = await LoadFriends(context, api, other);
+
+                ServerLogic.FriendResult result = ServerLogic.SendRequest(me, mine, other, theirs);
+                bool changed = result == ServerLogic.FriendResult.Sent || result == ServerLogic.FriendResult.BecameFriends;
+                if (!changed) return await ToFriendsDto(context, api, mine, ServerLogic.ResultCode(result));
+
+                // Se guardan los dos; si alguno chocó con otro cambio, se repite (las reglas son idempotentes).
+                if (!await TrySaveFriends(context, api, me, mine, myLock)) continue;
+                if (!await TrySaveFriends(context, api, other, theirs, theirLock)) continue;
+                return await ToFriendsDto(context, api, mine, ServerLogic.ResultCode(result));
+            }
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        /// <summary>Acepta (accept = true) o rechaza la solicitud de ese jugador.</summary>
+        [CloudCodeFunction("RespondFriendRequest")]
+        public async Task<FriendsDto> RespondFriendRequest(IExecutionContext context, IGameApiClient api, string playerId, bool accept)
+        {
+            return await ChangeFriendship(context, api, playerId, (me, mine, other, theirs) =>
+                ServerLogic.Respond(me, mine, other, theirs, accept) ? (accept ? "friends" : "ok") : "ok");
+        }
+
+        /// <summary>Quita a ese jugador de amigos (o cancela la solicitud que le mandé).</summary>
+        [CloudCodeFunction("RemoveFriend")]
+        public async Task<FriendsDto> RemoveFriend(IExecutionContext context, IGameApiClient api, string playerId)
+        {
+            return await ChangeFriendship(context, api, playerId, (me, mine, other, theirs) =>
+            {
+                ServerLogic.Remove(me, mine, other, theirs);
+                return "ok";
+            });
+        }
+
+        private async Task<FriendsDto> ChangeFriendship(IExecutionContext context, IGameApiClient api, string other,
+            Func<string, FriendsState, string, FriendsState, string> change)
+        {
+            string me = context.PlayerId;
+            if (string.IsNullOrEmpty(other) || other.Length > 64 || other == me) throw new Exception("Jugador inválido.");
+
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (mine, myLock) = await LoadFriends(context, api, me);
+                var (theirs, theirLock) = await LoadFriends(context, api, other);
+                string result = change(me, mine, other, theirs);
+                if (!await TrySaveFriends(context, api, me, mine, myLock)) continue;
+                if (!await TrySaveFriends(context, api, other, theirs, theirLock)) continue;
+                return await ToFriendsDto(context, api, mine, result);
+            }
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        private static string IndexKey(int shortId) => "p" + shortId;
+
+        private async Task<string> FindPlayerByShortId(IExecutionContext context, IGameApiClient api, int shortId)
+        {
+            if (shortId < CounterState.FirstPlayerId || shortId > 99999999) return null;
+            var response = await api.CloudSaveData.GetCustomItemsAsync(
+                context, context.ServiceToken, context.ProjectId, PlayerIndexCustomId, new List<string> { IndexKey(shortId) }, null, default);
+            Item item = response.Data.Results.FirstOrDefault(i => i.Key == IndexKey(shortId));
+            if (item == null || item.Value == null) return null;
+            string id = item.Value is string s ? s : (item.Value is JToken token ? token.ToString() : item.Value.ToString());
+            return string.IsNullOrEmpty(id) ? null : id.Trim('"');
+        }
+
+        private async Task<(FriendsState friends, string writeLock)> LoadFriends(IExecutionContext context, IGameApiClient api, string playerId)
+        {
+            var response = await api.CloudSaveData.GetProtectedItemsAsync(
+                context, context.ServiceToken, context.ProjectId, playerId, new List<string> { FriendsKey }, null, default);
+            Item item = response.Data.Results.FirstOrDefault(i => i.Key == FriendsKey);
+            return item == null ? (new FriendsState(), null) : (Deserialize<FriendsState>(item.Value), item.WriteLock);
+        }
+
+        private async Task<bool> TrySaveFriends(IExecutionContext context, IGameApiClient api, string playerId, FriendsState friends, string writeLock)
+        {
+            try
+            {
+                await api.CloudSaveData.SetProtectedItemAsync(
+                    context, context.ServiceToken, context.ProjectId, playerId,
+                    new SetItemBody(FriendsKey, JsonConvert.SerializeObject(friends), writeLock), default);
+                return true;
+            }
+            catch (ApiException e) when (IsConflict(e))
+            {
+                return false;
+            }
+        }
+
+        /// <summary>Completa los datos de cada jugador de las listas (se leen en paralelo).</summary>
+        private async Task<FriendsDto> ToFriendsDto(IExecutionContext context, IGameApiClient api, FriendsState state, string result)
+        {
+            var ids = state.Friends.Concat(state.Incoming).Concat(state.Outgoing).Distinct().ToList();
+            var profiles = await Task.WhenAll(ids.Select(async id => (id, (await ReadProfile(context, api, id)).profile)));
+            var byId = profiles.Where(p => p.profile != null).ToDictionary(p => p.id, p => p.profile);
+
+            List<FriendDto> Map(List<string> list) => list.Where(byId.ContainsKey).Select(id => new FriendDto
+            {
+                PlayerId = id,
+                ShortId = byId[id].ShortId,
+                Name = byId[id].Name,
+                Avatar = byId[id].Avatar ?? "a0",
+                Banner = byId[id].Banner ?? "",
+                Points = byId[id].Points
+            }).ToList();
+
+            return new FriendsDto
+            {
+                Result = result,
+                Friends = Map(state.Friends).OrderByDescending(f => f.Points).ToList(),
+                Incoming = Map(state.Incoming),
+                Outgoing = Map(state.Outgoing)
+            };
         }
 
         [CloudCodeFunction("FindMatch")]
@@ -608,6 +754,14 @@ namespace CrystalClashRanked
 
                 int seasonBefore = profile.Season;
                 if (ServerLogic.ApplySeason(profile, Now)) changed = true;
+
+                // Índice ID corto -> jugador (para poder agregarlo como amigo por su ID).
+                if (!profile.Indexed)
+                {
+                    await SaveCustom(context, api, PlayerIndexCustomId, IndexKey(profile.ShortId), playerId, null);
+                    profile.Indexed = true;
+                    changed = true;
+                }
 
                 if (!changed) return (profile, writeLock);
 

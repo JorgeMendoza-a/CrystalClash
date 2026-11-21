@@ -217,6 +217,48 @@ public class TestRankedService : IRankedService
 
     // ------------------------------------------------------------------
 
+    // Amigos simulados (modo prueba): agregar un ID crea un amigo falso al instante.
+    private static readonly FriendsList testFriends = new FriendsList();
+
+    public Task<FriendsList> GetFriendsAsync()
+    {
+        testFriends.Result = "ok";
+        return Task.FromResult(testFriends);
+    }
+
+    public Task<FriendsList> SendFriendRequestAsync(int shortId)
+    {
+        LoadProfile();
+        if (shortId == profile.ShortId) testFriends.Result = "self";
+        else if (testFriends.Friends.Exists(f => f.ShortId == shortId)) testFriends.Result = "already_friends";
+        else
+        {
+            testFriends.Friends.Add(new FriendInfo
+            {
+                PlayerId = "test" + shortId,
+                ShortId = shortId,
+                Name = BotNames[UnityEngine.Random.Range(0, BotNames.Length)],
+                Avatar = "a" + UnityEngine.Random.Range(0, 8),
+                Points = UnityEngine.Random.Range(0, 2500)
+            });
+            testFriends.Result = "friends";
+        }
+        return Task.FromResult(testFriends);
+    }
+
+    public Task<FriendsList> RespondFriendRequestAsync(string playerId, bool accept)
+    {
+        testFriends.Result = "ok";
+        return Task.FromResult(testFriends);
+    }
+
+    public Task<FriendsList> RemoveFriendAsync(string playerId)
+    {
+        testFriends.Friends.RemoveAll(f => f.PlayerId == playerId);
+        testFriends.Result = "ok";
+        return Task.FromResult(testFriends);
+    }
+
     private static void PlayBotMove(BotMatch bot)
     {
         if (bot.MovesLeft <= 0) return;

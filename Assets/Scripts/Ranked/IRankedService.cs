@@ -98,7 +98,6 @@ public interface IRankedService
     /// <summary>Cambia el nombre de clasificatoria. Lanza una excepción con el motivo si no es válido.</summary>
     Task<RankedProfile> SetNameAsync(string name);
 
-    /// <summary>Cambia la foto de perfil que ven los rivales ("a3" o una insignia ganada).</summary>
     /// <summary>Foto de perfil y banner (los ve el rival en la pantalla de VS).</summary>
     Task SetCosmeticsAsync(string avatar, string banner);
 
@@ -121,6 +120,35 @@ public interface IRankedService
     /// <summary>Recoge las recompensas pendientes (subir de rango, fin de temporada) y las borra del servidor.</summary>
     Task<List<SeasonReward>> ClaimRewardsAsync();
     Task<List<MatchHistoryEntry>> GetHistoryAsync();
+
+    // Amigos (todas devuelven la lista actualizada; Result dice qué pasó)
+    Task<FriendsList> GetFriendsAsync();
+    Task<FriendsList> SendFriendRequestAsync(int shortId);
+    Task<FriendsList> RespondFriendRequestAsync(string playerId, bool accept);
+    Task<FriendsList> RemoveFriendAsync(string playerId);
+}
+
+/// <summary>Un amigo o una solicitud (mismos nombres que FriendDto del servidor).</summary>
+[Serializable]
+public class FriendInfo
+{
+    public string PlayerId = "";
+    public int ShortId;
+    public string Name = "";
+    public string Avatar = "a0";
+    public string Banner = "";
+    public int Points;
+}
+
+/// <summary>Amigos y solicitudes (mismos nombres que FriendsDto del servidor).</summary>
+[Serializable]
+public class FriendsList
+{
+    /// <summary>"ok", "sent", "friends", "already_friends", "already_sent", "self", "not_found", "full".</summary>
+    public string Result = "ok";
+    public List<FriendInfo> Friends = new List<FriendInfo>();
+    public List<FriendInfo> Incoming = new List<FriendInfo>();
+    public List<FriendInfo> Outgoing = new List<FriendInfo>();
 }
 
 /// <summary>Elige la implementación del servicio de clasificatoria.</summary>

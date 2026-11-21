@@ -24,6 +24,9 @@ public static class ServerLogicTests
         Run(nameof(Peak_GivesRewardsAndBadgesOnce), Peak_GivesRewardsAndBadgesOnce);
         Run(nameof(Avatar_OnlyOwnedBadges), Avatar_OnlyOwnedBadges);
         Run(nameof(Shop_AvatarsAndBanners), Shop_AvatarsAndBanners);
+        Run(nameof(Friends_RequestAcceptRemove), Friends_RequestAcceptRemove);
+        Run(nameof(Friends_CrossRequestsBecomeFriends), Friends_CrossRequestsBecomeFriends);
+        Run(nameof(Friends_LimitsAndSelf), Friends_LimitsAndSelf);
         Console.WriteLine(failures == 0 ? "Todos los tests del servidor pasaron." : $"{failures} test(s) fallaron.");
         return failures;
     }
@@ -174,6 +177,39 @@ public static class ServerLogicTests
         {
             Check(ServerLogic.IsValidAvatar(p, ServerLogic.BotAvatar(random)) && ServerLogic.IsValidBanner(ServerLogic.BotBanner(random)), "bot valido");
         }
+    }
+
+    private static void Friends_RequestAcceptRemove()
+    {
+        var a = new FriendsState(); var b = new FriendsState();
+        Check(ServerLogic.SendRequest("a", a, "b", b) == ServerLogic.FriendResult.Sent, "solicitud enviada");
+        Check(a.Outgoing.Contains("b") && b.Incoming.Contains("a"), "listas de solicitudes");
+        Check(ServerLogic.SendRequest("a", a, "b", b) == ServerLogic.FriendResult.AlreadySent, "no se repite");
+        Check(ServerLogic.Respond("b", b, "a", a, true), "aceptar");
+        Check(a.Friends.Contains("b") && b.Friends.Contains("a"), "son amigos");
+        Check(a.Outgoing.Count == 0 && b.Incoming.Count == 0, "solicitudes limpias");
+        Check(ServerLogic.SendRequest("a", a, "b", b) == ServerLogic.FriendResult.AlreadyFriends, "ya amigos");
+        ServerLogic.Remove("a", a, "b", b);
+        Check(a.Friends.Count == 0 && b.Friends.Count == 0, "eliminado de los dos lados");
+
+        ServerLogic.SendRequest("a", a, "b", b);
+        Check(ServerLogic.Respond("b", b, "a", a, false) && !a.Outgoing.Contains("b") && !b.Incoming.Contains("a") && b.Friends.Count == 0, "rechazar");
+    }
+
+    private static void Friends_CrossRequestsBecomeFriends()
+    {
+        var a = new FriendsState(); var b = new FriendsState();
+        ServerLogic.SendRequest("a", a, "b", b);
+        Check(ServerLogic.SendRequest("b", b, "a", a) == ServerLogic.FriendResult.BecameFriends, "solicitud cruzada");
+        Check(a.Friends.Contains("b") && b.Friends.Contains("a") && a.Outgoing.Count == 0 && b.Incoming.Count == 0, "amigos directos");
+    }
+
+    private static void Friends_LimitsAndSelf()
+    {
+        var a = new FriendsState(); var b = new FriendsState();
+        Check(ServerLogic.SendRequest("a", a, "a", a) == ServerLogic.FriendResult.Self, "uno mismo");
+        for (int i = 0; i < ServerLogic.MaxFriends; i++) a.Friends.Add("x" + i);
+        Check(ServerLogic.SendRequest("a", a, "b", b) == ServerLogic.FriendResult.Full && b.Incoming.Count == 0, "lista llena");
     }
 
     private static void Run(string name, Action test)

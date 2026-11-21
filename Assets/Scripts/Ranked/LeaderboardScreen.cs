@@ -180,10 +180,14 @@ public class LeaderboardScreen : MonoBehaviour
         {
             Load();
         }
+        else if (tab == 1)
+        {
+            LoadFriends();
+        }
         else
         {
             Clear();
-            Message(tab == 1 ? "Muy pronto podrás agregar amigos\ny ver su clasificación aquí." : "La tabla semanal llegará pronto.");
+            Message("La tabla semanal llegará pronto.");
         }
     }
 
@@ -206,6 +210,40 @@ public class LeaderboardScreen : MonoBehaviour
         {
             if (this == null || tab != 0) return;
             Debug.LogWarning("Tabla de posiciones: " + e.Message);
+            Clear();
+            Message("No se pudo cargar.\nRevisa tu internet.");
+        }
+    }
+
+    /// <summary>Pestaña Amigos: tú y tus amigos ordenados por puntos.</summary>
+    private async void LoadFriends()
+    {
+        Clear();
+        Message("Cargando...");
+        try
+        {
+            FriendsList friends = await service.GetFriendsAsync();
+            if (this == null || tab != 1) return;
+            Clear();
+
+            var entries = new List<LeaderboardEntry>();
+            foreach (FriendInfo f in friends.Friends) entries.Add(new LeaderboardEntry { Name = f.Name, Points = f.Points });
+            if (me != null) entries.Add(new LeaderboardEntry { Name = me.Name, Points = me.Points, IsMe = true });
+            entries.Sort((a, b) => b.Points.CompareTo(a.Points));
+            for (int i = 0; i < entries.Count; i++) entries[i].Rank = i + 1;
+
+            if (friends.Friends.Count == 0)
+            {
+                Message("Todavía no tienes amigos.\nAgrégalos desde tu <b>Perfil → VER AMIGOS</b> con su ID.");
+                BuildFooter(entries.Find(e => e.IsMe));
+                return;
+            }
+            Fill(entries);
+        }
+        catch (Exception e)
+        {
+            if (this == null || tab != 1) return;
+            Debug.LogWarning("Tabla de amigos: " + e.Message);
             Clear();
             Message("No se pudo cargar.\nRevisa tu internet.");
         }

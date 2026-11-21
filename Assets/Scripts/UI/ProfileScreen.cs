@@ -48,6 +48,7 @@ public static class ProfileScreen
         BuildHeader(list, p, view);
         BuildLevel(list, p);
         BuildAccount(list);
+        BuildFriends(list, root);
         BuildStats(list, p, view);
         BuildAchievements(list, view);
         BuildBadges(list, view);
@@ -209,6 +210,25 @@ public static class ProfileScreen
             UiKit.Size(UiKit.Button(card.transform, "VINCULAR CON GOOGLE", UiKit.ButtonStyle.Green, AccountLink.StartLink, 34f),
                 width: 400f, height: 96f);
         }
+    }
+
+    /// <summary>Acceso a Amigos (agregar por ID, solicitudes, lista).</summary>
+    private static void BuildFriends(Transform parent, Transform screenRoot)
+    {
+        Image card = UiKit.Card(parent, "Amigos");
+        UiKit.Size(card, height: 150f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 30, 18f);
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = false;
+        row.childAlignment = TextAnchor.MiddleLeft;
+
+        TMP_Text info = UiKit.Text(card.transform, "<b>Amigos</b>\n<size=75%>Agrégalos con su ID y compitan en la tabla</size>",
+            38f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(info, 0.15f);
+        UiKit.Size(info, flexibleWidth: 1f, height: 100f);
+
+        UiKit.Size(UiKit.Button(card.transform, "VER AMIGOS", UiKit.ButtonStyle.Purple, () => FriendsScreen.Open(screenRoot), 36f),
+            width: 400f, height: 96f);
     }
 
     private static void BuildLevel(Transform parent, PlayerProgress p)

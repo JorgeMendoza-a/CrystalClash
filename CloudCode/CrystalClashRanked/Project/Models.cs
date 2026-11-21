@@ -35,6 +35,21 @@ namespace CrystalClashRanked
 
         /// <summary>Recompensas que el juego todavía no recogió (monedas/gemas y aviso).</summary>
         public List<SeasonReward> PendingRewards { get; set; } = new List<SeasonReward>();
+
+        /// <summary>True cuando su ID corto ya está en el índice (para buscarlo al agregar amigos).</summary>
+        public bool Indexed { get; set; }
+    }
+
+    /// <summary>Amigos y solicitudes de un jugador (datos protegidos del jugador). Guarda PlayerIds.</summary>
+    public class FriendsState
+    {
+        public List<string> Friends { get; set; } = new List<string>();
+
+        /// <summary>Solicitudes que me mandaron (esperan mi respuesta).</summary>
+        public List<string> Incoming { get; set; } = new List<string>();
+
+        /// <summary>Solicitudes que yo mandé.</summary>
+        public List<string> Outgoing { get; set; } = new List<string>();
     }
 
     /// <summary>Contador global de IDs de jugador.</summary>
@@ -123,6 +138,26 @@ namespace CrystalClashRanked
         public int Season { get; set; }
         public int SeasonPeakPoints { get; set; }
         public List<string> Badges { get; set; } = new List<string>();
+    }
+
+    /// <summary>Un amigo (o solicitud) como lo ve el juego.</summary>
+    public class FriendDto
+    {
+        public string PlayerId { get; set; } = "";
+        public int ShortId { get; set; }
+        public string Name { get; set; } = "";
+        public string Avatar { get; set; } = "a0";
+        public string Banner { get; set; } = "";
+        public int Points { get; set; }
+    }
+
+    public class FriendsDto
+    {
+        /// <summary>Resultado de la última acción: "ok", "sent", "friends", "already_friends", "already_sent", "self", "not_found", "full".</summary>
+        public string Result { get; set; } = "ok";
+        public List<FriendDto> Friends { get; set; } = new List<FriendDto>();
+        public List<FriendDto> Incoming { get; set; } = new List<FriendDto>();
+        public List<FriendDto> Outgoing { get; set; } = new List<FriendDto>();
     }
 
     public class MatchmakingDto
