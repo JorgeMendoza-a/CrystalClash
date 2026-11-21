@@ -31,6 +31,8 @@ public class RankedScreen : MonoBehaviour
     private TMP_Text perMatchText;
     private Button searchButton;
 
+    private Transform content;
+    private RankedProfile lastProfile;
     private CancellationTokenSource searchCancel;
     private bool searching;
 
@@ -38,6 +40,7 @@ public class RankedScreen : MonoBehaviour
     public void Init(Transform content)
     {
         service = RankedServices.Current;
+        this.content = content;
         Build(UiKit.ScrollArea(content, 14f));
     }
 
@@ -62,7 +65,8 @@ public class RankedScreen : MonoBehaviour
         {
             await service.SignInAsync();
             RankedProfile profile = await service.GetProfileAsync();
-            if (this == null) return;
+            if (this == null || status == null) return;
+            lastProfile = profile;
             ShowProfile(profile);
             status.text = service.IsTestMode
                 ? "<color=#FFB040>MODO PRUEBA: rival simulado, sin servidor</color>"
@@ -77,7 +81,7 @@ public class RankedScreen : MonoBehaviour
         }
         catch (Exception e)
         {
-            if (this == null) return;
+            if (this == null || status == null) return;
             status.text = "<color=#FF7070>No se pudo conectar. Revisa tu internet.</color>";
             Debug.LogWarning("Clasificatoria: " + e.Message);
         }
@@ -167,25 +171,15 @@ public class RankedScreen : MonoBehaviour
         }
     }
 
-    private async void OnLeaderboard()
+    private void OnLeaderboard()
     {
-        try
+        if (searching) return;
+        if (lastProfile == null)
         {
-            List<LeaderboardEntry> entries = await service.GetLeaderboardAsync(20);
-            var sb = new StringBuilder();
-            foreach (LeaderboardEntry e in entries)
-            {
-                string line = $"{e.Rank}. {e.Name} — {e.Points} ({RankTiers.ForPoints(e.Points).Name})";
-                sb.AppendLine(e.IsMe ? $"<color=#FFD040><b>{line}</b></color>" : line);
-            }
-            StoryPopup.Show("Tabla de posiciones", sb.Length > 0 ? sb.ToString() : "Todavía no hay jugadores.",
-                new StoryPopup.PopupButton("Cerrar", null));
+            StoryPopup.Show("Tabla de posiciones", "Conectando con el servidor...\nInténtalo en un momento.", new StoryPopup.PopupButton("Cerrar", null));
+            return;
         }
-        catch (Exception e)
-        {
-            Debug.LogWarning("Tabla de posiciones: " + e.Message);
-            StoryPopup.Show("Tabla de posiciones", "No se pudo cargar.", new StoryPopup.PopupButton("Cerrar", null));
-        }
+        LeaderboardScreen.Open(content, service, lastProfile);
     }
 
     private async void OnHistory()
@@ -395,7 +389,7 @@ public class RankedScreen : MonoBehaviour
         return $"Temporada {season}  ·  termina en {left.Days}d {left.Hours}h  <size=75%>(toca para ver premios)</size>";
     }
 
-    private static void ShowSeasonEndRewards()
+    public static void ShowSeasonEndRewards()
     {
         var sb = new StringBuilder();
         for (int i = RankTiers.Leagues.Count - 1; i >= 0; i--)
