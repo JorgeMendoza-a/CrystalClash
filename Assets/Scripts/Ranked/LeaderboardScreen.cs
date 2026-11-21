@@ -252,11 +252,17 @@ public class LeaderboardScreen : MonoBehaviour
     {
         float[] blockHeights = { 160f, 120f, 95f };
         float[] emblemSizes = { 190f, 160f, 150f };
-        Color[] blockColors =
+        Color[] blockTops =
         {
-            new Color(0.95f, 0.72f, 0.15f),
-            new Color(0.62f, 0.68f, 0.76f),
-            new Color(0.78f, 0.42f, 0.2f)
+            new Color(1f, 0.8f, 0.2f),
+            new Color(0.78f, 0.83f, 0.9f),
+            new Color(0.9f, 0.52f, 0.25f)
+        };
+        Color[] blockBottoms =
+        {
+            new Color(0.82f, 0.55f, 0.05f),
+            new Color(0.48f, 0.54f, 0.64f),
+            new Color(0.6f, 0.3f, 0.12f)
         };
 
         RankTier tier = RankTiers.ForPoints(entry.Points);
@@ -286,13 +292,34 @@ public class LeaderboardScreen : MonoBehaviour
         UiKit.Outline(pts, 0.2f);
         UiKit.Size(pts, height: 46f);
 
-        // Bloque del podio: color sólido (dorado, plateado, bronce) con borde claro.
-        Image block = UiKit.Image(column.transform, "Bloque", blockColors[place]);
-        var edge = block.gameObject.AddComponent<UnityEngine.UI.Outline>();
-        edge.effectColor = Color.Lerp(blockColors[place], Color.white, 0.5f);
-        edge.effectDistance = new Vector2(4f, -4f);
+        // Bloque del podio con relieve: base oscura, mitad de arriba más clara y brillo en el borde.
+        Color top = blockTops[place];
+        Color bottom = blockBottoms[place];
+        Image block = UiKit.Image(column.transform, "Bloque", bottom);
         UiKit.Size(block, height: blockHeights[place]);
-        TMP_Text number = UiKit.Title(block.transform, (place + 1).ToString(), 90f);
+        var edge = block.gameObject.AddComponent<UnityEngine.UI.Outline>();
+        edge.effectColor = new Color(0f, 0f, 0f, 0.6f);
+        edge.effectDistance = new Vector2(3f, -5f);
+
+        Image upper = UiKit.Image(block.transform, "Claro", top);
+        upper.raycastTarget = false;
+        RectTransform upperRect = upper.rectTransform;
+        upperRect.anchorMin = new Vector2(0f, 0.45f);
+        upperRect.anchorMax = Vector2.one;
+        upperRect.offsetMin = upperRect.offsetMax = Vector2.zero;
+
+        Image shine = UiKit.Image(block.transform, "Brillo", new Color(1f, 1f, 1f, 0.55f));
+        shine.raycastTarget = false;
+        RectTransform shineRect = shine.rectTransform;
+        shineRect.anchorMin = new Vector2(0f, 1f);
+        shineRect.anchorMax = Vector2.one;
+        shineRect.pivot = new Vector2(0.5f, 1f);
+        shineRect.sizeDelta = new Vector2(0f, 8f);
+        shineRect.anchoredPosition = Vector2.zero;
+
+        TMP_Text number = UiKit.Text(block.transform, (place + 1).ToString(), 96f, Color.white);
+        number.outlineColor = new Color32(30, 20, 10, 255);
+        number.outlineWidth = 0.3f;
         UiKit.Stretch(number.rectTransform, 6f);
     }
 
