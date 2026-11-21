@@ -220,10 +220,13 @@ public static class MenuScreens
     public static void ShowSettings()
     {
         bool testMode = UgsRankedService.TestModeEnabled;
+        bool linked = AccountLink.IsLinked;
         StoryPopup.Show("Ajustes",
+            $"Cuenta: <b>{(linked ? "vinculada (guardado en la nube)" : "invitado")}</b>\n" +
             $"Clasificatoria: <b>{(testMode ? "modo prueba (rival simulado)" : "en línea")}</b>\n\n" +
             "Crystal Clash\n<size=75%>Fuente: Lilita One (SIL Open Font License)</size>",
             new StoryPopup.PopupButton("Cerrar", null),
+            new StoryPopup.PopupButton(linked ? "Cuenta vinculada" : "Vincular con Google", AccountLink.StartLink, !linked),
             new StoryPopup.PopupButton(testMode ? "Usar clasificatoria en línea" : "Usar modo prueba", () =>
             {
                 UgsRankedService.TestModeEnabled = !testMode;

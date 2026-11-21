@@ -51,11 +51,29 @@ public class UgsRankedService : IRankedService
 
     public Task SignInAsync()
     {
+        return EnsureSignedInAsync();
+    }
+
+    /// <summary>Inicia Unity Gaming Services y la sesión (anónima o vinculada). Se puede llamar varias veces.</summary>
+    public static Task EnsureSignedInAsync()
+    {
         if (signInTask == null || signInTask.IsFaulted || signInTask.IsCanceled)
         {
             signInTask = SignInInternal();
         }
         return signInTask;
+    }
+
+    /// <summary>Olvida la sesión iniciada (al cambiar de cuenta).</summary>
+    public static void ResetSession()
+    {
+        signInTask = null;
+    }
+
+    /// <summary>Llama a una función del módulo de Cloud Code (para otros sistemas, como el guardado en la nube).</summary>
+    public static Task<T> CallModule<T>(string function, Dictionary<string, object> args = null)
+    {
+        return Call<T>(function, args);
     }
 
     public async Task<RankedProfile> GetProfileAsync()

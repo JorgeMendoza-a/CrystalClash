@@ -96,6 +96,14 @@ namespace CrystalClashRanked
     // Respuestas al juego
     // ------------------------------------------------------------------
 
+    /// <summary>Progreso del modo historia guardado en la nube (el JSON de PlayerProgress del juego).</summary>
+    public class StoryProgressDto
+    {
+        public bool Exists { get; set; }
+        public string Json { get; set; } = "";
+        public long SavedUtc { get; set; }
+    }
+
     public class ProfileDto
     {
         public string PlayerId { get; set; } = "";

@@ -17,7 +17,25 @@ public static class SaveManager
         }
     }
 
+    /// <summary>Se dispara cada vez que se guarda (para respaldar en la nube).</summary>
+    public static event System.Action Saved;
+
     public static void Save()
+    {
+        Progress.savedUtc = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        WriteLocal();
+        Saved?.Invoke();
+    }
+
+    /// <summary>Reemplaza el progreso (p. ej. con el de la nube) y lo guarda en el dispositivo.</summary>
+    public static void Replace(PlayerProgress newProgress)
+    {
+        if (newProgress == null) return;
+        progress = newProgress;
+        WriteLocal();
+    }
+
+    private static void WriteLocal()
     {
         PlayerPrefs.SetString(ProgressKey, JsonUtility.ToJson(Progress));
         PlayerPrefs.Save();

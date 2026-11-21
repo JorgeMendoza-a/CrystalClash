@@ -169,6 +169,52 @@ namespace CrystalClash.Story.Logic
         /// <summary>Especiales creados en total (para el logro "Maestro de Combos").</summary>
         public int specialsCreated;
 
+        /// <summary>Última vez que se guardó (segundos UTC). Sirve para juntar con la copia de la nube.</summary>
+        public long savedUtc;
+
+        /// <summary>Copia independiente (listas nuevas).</summary>
+        public PlayerProgress Clone()
+        {
+            var copy = (PlayerProgress)MemberwiseClone();
+            copy.stars = new List<int>(stars ?? new List<int>());
+            copy.boosters = boosters != null ? (int[])boosters.Clone() : null;
+            return copy;
+        }
+
+        /// <summary>
+        /// Junta dos copias del progreso (este dispositivo y la nube):
+        /// lo que solo sube (niveles, estrellas, experiencia, logros) se toma
+        /// el máximo; lo que se gasta (monedas, gemas, potenciadores, vidas) y
+        /// las preferencias se toman de la copia guardada más recientemente.
+        /// </summary>
+        public static PlayerProgress Merge(PlayerProgress a, PlayerProgress b)
+        {
+            if (a == null) return b?.Clone();
+            if (b == null) return a.Clone();
+
+            PlayerProgress newer = b.savedUtc > a.savedUtc ? b : a;
+            PlayerProgress older = ReferenceEquals(newer, a) ? b : a;
+            PlayerProgress result = newer.Clone();
+
+            result.highestUnlocked = Math.Max(a.highestUnlocked, b.highestUnlocked);
+            result.xp = Math.Max(a.xp, b.xp);
+            result.specialsCreated = Math.Max(a.specialsCreated, b.specialsCreated);
+            result.savedUtc = Math.Max(a.savedUtc, b.savedUtc);
+
+            if (older.createdUtc > 0 && (result.createdUtc == 0 || older.createdUtc < result.createdUtc))
+            {
+                result.createdUtc = older.createdUtc;
+            }
+
+            int levels = Math.Max(a.stars?.Count ?? 0, b.stars?.Count ?? 0);
+            result.stars = new List<int>(levels);
+            for (int i = 0; i < levels; i++)
+            {
+                result.stars.Add(Math.Max(a.GetStars(i + 1), b.GetStars(i + 1)));
+            }
+            return result;
+        }
+
         public const int XpStoryWin = 30;
         public const int XpPerStar = 10;
         public const int XpStoryLoss = 5;

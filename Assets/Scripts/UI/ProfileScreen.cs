@@ -47,6 +47,7 @@ public static class ProfileScreen
 
         BuildHeader(list, p, view);
         BuildLevel(list, p);
+        BuildAccount(list);
         BuildStats(list, p, view);
         BuildAchievements(list, view);
         BuildBadges(list, view);
@@ -171,6 +172,33 @@ public static class ProfileScreen
     // ------------------------------------------------------------------
     // Nivel y estadísticas
     // ------------------------------------------------------------------
+
+    /// <summary>Guardado en la nube: vincular con Google para no perder el progreso.</summary>
+    private static void BuildAccount(Transform parent)
+    {
+        bool linked = AccountLink.IsLinked;
+
+        Image card = UiKit.Card(parent, "Cuenta");
+        UiKit.Size(card, height: 150f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 30, 18f);
+        row.childForceExpandWidth = false;
+        row.childForceExpandHeight = false;
+        row.childAlignment = TextAnchor.MiddleLeft;
+
+        TMP_Text info = UiKit.Text(card.transform,
+            linked ? "<b>Cuenta vinculada</b>\n<size=75%>Tu progreso se guarda en la nube</size>"
+                   : "<b>Cuenta de invitado</b>\n<size=75%>Vincula para no perder tu progreso</size>",
+            38f, linked ? UiKit.Gold : Color.white);
+        info.alignment = TextAlignmentOptions.Left;
+        UiKit.Outline(info, 0.15f);
+        UiKit.Size(info, flexibleWidth: 1f, height: 100f);
+
+        if (!linked)
+        {
+            UiKit.Size(UiKit.Button(card.transform, "VINCULAR CON GOOGLE", UiKit.ButtonStyle.Green, AccountLink.StartLink, 34f),
+                width: 400f, height: 96f);
+        }
+    }
 
     private static void BuildLevel(Transform parent, PlayerProgress p)
     {

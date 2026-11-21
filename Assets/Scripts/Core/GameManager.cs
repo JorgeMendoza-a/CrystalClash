@@ -60,6 +60,8 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        CloudSync.StartSync();
+
         if (GameUI.Instance != null) GameUI.Instance.HideLegacyPanel();
 
         // La barra superior de la escena era de muestra (números fijos): la reemplazan los menús.

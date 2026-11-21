@@ -36,6 +36,8 @@ namespace CrystalClashRanked
         public const string LeaderboardId = "ranked_points";
 
         private const string ProfileKey = "ranked_profile";
+        private const string StoryProgressKey = "story_progress";
+        private const int MaxStoryProgressLength = 200_000;
         private const string QueueCustomId = "matchmaking";
         private const string CountersCustomId = "counters";
         private const string CountersKey = "player_ids";
@@ -82,6 +84,30 @@ namespace CrystalClashRanked
             }
 
             throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        /// <summary>Guarda el progreso del modo historia de este jugador (respaldo en la nube).</summary>
+        [CloudCodeFunction("SaveProgress")]
+        public async Task<bool> SaveProgress(IExecutionContext context, IGameApiClient api, string json, long savedUtc)
+        {
+            if (string.IsNullOrEmpty(json) || json.Length > MaxStoryProgressLength) throw new Exception("Progreso inválido.");
+            JToken.Parse(json); // que sea JSON válido
+
+            var dto = new StoryProgressDto { Exists = true, Json = json, SavedUtc = savedUtc };
+            await api.CloudSaveData.SetProtectedItemAsync(
+                context, context.ServiceToken, context.ProjectId, context.PlayerId,
+                new SetItemBody(StoryProgressKey, JsonConvert.SerializeObject(dto)), default);
+            return true;
+        }
+
+        /// <summary>Devuelve el progreso del modo historia guardado (Exists = false si no hay).</summary>
+        [CloudCodeFunction("LoadProgress")]
+        public async Task<StoryProgressDto> LoadProgress(IExecutionContext context, IGameApiClient api)
+        {
+            var response = await api.CloudSaveData.GetProtectedItemsAsync(
+                context, context.ServiceToken, context.ProjectId, context.PlayerId, new List<string> { StoryProgressKey }, null, default);
+            Item item = response.Data.Results.FirstOrDefault(i => i.Key == StoryProgressKey);
+            return item == null ? new StoryProgressDto { Exists = false } : Deserialize<StoryProgressDto>(item.Value);
         }
 
         /// <summary>Cambia la foto de perfil (la ve el rival en la pantalla de VS).</summary>
