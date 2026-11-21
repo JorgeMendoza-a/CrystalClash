@@ -84,6 +84,23 @@ namespace CrystalClashRanked
             throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
         }
 
+        /// <summary>Cambia la foto de perfil (la ve el rival en la pantalla de VS).</summary>
+        [CloudCodeFunction("SetAvatar")]
+        public async Task<ProfileDto> SetAvatar(IExecutionContext context, IGameApiClient api, string avatar)
+        {
+            string me = context.PlayerId;
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (profile, writeLock) = await LoadProfile(context, api, me);
+                if (!ServerLogic.IsValidAvatar(profile, avatar)) throw new Exception("Foto de perfil no disponible.");
+                if (profile.Avatar == avatar) return ToDto(me, profile);
+
+                profile.Avatar = avatar;
+                if (await TrySaveProfile(context, api, me, profile, writeLock)) return ToDto(me, profile);
+            }
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
         [CloudCodeFunction("FindMatch")]
         public async Task<MatchmakingDto> FindMatch(IExecutionContext context, IGameApiClient api)
         {
@@ -112,8 +129,8 @@ namespace CrystalClashRanked
                 if (opponent != null)
                 {
                     MatchState match = NewMatch(
-                        new MatchPlayer { PlayerId = opponent.PlayerId, Name = opponent.Name, PointsAtStart = opponent.Points },
-                        new MatchPlayer { PlayerId = me, Name = profile.Name, PointsAtStart = profile.Points });
+                        new MatchPlayer { PlayerId = opponent.PlayerId, Name = opponent.Name, Avatar = opponent.Avatar, PointsAtStart = opponent.Points },
+                        new MatchPlayer { PlayerId = me, Name = profile.Name, Avatar = profile.Avatar, PointsAtStart = profile.Points });
 
                     opponent.MatchId = match.MatchId;
                     opponent.LastPollUtc = now;
@@ -128,6 +145,7 @@ namespace CrystalClashRanked
                     Id = Guid.NewGuid().ToString("N"),
                     PlayerId = me,
                     Name = profile.Name,
+                    Avatar = profile.Avatar,
                     Points = profile.Points,
                     CreatedUtc = now,
                     LastPollUtc = now
@@ -174,11 +192,12 @@ namespace CrystalClashRanked
                     if (!await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock)) continue;
 
                     MatchState match = NewMatch(
-                        new MatchPlayer { PlayerId = me, Name = ticket.Name, PointsAtStart = ticket.Points },
+                        new MatchPlayer { PlayerId = me, Name = ticket.Name, Avatar = ticket.Avatar, PointsAtStart = ticket.Points },
                         new MatchPlayer
                         {
                             PlayerId = "bot",
                             Name = ServerLogic.BotNamePrefix + "Minero" + random.Next(100, 999),
+                            Avatar = "a" + random.Next(0, 8),
                             PointsAtStart = ticket.Points,
                             IsBot = true
                         });
@@ -383,6 +402,7 @@ namespace CrystalClashRanked
                 MatchId = match.MatchId,
                 Seed = match.Seed,
                 OpponentName = other.Name,
+                OpponentAvatar = other.Avatar,
                 OpponentPoints = other.PointsAtStart,
                 OpponentIsBot = other.IsBot
             };
@@ -497,6 +517,7 @@ namespace CrystalClashRanked
             {
                 PlayerId = playerId,
                 ShortId = profile.ShortId,
+                Avatar = profile.Avatar,
                 Season = profile.Season,
                 SeasonPeakPoints = profile.SeasonPeakPoints,
                 Badges = profile.Badges,

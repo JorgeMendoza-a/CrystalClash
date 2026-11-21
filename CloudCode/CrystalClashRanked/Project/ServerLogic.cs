@@ -57,6 +57,23 @@ namespace CrystalClashRanked
                 .FirstOrDefault();
         }
 
+        /// <summary>Cuántos avatares normales hay (a0 ... a63 se aceptan).</summary>
+        public const int MaxAvatars = 64;
+
+        /// <summary>
+        /// ¿Puede este perfil usar esa foto? Avatares normales "a0".."a63", o una
+        /// insignia de temporada que el jugador realmente ganó.
+        /// </summary>
+        public static bool IsValidAvatar(RankedProfileState profile, string avatar)
+        {
+            if (string.IsNullOrEmpty(avatar) || avatar.Length > 24) return false;
+            if (avatar[0] == 'a')
+            {
+                return int.TryParse(avatar.Substring(1), out int index) && index >= 0 && index < MaxAvatars;
+            }
+            return SeasonRules.TryParseBadge(avatar, out _, out _) && profile.Badges.Contains(avatar);
+        }
+
         public static int NewSeed(Random random)
         {
             return random.Next(1, int.MaxValue);

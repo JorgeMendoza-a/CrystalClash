@@ -462,6 +462,7 @@ public static class ProfileScreen
                 SaveManager.Progress.avatar = index;
                 SaveManager.Progress.avatarBadge = "";
                 SaveManager.Save();
+                ProfileAvatar.SyncToServer();
                 MenuScreens.Refresh();
             }));
         }
@@ -484,6 +485,7 @@ public static class ProfileScreen
                 {
                     SaveManager.Progress.avatarBadge = id;
                     SaveManager.Save();
+                    ProfileAvatar.SyncToServer();
                     MenuScreens.Refresh();
                 }));
                 badgeCount++;

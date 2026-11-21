@@ -18,6 +18,9 @@ public class RankedMatchController : MonoBehaviour
     private const float SyncIntervalSeconds = 2f;
     private const int GemsPerWin = 10;
 
+    /// <summary>Mi nombre de clasificatoria (lo guarda RankedScreen al conectarse) para la pantalla de VS.</summary>
+    public static string myDisplayName = "";
+
     private IRankedService service;
     private RankedMatchInfo match;
     private LevelSession session;
@@ -62,9 +65,12 @@ public class RankedMatchController : MonoBehaviour
         GameHud.Create(session, match);
 
         RankTier opponentTier = RankTiers.ForPoints(match.OpponentPoints);
-        StoryPopup.Show(
+        string myName = string.IsNullOrEmpty(myDisplayName) ? "Tú" : myDisplayName;
+        StoryPopup.ShowVersus(
             "¡Partida encontrada!",
-            $"<b>Tú</b>  vs  <b>{match.OpponentName}</b>\n<size=80%>{opponentTier.Name} · {match.OpponentPoints} puntos</size>\n\n" +
+            myName, ProfileAvatar.LocalId,
+            match.OpponentName, match.OpponentAvatar,
+            $"{opponentTier.Name} · {match.OpponentPoints}",
             $"Mismo tablero para los dos.\n{RankedRules.Moves} movimientos · {RankedRules.TimeLimitSeconds / 60}:{RankedRules.TimeLimitSeconds % 60:00} minutos\n" +
             "¡Gana quien haga más puntos!",
             new StoryPopup.PopupButton("¡Empezar!", StartPlaying));

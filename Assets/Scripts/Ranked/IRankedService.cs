@@ -12,6 +12,9 @@ public class RankedProfile
 
     /// <summary>ID público en orden de registro (100001, 100002...). 0 = sin asignar.</summary>
     public int ShortId;
+
+    /// <summary>Foto de perfil guardada en el servidor ("a3" o "s1_oro").</summary>
+    public string Avatar = "a0";
     public string Name = "";
     public int Points;
     public int Wins;
@@ -32,6 +35,7 @@ public class RankedMatchInfo
     public string MatchId = "";
     public int Seed;
     public string OpponentName = "";
+    public string OpponentAvatar = "a0";
     public int OpponentPoints;
     public bool OpponentIsBot;
 }
@@ -91,6 +95,9 @@ public interface IRankedService
 
     /// <summary>Cambia el nombre de clasificatoria. Lanza una excepción con el motivo si no es válido.</summary>
     Task<RankedProfile> SetNameAsync(string name);
+
+    /// <summary>Cambia la foto de perfil que ven los rivales ("a3" o una insignia ganada).</summary>
+    Task SetAvatarAsync(string avatar);
 
     /// <summary>Busca rival. Termina cuando hay partida o se cancela (OperationCanceledException).</summary>
     Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel);

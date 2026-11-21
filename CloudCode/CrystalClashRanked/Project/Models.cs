@@ -14,6 +14,9 @@ namespace CrystalClashRanked
         public int ShortId { get; set; }
 
         public string Name { get; set; } = "";
+
+        /// <summary>Foto de perfil: "a3" (avatar normal 3) o una insignia ganada ("s1_oro").</summary>
+        public string Avatar { get; set; } = "a0";
         public int Points { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
@@ -51,6 +54,7 @@ namespace CrystalClashRanked
         public string Id { get; set; } = "";
         public string PlayerId { get; set; } = "";
         public string Name { get; set; } = "";
+        public string Avatar { get; set; } = "a0";
         public int Points { get; set; }
         public long CreatedUtc { get; set; }
         public long LastPollUtc { get; set; }
@@ -74,6 +78,7 @@ namespace CrystalClashRanked
     {
         public string PlayerId { get; set; } = "";
         public string Name { get; set; } = "";
+        public string Avatar { get; set; } = "a0";
         public int PointsAtStart { get; set; }
         public bool IsBot { get; set; }
 
@@ -95,6 +100,7 @@ namespace CrystalClashRanked
     {
         public string PlayerId { get; set; } = "";
         public int ShortId { get; set; }
+        public string Avatar { get; set; } = "a0";
         public string Name { get; set; } = "";
         public int Points { get; set; }
         public int Wins { get; set; }
@@ -112,6 +118,7 @@ namespace CrystalClashRanked
         public string MatchId { get; set; } = "";
         public int Seed { get; set; }
         public string OpponentName { get; set; } = "";
+        public string OpponentAvatar { get; set; } = "a0";
         public int OpponentPoints { get; set; }
         public bool OpponentIsBot { get; set; }
     }

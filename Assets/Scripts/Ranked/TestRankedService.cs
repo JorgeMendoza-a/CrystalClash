@@ -69,6 +69,14 @@ public class TestRankedService : IRankedService
         return Task.FromResult(profile);
     }
 
+    public Task SetAvatarAsync(string avatar)
+    {
+        LoadProfile();
+        profile.Avatar = avatar;
+        SaveProfile();
+        return Task.CompletedTask;
+    }
+
     public async Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel)
     {
         LoadProfile();
@@ -80,6 +88,7 @@ public class TestRankedService : IRankedService
             MatchId = Guid.NewGuid().ToString("N"),
             Seed = seed,
             OpponentName = BotNames[UnityEngine.Random.Range(0, BotNames.Length)],
+            OpponentAvatar = "a" + UnityEngine.Random.Range(0, 8),
             OpponentPoints = Mathf.Max(0, profile.Points + UnityEngine.Random.Range(-150, 151))
         };
 

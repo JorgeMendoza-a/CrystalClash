@@ -61,6 +61,68 @@ public static class StoryPopup
     /// <summary>True mientras hay un popup abierto (el tablero ignora los clics).</summary>
     public static bool IsOpen => current != null;
 
+    /// <summary>Pantalla de VS: tu foto y nombre contra los del rival.</summary>
+    public static void ShowVersus(string title, string myName, string myAvatar, string rivalName, string rivalAvatar,
+        string rivalInfo, string body, params PopupButton[] buttons)
+    {
+        Transform panel = CreatePanel(title, null);
+
+        var rowGO = new GameObject("VS", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+        rowGO.transform.SetParent(panel, false);
+        rowGO.GetComponent<LayoutElement>().preferredHeight = 330f;
+        var row = rowGO.GetComponent<HorizontalLayoutGroup>();
+        row.childAlignment = TextAnchor.MiddleCenter;
+        row.spacing = 10f;
+        row.childControlWidth = true;
+        row.childControlHeight = true;
+        row.childForceExpandWidth = true;
+        row.childForceExpandHeight = true;
+
+        VersusSide(rowGO.transform, myName, "Tú", myAvatar);
+
+        TMP_Text vs = CreateText("VS", rowGO.transform, "VS", 96f, TitleColor, FontStyles.Normal);
+        UiKit.Outline(vs, 0.25f);
+        vs.gameObject.AddComponent<LayoutElement>().preferredWidth = 140f;
+
+        VersusSide(rowGO.transform, rivalName, rivalInfo, rivalAvatar);
+
+        if (!string.IsNullOrEmpty(body))
+        {
+            TMP_Text bodyText = CreateText("Body", panel, body, 40f, Color.white, FontStyles.Normal);
+            UiKit.Outline(bodyText, 0.12f);
+        }
+
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            CreateButton(panel, buttons[i], 130f, 50f, i == 0 ? UiKit.ButtonStyle.Green : UiKit.ButtonStyle.Blue);
+        }
+    }
+
+    private static void VersusSide(Transform parent, string name, string info, string avatar)
+    {
+        var side = new GameObject("Lado", typeof(RectTransform), typeof(VerticalLayoutGroup));
+        side.transform.SetParent(parent, false);
+        var layout = side.GetComponent<VerticalLayoutGroup>();
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.spacing = 4f;
+        layout.childControlWidth = false;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        ProfileAvatar.Create(side.transform, avatar, 200f);
+
+        TMP_Text nameText = CreateText("Nombre", side.transform, name, 40f, Color.white, FontStyles.Normal);
+        UiKit.Outline(nameText, 0.2f);
+        nameText.rectTransform.sizeDelta = new Vector2(300f, 54f);
+        nameText.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        TMP_Text infoText = CreateText("Info", side.transform, info, 30f, UiKit.Muted, FontStyles.Normal);
+        UiKit.Outline(infoText, 0.15f);
+        infoText.rectTransform.sizeDelta = new Vector2(300f, 42f);
+        infoText.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
+    }
+
     /// <summary>Como Show, con una insignia de temporada debajo del título (season 0 = sin insignia).</summary>
     public static void ShowWithBadge(string title, string body, int season, int leagueIndex, params PopupButton[] buttons)
     {

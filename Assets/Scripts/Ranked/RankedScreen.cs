@@ -70,6 +70,10 @@ public class RankedScreen : MonoBehaviour
 
             // Recompensas pendientes (subir de rango, fin de temporada).
             SeasonRewards.ClaimAndShow();
+
+            // Que el rival vea la foto de perfil elegida en este dispositivo.
+            if (profile.Avatar != ProfileAvatar.LocalId) ProfileAvatar.SyncToServer();
+            RankedMatchController.myDisplayName = profile.Name;
         }
         catch (Exception e)
         {

@@ -22,6 +22,7 @@ public static class ServerLogicTests
         Run(nameof(Season_NewProfile_StartsInCurrentSeason), Season_NewProfile_StartsInCurrentSeason);
         Run(nameof(Season_Rollover_RewardsAndSoftReset), Season_Rollover_RewardsAndSoftReset);
         Run(nameof(Peak_GivesRewardsAndBadgesOnce), Peak_GivesRewardsAndBadgesOnce);
+        Run(nameof(Avatar_OnlyOwnedBadges), Avatar_OnlyOwnedBadges);
         Console.WriteLine(failures == 0 ? "Todos los tests del servidor pasaron." : $"{failures} test(s) fallaron.");
         return failures;
     }
@@ -148,6 +149,16 @@ public static class ServerLogicTests
         p.Points = 470; ServerLogic.ApplyPeak(p);
         p.Points = 530; ServerLogic.ApplyPeak(p);
         Check(p.PendingRewards.Count == 1 && p.Badges.Count == 1, "bajar y volver a subir no repite premios");
+    }
+
+    private static void Avatar_OnlyOwnedBadges()
+    {
+        var p = new RankedProfileState();
+        p.Badges.Add("s1_oro");
+        Check(ServerLogic.IsValidAvatar(p, "a0") && ServerLogic.IsValidAvatar(p, "a7"), "avatares normales");
+        Check(ServerLogic.IsValidAvatar(p, "s1_oro"), "insignia ganada");
+        Check(!ServerLogic.IsValidAvatar(p, "s1_campeon"), "insignia no ganada");
+        Check(!ServerLogic.IsValidAvatar(p, "a999") && !ServerLogic.IsValidAvatar(p, "") && !ServerLogic.IsValidAvatar(p, "x"), "basura");
     }
 
     private static void Run(string name, Action test)

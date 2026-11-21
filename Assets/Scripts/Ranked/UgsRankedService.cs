@@ -66,6 +66,7 @@ public class UgsRankedService : IRankedService
         {
             PlayerId = dto.PlayerId,
             ShortId = dto.ShortId,
+            Avatar = string.IsNullOrEmpty(dto.Avatar) ? "a0" : dto.Avatar,
             Season = dto.Season,
             SeasonPeakPoints = dto.SeasonPeakPoints,
             Badges = dto.Badges ?? new List<string>(),
@@ -85,6 +86,7 @@ public class UgsRankedService : IRankedService
         {
             PlayerId = dto.PlayerId,
             ShortId = dto.ShortId,
+            Avatar = string.IsNullOrEmpty(dto.Avatar) ? "a0" : dto.Avatar,
             Season = dto.Season,
             SeasonPeakPoints = dto.SeasonPeakPoints,
             Badges = dto.Badges ?? new List<string>(),
@@ -94,6 +96,12 @@ public class UgsRankedService : IRankedService
             Losses = dto.Losses,
             Draws = dto.Draws
         };
+    }
+
+    public async Task SetAvatarAsync(string avatar)
+    {
+        await SignInAsync();
+        await Call<ProfileDto>("SetAvatar", new Dictionary<string, object> { { "avatar", avatar } });
     }
 
     public async Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel)
@@ -123,6 +131,7 @@ public class UgsRankedService : IRankedService
             MatchId = status.MatchId,
             Seed = status.Seed,
             OpponentName = status.OpponentName,
+            OpponentAvatar = string.IsNullOrEmpty(status.OpponentAvatar) ? "a0" : status.OpponentAvatar,
             OpponentPoints = status.OpponentPoints,
             OpponentIsBot = status.OpponentIsBot
         };
@@ -259,6 +268,7 @@ public class UgsRankedService : IRankedService
     {
         public string PlayerId;
         public int ShortId;
+        public string Avatar;
         public int Season;
         public int SeasonPeakPoints;
         public List<string> Badges;
@@ -277,6 +287,7 @@ public class UgsRankedService : IRankedService
         public string MatchId;
         public int Seed;
         public string OpponentName;
+        public string OpponentAvatar;
         public int OpponentPoints;
         public bool OpponentIsBot;
     }
