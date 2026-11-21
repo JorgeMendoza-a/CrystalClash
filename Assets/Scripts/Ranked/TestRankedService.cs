@@ -69,10 +69,11 @@ public class TestRankedService : IRankedService
         return Task.FromResult(profile);
     }
 
-    public Task SetAvatarAsync(string avatar)
+    public Task SetCosmeticsAsync(string avatar, string banner)
     {
         LoadProfile();
         profile.Avatar = avatar;
+        profile.Banner = banner ?? "";
         SaveProfile();
         return Task.CompletedTask;
     }
@@ -88,7 +89,12 @@ public class TestRankedService : IRankedService
             MatchId = Guid.NewGuid().ToString("N"),
             Seed = seed,
             OpponentName = BotNames[UnityEngine.Random.Range(0, BotNames.Length)],
-            OpponentAvatar = "a" + UnityEngine.Random.Range(0, 8),
+            OpponentAvatar = UnityEngine.Random.Range(0, 3) == 0
+                ? Cosmetics.Avatars[UnityEngine.Random.Range(0, Cosmetics.Avatars.Length)].Id
+                : "a" + UnityEngine.Random.Range(0, 8),
+            OpponentBanner = UnityEngine.Random.Range(0, 2) == 0
+                ? Cosmetics.Banners[UnityEngine.Random.Range(0, Cosmetics.Banners.Length)].Id
+                : "",
             OpponentPoints = Mathf.Max(0, profile.Points + UnityEngine.Random.Range(-150, 151))
         };
 

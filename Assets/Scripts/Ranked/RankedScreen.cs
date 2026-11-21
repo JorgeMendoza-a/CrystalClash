@@ -76,7 +76,7 @@ public class RankedScreen : MonoBehaviour
             SeasonRewards.ClaimAndShow();
 
             // Que el rival vea la foto de perfil elegida en este dispositivo.
-            if (profile.Avatar != ProfileAvatar.LocalId) ProfileAvatar.SyncToServer();
+            if (profile.Avatar != ProfileAvatar.LocalId || (profile.Banner ?? "") != ProfileAvatar.LocalBanner) ProfileAvatar.SyncToServer();
             RankedMatchController.myDisplayName = profile.Name;
         }
         catch (Exception e)

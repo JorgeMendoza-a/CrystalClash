@@ -74,6 +74,9 @@ public static class ProfileScreen
         HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 36, 20f);
         row.childForceExpandWidth = false;
 
+        // Banner comprado en la tienda, de fondo (un poco oscuro para que se lean los textos).
+        Cosmetics.BannerBackground(card.transform, p.banner, 16f, 0.3f);
+
         // Avatar con marco y lápiz
         GameObject avatarHolder = UiKit.Node(card.transform, "Avatar");
         UiKit.Size(avatarHolder.transform, width: 250f);
@@ -83,7 +86,15 @@ public static class ProfileScreen
         RectTransform frameRect = frame.rectTransform;
         frameRect.anchorMin = frameRect.anchorMax = new Vector2(0.5f, 0.5f);
         frameRect.sizeDelta = new Vector2(230f, 230f);
-        if (SeasonRules.TryParseBadge(p.avatarBadge, out int badgeSeason, out int badgeLeague))
+        Sprite shopAvatar = Cosmetics.AvatarSprite(p.avatarBadge);
+        if (shopAvatar != null)
+        {
+            // Avatar de la tienda: ya trae su marco.
+            frame.sprite = shopAvatar;
+            frame.type = Image.Type.Simple;
+            frame.preserveAspect = true;
+        }
+        else if (SeasonRules.TryParseBadge(p.avatarBadge, out int badgeSeason, out int badgeLeague))
         {
             // Foto de perfil: una insignia de temporada ganada.
             RectTransform badge = SeasonBadge.Create(frame.transform, badgeSeason, badgeLeague, 190f);
@@ -496,6 +507,14 @@ public static class ProfileScreen
             }));
         }
 
+        // Avatares comprados en la tienda.
+        foreach (Cosmetics.Item item in Cosmetics.Avatars)
+        {
+            if (!SaveManager.Progress.OwnsCosmetic(item.Id)) continue;
+            Cosmetics.Item chosen = item;
+            cells.Add(new StoryPopup.PopupButton(Cosmetics.AvatarSprite(item.Id), () => Cosmetics.Equip(chosen)));
+        }
+
         // Insignias de temporada ganadas: también sirven como foto de perfil.
         List<string> badges = view.Profile != null ? view.Profile.Badges : null;
         int badgeCount = 0;
@@ -522,8 +541,8 @@ public static class ProfileScreen
         }
 
         string body = badgeCount > 0
-            ? "Avatares e insignias de temporada que ganaste"
-            : "Gana insignias en la clasificatoria para usarlas como foto de perfil";
+            ? "Tus avatares e insignias de temporada"
+            : "Compra avatares épicos en la Tienda y gana insignias en la clasificatoria";
         StoryPopup.ShowGrid("Foto de perfil", body, cells, 4, new StoryPopup.PopupButton("Cerrar", null));
     }
 }

@@ -62,7 +62,8 @@ public static class StoryPopup
     public static bool IsOpen => current != null;
 
     /// <summary>Pantalla de VS: tu foto y nombre contra los del rival.</summary>
-    public static void ShowVersus(string title, string myName, string myAvatar, string rivalName, string rivalAvatar,
+    public static void ShowVersus(string title, string myName, string myAvatar, string myBanner,
+        string rivalName, string rivalAvatar, string rivalBanner,
         string rivalInfo, string body, params PopupButton[] buttons)
     {
         Transform panel = CreatePanel(title, null);
@@ -78,13 +79,13 @@ public static class StoryPopup
         row.childForceExpandWidth = true;
         row.childForceExpandHeight = true;
 
-        VersusSide(rowGO.transform, myName, "Tú", myAvatar);
+        VersusSide(rowGO.transform, myName, "Tú", myAvatar, myBanner);
 
         TMP_Text vs = CreateText("VS", rowGO.transform, "VS", 96f, TitleColor, FontStyles.Normal);
         UiKit.Outline(vs, 0.25f);
         vs.gameObject.AddComponent<LayoutElement>().preferredWidth = 140f;
 
-        VersusSide(rowGO.transform, rivalName, rivalInfo, rivalAvatar);
+        VersusSide(rowGO.transform, rivalName, rivalInfo, rivalAvatar, rivalBanner);
 
         if (!string.IsNullOrEmpty(body))
         {
@@ -98,7 +99,7 @@ public static class StoryPopup
         }
     }
 
-    private static void VersusSide(Transform parent, string name, string info, string avatar)
+    private static void VersusSide(Transform parent, string name, string info, string avatar, string banner)
     {
         var side = new GameObject("Lado", typeof(RectTransform), typeof(VerticalLayoutGroup));
         side.transform.SetParent(parent, false);
@@ -109,6 +110,9 @@ public static class StoryPopup
         layout.childControlHeight = true;
         layout.childForceExpandWidth = false;
         layout.childForceExpandHeight = false;
+
+        // Banner de fondo (comprado en la tienda), oscurecido para que se lea el nombre.
+        Cosmetics.BannerBackground(side.transform, banner, 0f, 0.35f);
 
         ProfileAvatar.Create(side.transform, avatar, 200f);
 

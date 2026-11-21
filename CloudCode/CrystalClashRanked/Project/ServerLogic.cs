@@ -71,7 +71,45 @@ namespace CrystalClashRanked
             {
                 return int.TryParse(avatar.Substring(1), out int index) && index >= 0 && index < MaxAvatars;
             }
+            if (avatar.StartsWith(ShopAvatarPrefix)) return ShopAvatars.Contains(avatar.Substring(ShopAvatarPrefix.Length));
             return SeasonRules.TryParseBadge(avatar, out _, out _) && profile.Badges.Contains(avatar);
+        }
+
+        // Artículos de la tienda (mismas claves que Cosmetics.cs del juego). Se compran
+        // con gemas/monedas del juego; el servidor solo comprueba que existan.
+        public const string ShopAvatarPrefix = "e_";
+        public const string ShopBannerPrefix = "b_";
+
+        public static readonly string[] ShopAvatars =
+        {
+            "golem_lava", "rey_lich", "caballero_obsidiana", "demonio_mina", "hechicero_cristal",
+            "ninja_minero", "zombie_minero", "golem_oro", "yeti_hielo", "dragon_fuego"
+        };
+
+        public static readonly string[] ShopBanners =
+        {
+            "mina_cristales", "volcan_ardiente", "cueva_hielo", "tesoro_del_rey",
+            "entrada_mina", "noche_minera", "cripta_maldita", "abismo_dragon"
+        };
+
+        /// <summary>Banner vacío (ninguno) o uno de la tienda.</summary>
+        public static bool IsValidBanner(string banner)
+        {
+            if (string.IsNullOrEmpty(banner)) return true;
+            return banner.StartsWith(ShopBannerPrefix) && ShopBanners.Contains(banner.Substring(ShopBannerPrefix.Length));
+        }
+
+        /// <summary>Los bots a veces usan cosas de la tienda (para que se vean como jugadores de verdad).</summary>
+        public static string BotAvatar(Random random)
+        {
+            return random.Next(0, 3) == 0
+                ? ShopAvatarPrefix + ShopAvatars[random.Next(ShopAvatars.Length)]
+                : "a" + random.Next(0, 8);
+        }
+
+        public static string BotBanner(Random random)
+        {
+            return random.Next(0, 2) == 0 ? ShopBannerPrefix + ShopBanners[random.Next(ShopBanners.Length)] : "";
         }
 
         public static int NewSeed(Random random)

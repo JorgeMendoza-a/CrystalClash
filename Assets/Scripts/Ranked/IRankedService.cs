@@ -15,6 +15,7 @@ public class RankedProfile
 
     /// <summary>Foto de perfil guardada en el servidor ("a3" o "s1_oro").</summary>
     public string Avatar = "a0";
+    public string Banner = "";
     public string Name = "";
     public int Points;
     public int Wins;
@@ -36,6 +37,7 @@ public class RankedMatchInfo
     public int Seed;
     public string OpponentName = "";
     public string OpponentAvatar = "a0";
+    public string OpponentBanner = "";
     public int OpponentPoints;
     public bool OpponentIsBot;
 }
@@ -97,7 +99,8 @@ public interface IRankedService
     Task<RankedProfile> SetNameAsync(string name);
 
     /// <summary>Cambia la foto de perfil que ven los rivales ("a3" o una insignia ganada).</summary>
-    Task SetAvatarAsync(string avatar);
+    /// <summary>Foto de perfil y banner (los ve el rival en la pantalla de VS).</summary>
+    Task SetCosmeticsAsync(string avatar, string banner);
 
     /// <summary>Busca rival. Termina cuando hay partida o se cancela (OperationCanceledException).</summary>
     Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel);

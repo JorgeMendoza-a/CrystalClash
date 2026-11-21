@@ -99,8 +99,7 @@ public class GameManager : MonoBehaviour
         {
             int seconds = progress.SecondsToNextLife(now);
             StoryPopup.Show("Sin vidas",
-                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>\n\nTambién puedes llenarlas en la tienda.",
-                new StoryPopup.PopupButton("Tienda", () => MenuScreens.Show(MenuScreens.Screen.Shop)),
+                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>\n\nLas vidas se recuperan solas con el tiempo.",
                 new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
             return;
         }
@@ -424,13 +423,18 @@ public class GameManager : MonoBehaviour
             ? $"Te quedan <color=#FF7070>{lives}</color> vidas"
             : "<color=#FF7070>¡Te quedaste sin vidas!</color>";
 
-        StoryPopup.Show(
-            "Sin movimientos",
-            $"¡Casi!\n\n{DescribeObjectives(Session, true)}\n\n{livesText}",
-            lives > 0
-                ? new StoryPopup.PopupButton("Reintentar", RetryLevel)
-                : new StoryPopup.PopupButton("Tienda", () => MenuScreens.Show(MenuScreens.Screen.Shop)),
-            new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
+        string body = $"¡Casi!\n\n{DescribeObjectives(Session, true)}\n\n{livesText}";
+        if (lives > 0)
+        {
+            StoryPopup.Show("Sin movimientos", body,
+                new StoryPopup.PopupButton("Reintentar", RetryLevel),
+                new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
+        }
+        else
+        {
+            StoryPopup.Show("Sin movimientos", body + "\nSe recuperan solas con el tiempo.",
+                new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
+        }
     }
 
     /// <summary>Texto con los objetivos, p. ej. "Zafiro 12/15". Lo usan los popups y GameUI.</summary>

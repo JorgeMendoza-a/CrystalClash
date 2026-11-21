@@ -38,4 +38,19 @@ public class ProgressMergeTests
         merged.highestUnlocked = 9;
         Assert.AreEqual(5, p.highestUnlocked);                  // es una copia
     }
+
+    [Test]
+    public void Merge_KeepsEverythingBought()
+    {
+        var phone = new PlayerProgress { savedUtc = 10L };
+        phone.AddCosmetic("e_dragon_fuego");
+        var cloud = new PlayerProgress { savedUtc = 200L };
+        cloud.AddCosmetic("b_volcan_ardiente");
+        cloud.AddCosmetic("e_dragon_fuego");
+
+        PlayerProgress merged = PlayerProgress.Merge(phone, cloud);
+        Assert.IsTrue(merged.OwnsCosmetic("e_dragon_fuego"));
+        Assert.IsTrue(merged.OwnsCosmetic("b_volcan_ardiente"));
+        Assert.AreEqual(2, merged.ownedCosmetics.Count);
+    }
 }

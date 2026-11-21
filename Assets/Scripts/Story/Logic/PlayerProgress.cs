@@ -157,8 +157,28 @@ namespace CrystalClash.Story.Logic
         /// <summary>Avatar elegido (índice en ProfileAvatars del juego).</summary>
         public int avatar;
 
-        /// <summary>Insignia de temporada usada como foto de perfil ("s1_oro"); vacío = usar el avatar normal.</summary>
+        /// <summary>
+        /// Foto de perfil especial: insignia de temporada ("s1_oro") o avatar de la
+        /// tienda ("e_dragon_fuego"); vacío = usar el avatar normal.
+        /// </summary>
         public string avatarBadge = "";
+
+        /// <summary>Banner equipado ("b_volcan_ardiente"); vacío = sin banner.</summary>
+        public string banner = "";
+
+        /// <summary>Cosas compradas en la tienda (avatares "e_..." y banners "b_...").</summary>
+        public List<string> ownedCosmetics = new List<string>();
+
+        public bool OwnsCosmetic(string id)
+        {
+            return ownedCosmetics != null && ownedCosmetics.Contains(id);
+        }
+
+        public void AddCosmetic(string id)
+        {
+            if (ownedCosmetics == null) ownedCosmetics = new List<string>();
+            if (!string.IsNullOrEmpty(id) && !ownedCosmetics.Contains(id)) ownedCosmetics.Add(id);
+        }
 
         /// <summary>Experiencia total (sube de nivel de jugador).</summary>
         public int xp;
@@ -178,6 +198,7 @@ namespace CrystalClash.Story.Logic
             var copy = (PlayerProgress)MemberwiseClone();
             copy.stars = new List<int>(stars ?? new List<int>());
             copy.boosters = boosters != null ? (int[])boosters.Clone() : null;
+            copy.ownedCosmetics = new List<string>(ownedCosmetics ?? new List<string>());
             return copy;
         }
 
@@ -205,6 +226,11 @@ namespace CrystalClash.Story.Logic
             {
                 result.createdUtc = older.createdUtc;
             }
+
+            // Lo comprado nunca se pierde: se juntan las dos listas.
+            result.ownedCosmetics = new List<string>();
+            foreach (string id in a.ownedCosmetics ?? new List<string>()) result.AddCosmetic(id);
+            foreach (string id in b.ownedCosmetics ?? new List<string>()) result.AddCosmetic(id);
 
             int levels = Math.Max(a.stars?.Count ?? 0, b.stars?.Count ?? 0);
             result.stars = new List<int>(levels);

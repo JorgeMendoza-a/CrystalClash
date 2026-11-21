@@ -127,6 +127,26 @@ namespace CrystalClashRanked
             throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
         }
 
+        /// <summary>Cambia foto de perfil y banner a la vez (los ve el rival en la pantalla de VS).</summary>
+        [CloudCodeFunction("SetCosmetics")]
+        public async Task<ProfileDto> SetCosmetics(IExecutionContext context, IGameApiClient api, string avatar, string banner)
+        {
+            string me = context.PlayerId;
+            banner = banner ?? "";
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (profile, writeLock) = await LoadProfile(context, api, me);
+                if (!ServerLogic.IsValidAvatar(profile, avatar)) throw new Exception("Foto de perfil no disponible.");
+                if (!ServerLogic.IsValidBanner(banner)) throw new Exception("Banner no disponible.");
+                if (profile.Avatar == avatar && profile.Banner == banner) return ToDto(me, profile);
+
+                profile.Avatar = avatar;
+                profile.Banner = banner;
+                if (await TrySaveProfile(context, api, me, profile, writeLock)) return ToDto(me, profile);
+            }
+            throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
         [CloudCodeFunction("FindMatch")]
         public async Task<MatchmakingDto> FindMatch(IExecutionContext context, IGameApiClient api)
         {
@@ -155,8 +175,8 @@ namespace CrystalClashRanked
                 if (opponent != null)
                 {
                     MatchState match = NewMatch(
-                        new MatchPlayer { PlayerId = opponent.PlayerId, Name = opponent.Name, Avatar = opponent.Avatar, PointsAtStart = opponent.Points },
-                        new MatchPlayer { PlayerId = me, Name = profile.Name, Avatar = profile.Avatar, PointsAtStart = profile.Points });
+                        new MatchPlayer { PlayerId = opponent.PlayerId, Name = opponent.Name, Avatar = opponent.Avatar, Banner = opponent.Banner, PointsAtStart = opponent.Points },
+                        new MatchPlayer { PlayerId = me, Name = profile.Name, Avatar = profile.Avatar, Banner = profile.Banner, PointsAtStart = profile.Points });
 
                     opponent.MatchId = match.MatchId;
                     opponent.LastPollUtc = now;
@@ -172,6 +192,7 @@ namespace CrystalClashRanked
                     PlayerId = me,
                     Name = profile.Name,
                     Avatar = profile.Avatar,
+                    Banner = profile.Banner,
                     Points = profile.Points,
                     CreatedUtc = now,
                     LastPollUtc = now
@@ -218,12 +239,13 @@ namespace CrystalClashRanked
                     if (!await TrySaveCustom(context, api, QueueCustomId, QueueKey, queue, writeLock)) continue;
 
                     MatchState match = NewMatch(
-                        new MatchPlayer { PlayerId = me, Name = ticket.Name, Avatar = ticket.Avatar, PointsAtStart = ticket.Points },
+                        new MatchPlayer { PlayerId = me, Name = ticket.Name, Avatar = ticket.Avatar, Banner = ticket.Banner, PointsAtStart = ticket.Points },
                         new MatchPlayer
                         {
                             PlayerId = "bot",
                             Name = ServerLogic.BotNamePrefix + "Minero" + random.Next(100, 999),
-                            Avatar = "a" + random.Next(0, 8),
+                            Avatar = ServerLogic.BotAvatar(random),
+                            Banner = ServerLogic.BotBanner(random),
                             PointsAtStart = ticket.Points,
                             IsBot = true
                         });
@@ -429,6 +451,7 @@ namespace CrystalClashRanked
                 Seed = match.Seed,
                 OpponentName = other.Name,
                 OpponentAvatar = other.Avatar,
+                OpponentBanner = other.Banner ?? "",
                 OpponentPoints = other.PointsAtStart,
                 OpponentIsBot = other.IsBot
             };
@@ -544,6 +567,7 @@ namespace CrystalClashRanked
                 PlayerId = playerId,
                 ShortId = profile.ShortId,
                 Avatar = profile.Avatar,
+                Banner = profile.Banner ?? "",
                 Season = profile.Season,
                 SeasonPeakPoints = profile.SeasonPeakPoints,
                 Badges = profile.Badges,

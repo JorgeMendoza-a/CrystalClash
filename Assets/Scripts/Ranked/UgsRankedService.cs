@@ -85,6 +85,7 @@ public class UgsRankedService : IRankedService
             PlayerId = dto.PlayerId,
             ShortId = dto.ShortId,
             Avatar = string.IsNullOrEmpty(dto.Avatar) ? "a0" : dto.Avatar,
+            Banner = dto.Banner ?? "",
             Season = dto.Season,
             SeasonPeakPoints = dto.SeasonPeakPoints,
             Badges = dto.Badges ?? new List<string>(),
@@ -105,6 +106,7 @@ public class UgsRankedService : IRankedService
             PlayerId = dto.PlayerId,
             ShortId = dto.ShortId,
             Avatar = string.IsNullOrEmpty(dto.Avatar) ? "a0" : dto.Avatar,
+            Banner = dto.Banner ?? "",
             Season = dto.Season,
             SeasonPeakPoints = dto.SeasonPeakPoints,
             Badges = dto.Badges ?? new List<string>(),
@@ -116,10 +118,10 @@ public class UgsRankedService : IRankedService
         };
     }
 
-    public async Task SetAvatarAsync(string avatar)
+    public async Task SetCosmeticsAsync(string avatar, string banner)
     {
         await SignInAsync();
-        await Call<ProfileDto>("SetAvatar", new Dictionary<string, object> { { "avatar", avatar } });
+        await Call<ProfileDto>("SetCosmetics", new Dictionary<string, object> { { "avatar", avatar }, { "banner", banner ?? "" } });
     }
 
     public async Task<RankedMatchInfo> FindMatchAsync(CancellationToken cancel)
@@ -150,6 +152,7 @@ public class UgsRankedService : IRankedService
             Seed = status.Seed,
             OpponentName = status.OpponentName,
             OpponentAvatar = string.IsNullOrEmpty(status.OpponentAvatar) ? "a0" : status.OpponentAvatar,
+            OpponentBanner = status.OpponentBanner ?? "",
             OpponentPoints = status.OpponentPoints,
             OpponentIsBot = status.OpponentIsBot
         };
@@ -287,6 +290,7 @@ public class UgsRankedService : IRankedService
         public string PlayerId;
         public int ShortId;
         public string Avatar;
+        public string Banner;
         public int Season;
         public int SeasonPeakPoints;
         public List<string> Badges;
@@ -306,6 +310,7 @@ public class UgsRankedService : IRankedService
         public int Seed;
         public string OpponentName;
         public string OpponentAvatar;
+        public string OpponentBanner;
         public int OpponentPoints;
         public bool OpponentIsBot;
     }

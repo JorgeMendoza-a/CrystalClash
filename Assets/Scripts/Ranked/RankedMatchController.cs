@@ -68,8 +68,8 @@ public class RankedMatchController : MonoBehaviour
         string myName = string.IsNullOrEmpty(myDisplayName) ? "Tú" : myDisplayName;
         StoryPopup.ShowVersus(
             "¡Partida encontrada!",
-            myName, ProfileAvatar.LocalId,
-            match.OpponentName, match.OpponentAvatar,
+            myName, ProfileAvatar.LocalId, ProfileAvatar.LocalBanner,
+            match.OpponentName, match.OpponentAvatar, match.OpponentBanner,
             $"{opponentTier.Name} · {match.OpponentPoints}",
             $"Mismo tablero para los dos.\n{RankedRules.Moves} movimientos · {RankedRules.TimeLimitSeconds / 60}:{RankedRules.TimeLimitSeconds % 60:00} minutos\n" +
             "¡Gana quien haga más puntos!",

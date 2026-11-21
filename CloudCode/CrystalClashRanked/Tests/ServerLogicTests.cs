@@ -23,6 +23,7 @@ public static class ServerLogicTests
         Run(nameof(Season_Rollover_RewardsAndSoftReset), Season_Rollover_RewardsAndSoftReset);
         Run(nameof(Peak_GivesRewardsAndBadgesOnce), Peak_GivesRewardsAndBadgesOnce);
         Run(nameof(Avatar_OnlyOwnedBadges), Avatar_OnlyOwnedBadges);
+        Run(nameof(Shop_AvatarsAndBanners), Shop_AvatarsAndBanners);
         Console.WriteLine(failures == 0 ? "Todos los tests del servidor pasaron." : $"{failures} test(s) fallaron.");
         return failures;
     }
@@ -159,6 +160,20 @@ public static class ServerLogicTests
         Check(ServerLogic.IsValidAvatar(p, "s1_oro"), "insignia ganada");
         Check(!ServerLogic.IsValidAvatar(p, "s1_campeon"), "insignia no ganada");
         Check(!ServerLogic.IsValidAvatar(p, "a999") && !ServerLogic.IsValidAvatar(p, "") && !ServerLogic.IsValidAvatar(p, "x"), "basura");
+    }
+
+    private static void Shop_AvatarsAndBanners()
+    {
+        var p = new RankedProfileState();
+        Check(ServerLogic.IsValidAvatar(p, "e_dragon_fuego"), "avatar de la tienda");
+        Check(!ServerLogic.IsValidAvatar(p, "e_no_existe"), "avatar inventado");
+        Check(ServerLogic.IsValidBanner("") && ServerLogic.IsValidBanner("b_volcan_ardiente"), "banners validos");
+        Check(!ServerLogic.IsValidBanner("b_x") && !ServerLogic.IsValidBanner("volcan_ardiente"), "banners invalidos");
+        var random = new Random(5);
+        for (int i = 0; i < 50; i++)
+        {
+            Check(ServerLogic.IsValidAvatar(p, ServerLogic.BotAvatar(random)) && ServerLogic.IsValidBanner(ServerLogic.BotBanner(random)), "bot valido");
+        }
     }
 
     private static void Run(string name, Action test)

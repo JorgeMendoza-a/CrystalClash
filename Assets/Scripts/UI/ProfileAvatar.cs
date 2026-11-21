@@ -18,6 +18,9 @@ public static class ProfileAvatar
         }
     }
 
+    /// <summary>El banner equipado en este dispositivo ("" = ninguno).</summary>
+    public static string LocalBanner => SaveManager.Progress.banner ?? "";
+
     /// <summary>Dibuja la foto con su marco dorado, centrada en parent.</summary>
     public static RectTransform Create(Transform parent, string avatarId, float size)
     {
@@ -28,6 +31,16 @@ public static class ProfileAvatar
         RectTransform rect = frame.rectTransform;
         rect.sizeDelta = new Vector2(size, size);
         frame.gameObject.AddComponent<LayoutElement>().preferredHeight = size;
+
+        // Avatar de la tienda: la imagen ya trae su propio marco.
+        Sprite shop = Cosmetics.AvatarSprite(avatarId);
+        if (shop != null)
+        {
+            frame.sprite = shop;
+            frame.type = Image.Type.Simple;
+            frame.preserveAspect = true;
+            return rect;
+        }
 
         if (SeasonRules.TryParseBadge(avatarId, out int season, out int league))
         {
@@ -51,7 +64,7 @@ public static class ProfileAvatar
     {
         try
         {
-            await RankedServices.Current.SetAvatarAsync(LocalId);
+            await RankedServices.Current.SetCosmeticsAsync(LocalId, LocalBanner);
         }
         catch (System.Exception e)
         {
