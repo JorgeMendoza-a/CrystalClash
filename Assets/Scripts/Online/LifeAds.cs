@@ -75,7 +75,11 @@ public static class LifeAds
         }
         if (provider == null || !provider.IsReady)
         {
-            StoryPopup.Show("Anuncio no disponible", "Todavía no hay un anuncio listo.\nInténtalo en unos segundos.",
+            string status = provider == null
+                ? (string.IsNullOrEmpty(AdsConfig.AndroidAppKey) ? "faltan las claves" : "LevelPlay no está activo en este build")
+                : provider.Status;
+            StoryPopup.Show("Anuncio no disponible", "Todavía no hay un anuncio listo.\nInténtalo en unos segundos.\n\n" +
+                $"<size=60%><color=#A0A8B8>Detalle: {status}</color></size>",
                 new StoryPopup.PopupButton("Entendido", onDone));
             return;
         }

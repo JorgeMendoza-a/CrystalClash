@@ -15,6 +15,7 @@ public class LevelPlayRewardedProvider : IRewardedAdProvider
     private bool rewarded;
 
     public bool IsReady => ad != null && loaded && ad.IsAdReady();
+    public string Status { get; private set; } = "sin iniciar";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Register()
@@ -33,18 +34,32 @@ public class LevelPlayRewardedProvider : IRewardedAdProvider
 
     private void Init()
     {
-        LevelPlay.OnInitSuccess += _ => CreateAd();
-        LevelPlay.OnInitFailed += error => Debug.LogWarning("Anuncios: no se pudo iniciar LevelPlay (" + error + ")");
+        LevelPlay.OnInitSuccess += _ =>
+        {
+            Status = "iniciado";
+            CreateAd();
+        };
+        LevelPlay.OnInitFailed += error =>
+        {
+            Status = "no se pudo iniciar: " + error;
+            Debug.LogWarning("Anuncios: " + Status);
+        };
+        Status = "iniciando";
         LevelPlay.Init(AdsConfig.AndroidAppKey);
     }
 
     private void CreateAd()
     {
         ad = new LevelPlayRewardedAd(AdsConfig.AndroidRewardedAdUnitId);
-        ad.OnAdLoaded += _ => loaded = true;
+        ad.OnAdLoaded += _ =>
+        {
+            loaded = true;
+            Status = "listo";
+        };
         ad.OnAdLoadFailed += error =>
         {
             loaded = false;
+            Status = "no se pudo cargar: " + error;
             Debug.Log("Anuncios: no se cargó (" + error + "), se reintenta.");
             RetryLoad();
         };
@@ -59,6 +74,7 @@ public class LevelPlayRewardedProvider : IRewardedAdProvider
             ad.LoadAd();
             FinishAfterClose();
         };
+        Status = "cargando";
         ad.LoadAd();
     }
 

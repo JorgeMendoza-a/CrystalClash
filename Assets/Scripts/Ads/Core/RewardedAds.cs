@@ -16,6 +16,9 @@ public interface IRewardedAdProvider
     /// <summary>Hay un anuncio cargado listo para mostrar.</summary>
     bool IsReady { get; }
 
+    /// <summary>Estado para diagnosticar (p. ej. "cargando", "error al cargar: ...").</summary>
+    string Status { get; }
+
     /// <summary>Muestra el anuncio. done(true) si el jugador lo vio completo y gana el premio.</summary>
     void Show(Action<bool> done);
 }
