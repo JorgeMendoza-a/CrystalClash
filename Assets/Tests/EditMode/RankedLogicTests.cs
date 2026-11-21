@@ -45,16 +45,16 @@ public class RankedLogicTests
     public void PointsChange_MatchesTheLeagueTable()
     {
         // Contra un rival de tus mismos puntos (base Elo: +20 / -20).
-        Assert.AreEqual(40, RankedRules.PointsChange(200, 200, MatchOutcome.Win));     // Bronce x2
+        Assert.AreEqual(60, RankedRules.PointsChange(200, 200, MatchOutcome.Win));     // Bronce x2
         Assert.AreEqual(-10, RankedRules.PointsChange(200, 200, MatchOutcome.Loss));   // Bronce x0.5
-        Assert.AreEqual(32, RankedRules.PointsChange(700, 700, MatchOutcome.Win));     // Plata
-        Assert.AreEqual(26, RankedRules.PointsChange(1500, 1500, MatchOutcome.Win));   // Oro
+        Assert.AreEqual(48, RankedRules.PointsChange(700, 700, MatchOutcome.Win));     // Plata
+        Assert.AreEqual(39, RankedRules.PointsChange(1500, 1500, MatchOutcome.Win));   // Oro
         Assert.AreEqual(-15, RankedRules.PointsChange(1500, 1500, MatchOutcome.Loss));
-        Assert.AreEqual(20, RankedRules.PointsChange(3000, 3000, MatchOutcome.Win));   // Platino
-        Assert.AreEqual(16, RankedRules.PointsChange(5000, 5000, MatchOutcome.Win));   // Diamante
+        Assert.AreEqual(30, RankedRules.PointsChange(3000, 3000, MatchOutcome.Win));   // Platino
+        Assert.AreEqual(24, RankedRules.PointsChange(5000, 5000, MatchOutcome.Win));   // Diamante
         Assert.AreEqual(-20, RankedRules.PointsChange(5000, 5000, MatchOutcome.Loss));
-        Assert.AreEqual(12, RankedRules.PointsChange(7000, 7000, MatchOutcome.Win));   // Maestro
-        Assert.AreEqual(10, RankedRules.PointsChange(9000, 9000, MatchOutcome.Win));   // Campeón
+        Assert.AreEqual(18, RankedRules.PointsChange(7000, 7000, MatchOutcome.Win));   // Maestro
+        Assert.AreEqual(15, RankedRules.PointsChange(9000, 9000, MatchOutcome.Win));   // Campeón
         Assert.AreEqual(0, RankedRules.PointsChange(3000, 3000, MatchOutcome.Draw));
     }
 

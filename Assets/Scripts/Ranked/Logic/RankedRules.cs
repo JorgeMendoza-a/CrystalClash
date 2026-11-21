@@ -26,11 +26,14 @@ namespace CrystalClash.Ranked.Logic
         /// <summary>Tiempo máximo de una partida. Al acabarse cuenta lo que lleves.</summary>
         public const int TimeLimitSeconds = 150;
 
-        /// <summary>Factor K del Elo: cuánto se mueve el ranking por partida.</summary>
-        public const int K = 40;
+        /// <summary>Factor K del Elo al ganar: cuánto se sube por partida (alto para que subir se sienta).</summary>
+        public const int K = 60;
+
+        /// <summary>Factor K del Elo al perder (más bajo: perder quita menos de lo que da ganar).</summary>
+        public const int LossK = 40;
 
         /// <summary>Lo mínimo que se gana por victoria (para que ganar siempre se note).</summary>
-        public const int MinWinPoints = 8;
+        public const int MinWinPoints = 12;
 
         public const int StartingPoints = 0;
 
@@ -44,7 +47,8 @@ namespace CrystalClash.Ranked.Logic
         {
             double expected = 1.0 / (1.0 + Math.Pow(10.0, (opponentPoints - myPoints) / 400.0));
             double actual = outcome == MatchOutcome.Win ? 1.0 : outcome == MatchOutcome.Draw ? 0.5 : 0.0;
-            double raw = K * (actual - expected);
+            double diff = actual - expected;
+            double raw = (diff >= 0 ? K : LossK) * diff;
 
             // Según la liga del jugador: abajo se gana mucho y se pierde poco; arriba, al revés.
             RankTiers.League league = RankTiers.LeagueForPoints(myPoints);
@@ -66,7 +70,7 @@ namespace CrystalClash.Ranked.Logic
             win = PointsChange(myPoints, myPoints, MatchOutcome.Win);
             // La pérdida típica sin el tope de 0 (para mostrarla aunque tengas pocos puntos).
             RankTiers.League league = RankTiers.LeagueForPoints(myPoints);
-            loss = -(int)Math.Round(K * 0.5 * league.LossMultiplier, MidpointRounding.AwayFromZero);
+            loss = -(int)Math.Round(LossK * 0.5 * league.LossMultiplier, MidpointRounding.AwayFromZero);
         }
 
         public static MatchOutcome Compare(int myScore, int opponentScore)

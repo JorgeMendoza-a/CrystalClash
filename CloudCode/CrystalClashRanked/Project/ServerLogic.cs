@@ -25,7 +25,7 @@ namespace CrystalClashRanked
         public const int MatchGraceSeconds = RankedRules.TimeLimitSeconds + StartDelaySeconds + 60;
 
         /// <summary>Contra un bot se gana/pierde la mitad (para que no sirva para subir fácil).</summary>
-        public const double BotMultiplier = 0.5;
+        public const double BotMultiplier = 1.0;
 
         public const string BotNamePrefix = "Bot ";
 

@@ -88,9 +88,9 @@ public static class ServerLogicTests
     private static void Results_HumanVsHuman()
     {
         var r = ServerLogic.ComputeResults(Match(true, 900, true, 700), id => 200);
-        Check(r["a"].Outcome == (int)MatchOutcome.Win && r["a"].PointsChange == 40, "gana +40 en Bronce");
+        Check(r["a"].Outcome == (int)MatchOutcome.Win && r["a"].PointsChange == 60, "gana +60 en Bronce");
         Check(r["b"].Outcome == (int)MatchOutcome.Loss && r["b"].PointsChange == -10, "pierde -10 en Bronce");
-        Check(r["a"].MyScore == 900 && r["a"].OpponentScore == 700 && r["a"].NewPoints == 240, "puntajes");
+        Check(r["a"].MyScore == 900 && r["a"].OpponentScore == 700 && r["a"].NewPoints == 260, "puntajes");
     }
 
     private static void Results_Abandonment_Loses()
@@ -105,7 +105,7 @@ public static class ServerLogicTests
         int botScore = ServerLogic.BotScoreAfter(77, RankedRules.Moves);
         var r = ServerLogic.ComputeResults(Match(true, botScore + 100, false, 0, bIsBot: true), id => 200);
         Check(r.Count == 1, "solo hay resultado para el humano");
-        Check(r["a"].Outcome == (int)MatchOutcome.Win && r["a"].PointsChange == 20, "mitad de +40");
+        Check(r["a"].Outcome == (int)MatchOutcome.Win && r["a"].PointsChange == 60, "contra bot da lo mismo: +60");
         Check(r["a"].OpponentIsBot && r["a"].OpponentScore == botScore, "contra bot");
     }
 
