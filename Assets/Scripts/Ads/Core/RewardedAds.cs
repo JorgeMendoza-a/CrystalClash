@@ -7,7 +7,7 @@ using System;
 public static class AdsConfig
 {
     public const string AndroidAppKey = "";
-    public const string AndroidRewardedAdUnitId = "";
+    public const string AndroidRewardedAdUnitId = "790fg51xj8xvr999";
 }
 
 /// <summary>Quien muestra anuncios con recompensa (LevelPlay, si el paquete está instalado).</summary>
