@@ -66,6 +66,7 @@ public class RankedMatchController : MonoBehaviour
 
         RankTier opponentTier = RankTiers.ForPoints(match.OpponentPoints);
         string myName = string.IsNullOrEmpty(myDisplayName) ? "Tú" : myDisplayName;
+        Sound.Play("match_found");
         StoryPopup.ShowVersus(
             "¡Partida encontrada!",
             myName, ProfileAvatar.LocalId, ProfileAvatar.LocalBanner,
@@ -182,6 +183,8 @@ public class RankedMatchController : MonoBehaviour
 
     private void ShowResult(RankedMatchResult result)
     {
+        Sound.Play(result.Outcome == MatchOutcome.Win ? "win" : result.Outcome == MatchOutcome.Loss ? "lose" : "star");
+
         string title;
         switch (result.Outcome)
         {

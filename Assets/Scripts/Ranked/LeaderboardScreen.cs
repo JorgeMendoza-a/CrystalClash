@@ -150,6 +150,7 @@ public class LeaderboardScreen : MonoBehaviour
             tabImage.type = Image.Type.Sliced;
             tabImage.preserveAspect = false;
             var button = tabImage.gameObject.AddComponent<Button>();
+            Sound.AddClick(button);
             button.targetGraphic = tabImage;
             button.onClick.AddListener(() => SelectTab(index));
             TMP_Text text = UiKit.Text(tabImage.transform, names[i], 40f, Color.white);

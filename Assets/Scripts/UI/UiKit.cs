@@ -242,6 +242,7 @@ public static class UiKit
         }
 
         var button = image.gameObject.AddComponent<Button>();
+        Sound.AddClick(button);
         button.targetGraphic = image;
         if (onClick != null) button.onClick.AddListener(() => onClick());
 

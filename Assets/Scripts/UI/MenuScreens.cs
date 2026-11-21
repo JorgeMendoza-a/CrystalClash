@@ -28,6 +28,7 @@ public static class MenuScreens
         if (current != null) Object.Destroy(current);
         current = null;
         SetGameVisible(true);
+        Sound.PlayMusic(Sound.Track.Game);
     }
 
     public static void ShowHome() => Show(Screen.Home);
@@ -41,6 +42,7 @@ public static class MenuScreens
 
         current = UiKit.CreateCanvas("Menu " + screen, 400).gameObject;
         CurrentScreen = screen;
+        Sound.PlayMusic(Sound.Track.Menu);
         SetGameVisible(false);
 
         UiKit.FullscreenBackground(current.transform, screen == Screen.Home ? 0.25f : 0.5f);
@@ -121,6 +123,7 @@ public static class MenuScreens
         tile.preserveAspect = false;
 
         var button = tile.gameObject.AddComponent<Button>();
+        Sound.AddClick(button);
         button.targetGraphic = tile;
         button.onClick.AddListener(() => Show(target));
 
@@ -221,11 +224,15 @@ public static class MenuScreens
     {
         bool testMode = UgsRankedService.TestModeEnabled;
         bool linked = AccountLink.IsLinked;
+        bool musicOn = Sound.MusicOn;
+        bool sfxOn = Sound.SfxOn;
         StoryPopup.Show("Ajustes",
             $"Cuenta: <b>{(linked ? "vinculada (guardado en la nube)" : "invitado")}</b>\n" +
             $"Clasificatoria: <b>{(testMode ? "modo prueba (rival simulado)" : "en línea")}</b>\n\n" +
             "Crystal Clash\n<size=75%>Fuente: Lilita One (SIL Open Font License)</size>",
             new StoryPopup.PopupButton("Cerrar", null),
+            new StoryPopup.PopupButton(musicOn ? "Música: SÍ" : "Música: NO", () => { Sound.MusicOn = !musicOn; ShowSettings(); }),
+            new StoryPopup.PopupButton(sfxOn ? "Sonidos: SÍ" : "Sonidos: NO", () => { Sound.SfxOn = !sfxOn; ShowSettings(); }),
             new StoryPopup.PopupButton(linked ? "Cuenta vinculada" : "Vincular con Google", AccountLink.StartLink, !linked),
             new StoryPopup.PopupButton(testMode ? "Usar clasificatoria en línea" : "Usar modo prueba", () =>
             {

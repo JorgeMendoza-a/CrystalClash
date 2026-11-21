@@ -126,6 +126,7 @@ public static class Cosmetics
                 }
 
                 p.AddCosmetic(item.Id);
+                Sound.Play("coin");
                 Equip(item, false);
                 StoryPopup.Show("¡Es tuyo!", $"<b>{item.Name}</b> ya está equipado en tu perfil.",
                     new StoryPopup.PopupButton("Genial", onDone));

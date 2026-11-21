@@ -376,6 +376,7 @@ public class GameManager : MonoBehaviour
 
     private void OnWin()
     {
+        Sound.Play("win");
         int levelNumber = Session.Level.Number;
         string reward = "";
         if (levelNumber > 0)
@@ -413,6 +414,7 @@ public class GameManager : MonoBehaviour
 
     private void OnLose()
     {
+        Sound.Play("lose");
         PlayerProgress progress = SaveManager.Progress;
         long now = GameClock.NowUtc;
         progress.LoseLife(now);

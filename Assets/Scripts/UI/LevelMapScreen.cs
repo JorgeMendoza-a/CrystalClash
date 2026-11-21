@@ -188,6 +188,7 @@ public static class LevelMapScreen
         rect.sizeDelta = new Vector2(NodeSize, NodeSize);
 
         var button = node.gameObject.AddComponent<Button>();
+        Sound.AddClick(button);
         button.targetGraphic = node;
         int n = number;
         button.onClick.AddListener(() =>

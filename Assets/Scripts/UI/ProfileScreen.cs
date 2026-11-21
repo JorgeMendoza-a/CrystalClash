@@ -299,6 +299,7 @@ public static class ProfileScreen
             AchievementStatus achievement = a;
             Image cell = UiKit.Image(view.AchievementsRow, achievement.Id, new Color(0f, 0f, 0f, 0f));
             var button = cell.gameObject.AddComponent<Button>();
+            Sound.AddClick(button);
             button.targetGraphic = cell;
             button.onClick.AddListener(() => StoryPopup.Show(achievement.Name.Replace("\n", " "),
                 $"{achievement.Description}\n\nProgreso: <b>{achievement.Current} / {achievement.Target}</b>",
@@ -364,6 +365,7 @@ public static class ProfileScreen
             UiKit.Size(holder.transform, width: 180f);
             RectTransform badge = SeasonBadge.Create(holder.transform, season, league, 175f);
             var button = badge.gameObject.AddComponent<Button>();
+            Sound.AddClick(button);
             Image hit = badge.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
             button.targetGraphic = hit;

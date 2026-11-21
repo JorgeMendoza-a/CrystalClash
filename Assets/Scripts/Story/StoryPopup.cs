@@ -313,6 +313,7 @@ public static class StoryPopup
         }
 
         var button = image.gameObject.AddComponent<Button>();
+        Sound.AddClick(button);
         button.interactable = data.Interactable;
         button.targetGraphic = image;
 

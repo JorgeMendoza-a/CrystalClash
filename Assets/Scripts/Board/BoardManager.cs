@@ -301,11 +301,13 @@ public class BoardManager : MonoBehaviour
 
         SwapResult result = Logic.TrySwap(a, b);
 
+        Sound.Play("swap", 1f, 0.6f);
         yield return AnimateSwap(first, second);
 
         if (!result.IsValid)
         {
             // Movimiento sin combinación: vuelven a su sitio.
+            Sound.Play("invalid", 1f, 0.7f);
             yield return AnimateSwap(first, second);
             IsBusy = false;
             yield break;
@@ -363,6 +365,8 @@ public class BoardManager : MonoBehaviour
             {
                 mineral.SetPiece((int)mineral.mineralType, SpecialKind.Bomb);
                 StartCoroutine(Pop(mineral.transform));
+                // Cada bomba nueva suena un poco más aguda.
+                Sound.Play("star", Mathf.Min(2f, 0.9f + 0.06f * (moves - left)), 0.6f);
             }
             left--;
             if (GameHud.Instance != null) GameHud.Instance.SetMoves(left);
@@ -415,6 +419,8 @@ public class BoardManager : MonoBehaviour
             yield break;
         }
 
+        Sound.Play("booster");
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RegisterBooster(kind, result);
@@ -440,8 +446,10 @@ public class BoardManager : MonoBehaviour
                 GameUI.Instance.ShowCascade(step.Level);
             }
 
+            PlayStepSounds(step);
             yield return AnimateClear(step);
             AddScore(step.Points);
+            if (step.Created.Count > 0) Sound.Play("special_create");
             yield return AnimateCreateSpecials(step);
             yield return AnimateFallAndRefill(step);
         }
@@ -450,6 +458,30 @@ public class BoardManager : MonoBehaviour
         {
             yield return AnimateShuffle();
         }
+    }
+
+    /// <summary>
+    /// Sonidos de una ola: la campanita sube de tono con cada cascada, y cada
+    /// especial que explota suena con lo suyo (taladro, dinamita, prisma).
+    /// </summary>
+    static void PlayStepSounds(CascadeStep step)
+    {
+        Sound.Play("match", Mathf.Min(1.8f, 1f + 0.1f * (step.Level - 1)), 0.8f);
+
+        bool line = false, bomb = false, prism = false;
+        foreach (SpecialActivation activation in step.Activations)
+        {
+            switch (activation.Kind)
+            {
+                case SpecialKind.LineH:
+                case SpecialKind.LineV: line = true; break;
+                case SpecialKind.Bomb: bomb = true; break;
+                case SpecialKind.Prism: prism = true; break;
+            }
+        }
+        if (line) Sound.Play("line", 1f, 0.8f);
+        if (bomb) Sound.Play("bomb", 1f, 0.9f);
+        if (prism) Sound.Play("prism");
     }
 
     IEnumerator AnimateShuffle()

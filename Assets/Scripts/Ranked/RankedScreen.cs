@@ -237,6 +237,7 @@ public class RankedScreen : MonoBehaviour
         Image info = UiKit.Card(column.transform, "Info");
         UiKit.Size(info, height: 150f);
         var infoButton = info.gameObject.AddComponent<Button>();
+        Sound.AddClick(infoButton);
         infoButton.targetGraphic = info;
         infoButton.onClick.AddListener(ShowSeasonEndRewards);
         UiKit.Vertical(info.gameObject, 24, 0f, TextAnchor.MiddleCenter);

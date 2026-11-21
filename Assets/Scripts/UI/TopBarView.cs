@@ -50,6 +50,7 @@ public class TopBarView : MonoBehaviour
         // Tocar las vidas: info y anuncio para ganar una.
         Image livesImage = lives.GetComponent<Image>();
         var livesButton = lives.gameObject.AddComponent<Button>();
+        Sound.AddClick(livesButton);
         livesButton.targetGraphic = livesImage;
         livesButton.onClick.AddListener(ShowLivesPopup);
         livesTimer = UiKit.Text(lives, "", 26f, Color.white);

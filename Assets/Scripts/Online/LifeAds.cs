@@ -99,6 +99,7 @@ public static class LifeAds
         PlayerProgress p = SaveManager.Progress;
         p.AddLife(GameClock.NowUtc);
         SaveManager.Save();
+        Sound.Play("star");
         StoryPopup.Show("¡+1 vida!", $"Ahora tienes <b>{p.GetLives(GameClock.NowUtc)}</b> vidas.",
             new StoryPopup.PopupButton("¡A jugar!", onDone));
     }
