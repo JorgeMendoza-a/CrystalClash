@@ -135,6 +135,25 @@ public class GameHud : MonoBehaviour
         }
     }
 
+    private Coroutine bannerRoutine;
+
+    /// <summary>Muestra un aviso grande sobre la barra de abajo (p. ej. "¡8 bombas de bonus!").</summary>
+    public void ShowBanner(string text, float seconds)
+    {
+        if (boosterHint == null) return;
+        boosterHint.text = $"<size=140%><color=#FFD040>{text}</color></size>";
+        boosterHint.gameObject.SetActive(true);
+        if (bannerRoutine != null) StopCoroutine(bannerRoutine);
+        bannerRoutine = StartCoroutine(HideBannerAfter(seconds));
+    }
+
+    private System.Collections.IEnumerator HideBannerAfter(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        if (boosterHint != null && pendingBooster == null) boosterHint.gameObject.SetActive(false);
+        bannerRoutine = null;
+    }
+
     /// <summary>Resalta el potenciador armado y muestra la ayuda (null = ninguno).</summary>
     public void SetPendingBooster(BoosterKind? kind)
     {

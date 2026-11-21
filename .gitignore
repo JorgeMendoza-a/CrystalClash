@@ -17,3 +17,4 @@ Builds/
 !CloudCode/**/*.sln
 !CloudCode/Build/
 !CloudCode/Build/*.ccm
+!Tools/**/*.csproj

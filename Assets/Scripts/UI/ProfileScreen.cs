@@ -253,7 +253,8 @@ public static class ProfileScreen
         if (view.AchievementsRow == null) return;
         foreach (Transform child in view.AchievementsRow) UnityEngine.Object.Destroy(child.gameObject);
 
-        List<AchievementStatus> list = Achievements.Evaluate(SaveManager.Progress, LevelCatalog.Count, rankedWins, rankedPoints);
+        int firstWorld = LevelCatalog.Worlds.Count > 0 ? LevelCatalog.Worlds[0].LevelCount : LevelCatalog.Count;
+        List<AchievementStatus> list = Achievements.Evaluate(SaveManager.Progress, firstWorld, rankedWins, rankedPoints);
         foreach (AchievementStatus a in list)
         {
             AchievementStatus achievement = a;

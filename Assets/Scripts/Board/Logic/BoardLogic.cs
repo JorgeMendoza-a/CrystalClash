@@ -281,6 +281,73 @@ namespace CrystalClash.Board.Logic
             return result;
         }
 
+        /// <summary>
+        /// Final de nivel ganado: cada movimiento sobrante se convierte en una
+        /// bomba sobre un mineral al azar; luego explotan todas (y cualquier
+        /// especial que quede) con sus cascadas. No cuenta como movimiento.
+        /// </summary>
+        public SwapResult PlayFinale(int bombs)
+        {
+            var result = new SwapResult(default(GridPos), default(GridPos)) { IsValid = true };
+
+            // Minerales normales al azar (en orden determinista según la semilla).
+            var candidates = new List<GridPos>();
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    if (types[x, y] >= 0 && specials[x, y] == SpecialKind.None) candidates.Add(new GridPos(x, y));
+                }
+            }
+            for (int i = candidates.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                GridPos temp = candidates[i];
+                candidates[i] = candidates[j];
+                candidates[j] = temp;
+            }
+
+            int count = Math.Min(Math.Max(0, bombs), candidates.Count);
+            for (int i = 0; i < count; i++)
+            {
+                specials[candidates[i].X, candidates[i].Y] = SpecialKind.Bomb;
+                result.FinaleBombs.Add(candidates[i]);
+            }
+
+            // Se activan todos los especiales; si las cascadas crean más, también (con un límite).
+            int level = 0;
+            for (int round = 0; round < 10; round++)
+            {
+                var ctx = new StepContext(new CascadeStep(++level), Width, Height);
+                for (int x = 0; x < Width; x++)
+                {
+                    for (int y = 0; y < Height; y++)
+                    {
+                        if (specials[x, y] != SpecialKind.None) Mark(ctx, new GridPos(x, y));
+                    }
+                }
+                if (ctx.Queue.Count == 0) { level--; break; }
+
+                FinishStep(ctx, new List<SpecialCreation>());
+                AddStep(result, ctx.Step);
+
+                List<Run> runs = FindRuns();
+                while (runs.Count > 0)
+                {
+                    level++;
+                    AddStep(result, ExecuteMatchStep(level, runs, null, null));
+                    runs = FindRuns();
+                }
+            }
+
+            if (!HasAvailableMoves())
+            {
+                Shuffle();
+                result.WasShuffled = true;
+            }
+            return result;
+        }
+
         // ------------------------------------------------------------------
         // Resolución de una ola
         // ------------------------------------------------------------------

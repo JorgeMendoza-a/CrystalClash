@@ -80,7 +80,14 @@ public class StoryLogicTests
 
         Assert.AreEqual(SessionState.Won, session.State);
         Assert.AreEqual(49, session.MovesLeft);
-        Assert.AreEqual(49 * LevelSession.PointsPerRemainingMove, session.MoveBonus);
+        Assert.AreEqual(0, session.MoveBonus);
+
+        // Movimientos sobrantes → bombas de bonus
+        SwapResult finale = board.PlayFinale(session.MovesLeft);
+        session.ApplyFinale(finale);
+        Assert.AreEqual(49, session.FinaleBombs);
+        Assert.Greater(session.MoveBonus, 0);
+        Assert.AreEqual(finale.PointsGained, session.MoveBonus);
         Assert.AreEqual(session.Score + session.MoveBonus, session.FinalScore);
         Assert.GreaterOrEqual(session.Stars, 1);
     }
@@ -132,6 +139,32 @@ public class StoryLogicTests
         PlayUntilEnd(session, board);
 
         Assert.AreEqual(3, session.Stars);
+    }
+
+    [Test]
+    public void Finale_TurnsMovesIntoBombs_AndLeavesStableBoard()
+    {
+        var board = new BoardLogic(8, 8, 6, 21);
+        SwapResult finale = board.PlayFinale(7);
+
+        Assert.AreEqual(7, finale.FinaleBombs.Count);
+        Assert.Greater(finale.Steps.Count, 0);
+        Assert.Greater(finale.PointsGained, 0);
+        Assert.AreEqual(finale.PointsGained, board.Score);
+        Assert.AreEqual(0, board.MovesMade);
+        Assert.AreEqual(0, board.FindMatches().Count);
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                Assert.AreEqual(SpecialKind.None, board.GetSpecial(x, y));
+            }
+        }
+
+        // Determinista
+        var again = new BoardLogic(8, 8, 6, 21);
+        Assert.AreEqual(finale.PointsGained, again.PlayFinale(7).PointsGained);
+        Assert.AreEqual(0, new BoardLogic(8, 8, 6, 21).PlayFinale(0).FinaleBombs.Count);
     }
 
     [Test]

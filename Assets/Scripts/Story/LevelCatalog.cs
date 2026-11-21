@@ -33,12 +33,50 @@ public static class LevelCatalog
     }
 
     [Serializable]
+    private class WorldJson
+    {
+        public string name = "";
+        public int levels;
+    }
+
+    [Serializable]
     private class CatalogJson
     {
+        public WorldJson[] worlds = new WorldJson[0];
         public LevelJson[] levels = new LevelJson[0];
     }
 
+    /// <summary>Un mundo del mapa: un grupo de niveles seguidos.</summary>
+    public sealed class WorldInfo
+    {
+        public int Number;
+        public string Name = "";
+        public int FirstLevel;
+        public int LastLevel;
+        public int LevelCount => LastLevel - FirstLevel + 1;
+    }
+
     private static List<LevelDefinition> levels;
+    private static List<WorldInfo> worlds;
+
+    public static IReadOnlyList<WorldInfo> Worlds
+    {
+        get
+        {
+            if (levels == null) Load();
+            return worlds;
+        }
+    }
+
+    /// <summary>Mundo al que pertenece un nivel (el primero si el número no existe).</summary>
+    public static WorldInfo WorldOf(int levelNumber)
+    {
+        foreach (WorldInfo w in Worlds)
+        {
+            if (levelNumber >= w.FirstLevel && levelNumber <= w.LastLevel) return w;
+        }
+        return Worlds.Count > 0 ? Worlds[0] : new WorldInfo { Number = 1, Name = "MUNDO", FirstLevel = 1, LastLevel = 1 };
+    }
 
     public static IReadOnlyList<LevelDefinition> Levels
     {
@@ -61,6 +99,7 @@ public static class LevelCatalog
     {
         levels = new List<LevelDefinition>();
 
+        worlds = new List<WorldInfo>();
         TextAsset file = Resources.Load<TextAsset>(ResourcePath);
         if (file == null)
         {
@@ -92,7 +131,26 @@ public static class LevelCatalog
             }
         }
 
-        Debug.Log($"Modo historia: {levels.Count} niveles cargados.");
+        // Mundos: los del archivo, recortados a los niveles que cargaron bien.
+        worlds = new List<WorldInfo>();
+        int next = 1;
+        if (catalog.worlds != null)
+        {
+            foreach (WorldJson w in catalog.worlds)
+            {
+                if (w.levels <= 0 || next > levels.Count) continue;
+                int last = Math.Min(levels.Count, next + w.levels - 1);
+                worlds.Add(new WorldInfo { Number = worlds.Count + 1, Name = w.name, FirstLevel = next, LastLevel = last });
+                next = last + 1;
+            }
+        }
+        if (next <= levels.Count)
+        {
+            // Niveles sin mundo (o archivo viejo sin "worlds"): un mundo más con el resto.
+            worlds.Add(new WorldInfo { Number = worlds.Count + 1, Name = worlds.Count == 0 ? "MINA DE CRISTALES" : "MUNDO " + (worlds.Count + 1), FirstLevel = next, LastLevel = levels.Count });
+        }
+
+        Debug.Log($"Modo historia: {levels.Count} niveles en {worlds.Count} mundos.");
     }
 
     private static LevelDefinition Convert(LevelJson json, int number)

@@ -110,6 +110,9 @@ namespace CrystalClash.Board.Logic
         /// <summary>True si al final no quedaban movimientos y el tablero se reorganizó.</summary>
         public bool WasShuffled { get; internal set; }
 
+        /// <summary>Final de nivel: celdas donde aparecieron las bombas de bonus (en orden).</summary>
+        public List<GridPos> FinaleBombs { get; } = new List<GridPos>();
+
         public SwapResult(GridPos a, GridPos b)
         {
             A = a;

@@ -1,85 +1,2483 @@
 {
-    "levels": [
+  "worlds": [
+    {
+      "name": "MINA DE CRISTALES",
+      "levels": 15
+    },
+    {
+      "name": "CAVERNAS DE ESMERALDA",
+      "levels": 20
+    },
+    {
+      "name": "VOLCÁN DE RUBÍ",
+      "levels": 25
+    },
+    {
+      "name": "CORAZÓN DE DIAMANTE",
+      "levels": 40
+    }
+  ],
+  "levels": [
+    {
+      "name": "La entrada de la mina",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 5,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
         {
-            "name": "La entrada de la mina",
-            "width": 8, "height": 8, "mineralTypes": 5, "seed": 0, "moves": 20,
-            "objectives": [ { "type": "score", "count": 1200 } ],
-            "stars": [1200, 2200, 2800]
-        },
-        {
-            "name": "Brillo azul",
-            "width": 8, "height": 8, "mineralTypes": 5, "seed": 0, "moves": 20,
-            "objectives": [ { "type": "collect", "mineral": "Sapphire", "count": 20 } ],
-            "stars": [1500, 2300, 3300]
-        },
-        {
-            "name": "Veta doble",
-            "width": 8, "height": 8, "mineralTypes": 5, "seed": 0, "moves": 24,
-            "objectives": [
-                { "type": "collect", "mineral": "Emerald", "count": 25 },
-                { "type": "collect", "mineral": "Ruby", "count": 25 }
-            ],
-            "stars": [2400, 3100, 4200]
-        },
-        {
-            "name": "Túnel estrecho",
-            "width": 7, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 22,
-            "objectives": [ { "type": "score", "count": 1400 } ],
-            "stars": [1400, 1850, 2300]
-        },
-        {
-            "name": "Corazón de la mina",
-            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 27,
-            "objectives": [
-                { "type": "collect", "mineral": "Sapphire", "count": 15 },
-                { "type": "collect", "mineral": "Carbon", "count": 20 },
-                { "type": "collect", "mineral": "Gold", "count": 10 }
-            ],
-            "stars": [1700, 2200, 3100]
-        },
-        {
-            "name": "Cueva de amatista",
-            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 23,
-            "objectives": [
-                { "type": "collect", "mineral": "Amethyst", "count": 18 },
-                { "type": "score", "count": 1600 }
-            ],
-            "stars": [1700, 2150, 2700]
-        },
-        {
-            "name": "Fiebre del oro",
-            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 23,
-            "objectives": [
-                { "type": "collect", "mineral": "Ruby", "count": 18 },
-                { "type": "collect", "mineral": "Gold", "count": 18 }
-            ],
-            "stars": [1600, 2100, 2800]
-        },
-        {
-            "name": "Tres tesoros",
-            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 26,
-            "objectives": [
-                { "type": "collect", "mineral": "Sapphire", "count": 20 },
-                { "type": "collect", "mineral": "Emerald", "count": 20 },
-                { "type": "collect", "mineral": "Amethyst", "count": 20 }
-            ],
-            "stars": [2000, 2500, 3400]
-        },
-        {
-            "name": "Derrumbe",
-            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 18,
-            "objectives": [ { "type": "score", "count": 1550 } ],
-            "stars": [1550, 1900, 2400]
-        },
-        {
-            "name": "El gran filón",
-            "width": 8, "height": 8, "mineralTypes": 6, "seed": 0, "moves": 26,
-            "objectives": [
-                { "type": "collect", "mineral": "Carbon", "count": 24 },
-                { "type": "collect", "mineral": "Gold", "count": 24 },
-                { "type": "score", "count": 2200 }
-            ],
-            "stars": [2200, 2800, 3800]
+          "type": "score",
+          "count": 1200
         }
-    ]
+      ],
+      "stars": [
+        1650,
+        2750,
+        4550
+      ]
+    },
+    {
+      "name": "Brillo azul",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 5,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 20
+        }
+      ],
+      "stars": [
+        1600,
+        3100,
+        4800
+      ]
+    },
+    {
+      "name": "Veta doble",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 5,
+      "seed": 0,
+      "moves": 24,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 25
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 25
+        }
+      ],
+      "stars": [
+        2450,
+        4000,
+        6200
+      ]
+    },
+    {
+      "name": "Túnel estrecho",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 22,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1400
+        }
+      ],
+      "stars": [
+        1500,
+        2000,
+        2650
+      ]
+    },
+    {
+      "name": "Corazón de la mina",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 27,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 15
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 20
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 10
+        }
+      ],
+      "stars": [
+        1650,
+        2450,
+        3700
+      ]
+    },
+    {
+      "name": "Cueva de amatista",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 18
+        },
+        {
+          "type": "score",
+          "count": 1600
+        }
+      ],
+      "stars": [
+        1800,
+        2350,
+        3350
+      ]
+    },
+    {
+      "name": "Fiebre del oro",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 18
+        }
+      ],
+      "stars": [
+        1500,
+        2400,
+        3600
+      ]
+    },
+    {
+      "name": "Tres tesoros",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 20
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 20
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 20
+        }
+      ],
+      "stars": [
+        1900,
+        2700,
+        3550
+      ]
+    },
+    {
+      "name": "Derrumbe",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 18,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1550
+        }
+      ],
+      "stars": [
+        1700,
+        2250,
+        3350
+      ]
+    },
+    {
+      "name": "El gran filón",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 24
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 24
+        },
+        {
+          "type": "score",
+          "count": 2200
+        }
+      ],
+      "stars": [
+        2400,
+        3200,
+        4300
+      ]
+    },
+    {
+      "name": "Túnel de los ecos",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 24
+        }
+      ],
+      "stars": [
+        1600,
+        2500,
+        3250
+      ]
+    },
+    {
+      "name": "Vagonetas perdidas",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 15
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 15
+        }
+      ],
+      "stars": [
+        1200,
+        1950,
+        2900
+      ]
+    },
+    {
+      "name": "Pozo profundo",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1700
+        }
+      ],
+      "stars": [
+        1900,
+        2600,
+        3250
+      ]
+    },
+    {
+      "name": "Grieta brillante",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2050
+        }
+      ],
+      "stars": [
+        2200,
+        2750,
+        3650
+      ]
+    },
+    {
+      "name": "Guardián de la mina",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 20
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 20
+        },
+        {
+          "type": "score",
+          "count": 1850
+        }
+      ],
+      "stars": [
+        2050,
+        2750,
+        3450
+      ]
+    },
+    {
+      "name": "Entrada verde",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 16
+        }
+      ],
+      "stars": [
+        1300,
+        2050,
+        2950
+      ]
+    },
+    {
+      "name": "Gruta de musgo",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1800,
+        2550,
+        3600
+      ]
+    },
+    {
+      "name": "Lago escondido",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 14
+        },
+        {
+          "type": "score",
+          "count": 1250
+        }
+      ],
+      "stars": [
+        1400,
+        2000,
+        2750
+      ]
+    },
+    {
+      "name": "Raíces de cristal",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 16
+        }
+      ],
+      "stars": [
+        1700,
+        2450,
+        3200
+      ]
+    },
+    {
+      "name": "Guardián del musgo",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 29,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 21
+        },
+        {
+          "type": "score",
+          "count": 2050
+        }
+      ],
+      "stars": [
+        2350,
+        3000,
+        4050
+      ]
+    },
+    {
+      "name": "Pasaje susurrante",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1400
+        }
+      ],
+      "stars": [
+        1550,
+        2100,
+        2900
+      ]
+    },
+    {
+      "name": "Bosque subterráneo",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 16
+        }
+      ],
+      "stars": [
+        1350,
+        2150,
+        2700
+      ]
+    },
+    {
+      "name": "Cascada de jade",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 20
+        },
+        {
+          "type": "score",
+          "count": 1750
+        }
+      ],
+      "stars": [
+        2000,
+        2600,
+        3450
+      ]
+    },
+    {
+      "name": "Hongos brillantes",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 13
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 13
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 13
+        }
+      ],
+      "stars": [
+        1300,
+        2300,
+        3350
+      ]
+    },
+    {
+      "name": "Guardián de jade",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 21
+        },
+        {
+          "type": "score",
+          "count": 2000
+        }
+      ],
+      "stars": [
+        2150,
+        2800,
+        3450
+      ]
+    },
+    {
+      "name": "Puente de lianas",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 24
+        }
+      ],
+      "stars": [
+        1450,
+        2650,
+        3650
+      ]
+    },
+    {
+      "name": "Eco esmeralda",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 15
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 15
+        }
+      ],
+      "stars": [
+        1150,
+        2100,
+        3000
+      ]
+    },
+    {
+      "name": "Cámara de helechos",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1700
+        }
+      ],
+      "stars": [
+        1850,
+        2300,
+        3100
+      ]
+    },
+    {
+      "name": "Río oculto",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1800,
+        2600,
+        3450
+      ]
+    },
+    {
+      "name": "Guardián del río",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1800
+        }
+      ],
+      "stars": [
+        1950,
+        2500,
+        3350
+      ]
+    },
+    {
+      "name": "Nido de luciérnagas",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 22
+        }
+      ],
+      "stars": [
+        1500,
+        2300,
+        3150
+      ]
+    },
+    {
+      "name": "Laberinto verde",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 21
+        }
+      ],
+      "stars": [
+        1700,
+        2800,
+        4000
+      ]
+    },
+    {
+      "name": "Corazón del bosque",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 17
+        },
+        {
+          "type": "score",
+          "count": 1550
+        }
+      ],
+      "stars": [
+        1650,
+        2450,
+        3250
+      ]
+    },
+    {
+      "name": "Trono de jade",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 18
+        }
+      ],
+      "stars": [
+        1600,
+        2400,
+        3450
+      ]
+    },
+    {
+      "name": "Guardián esmeralda",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 29,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2800
+        }
+      ],
+      "stars": [
+        2950,
+        3650,
+        4700
+      ]
+    },
+    {
+      "name": "Faldas del volcán",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 15
+        }
+      ],
+      "stars": [
+        1150,
+        1850,
+        2650
+      ]
+    },
+    {
+      "name": "Ríos de lava",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 17
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 17
+        }
+      ],
+      "stars": [
+        1400,
+        2300,
+        3000
+      ]
+    },
+    {
+      "name": "Roca ardiente",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 20
+        },
+        {
+          "type": "score",
+          "count": 1750
+        }
+      ],
+      "stars": [
+        1900,
+        2500,
+        3150
+      ]
+    },
+    {
+      "name": "Humo rojo",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 13
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 13
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 13
+        }
+      ],
+      "stars": [
+        1200,
+        2100,
+        3000
+      ]
+    },
+    {
+      "name": "Guardián de ceniza",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1800
+        }
+      ],
+      "stars": [
+        1950,
+        2550,
+        3400
+      ]
+    },
+    {
+      "name": "Forja antigua",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 22
+        }
+      ],
+      "stars": [
+        1500,
+        2350,
+        3250
+      ]
+    },
+    {
+      "name": "Puente de obsidiana",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1500
+        }
+      ],
+      "stars": [
+        1650,
+        2100,
+        2850
+      ]
+    },
+    {
+      "name": "Cráter dormido",
+      "width": 8,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1650
+        }
+      ],
+      "stars": [
+        1850,
+        2700,
+        3400
+      ]
+    },
+    {
+      "name": "Brasas danzantes",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1800,
+        2650,
+        3700
+      ]
+    },
+    {
+      "name": "Guardián de la forja",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1800
+        }
+      ],
+      "stars": [
+        1950,
+        2850,
+        3650
+      ]
+    },
+    {
+      "name": "Grieta de fuego",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 22
+        }
+      ],
+      "stars": [
+        1550,
+        2200,
+        3400
+      ]
+    },
+    {
+      "name": "Vapor escarlata",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 20
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 20
+        }
+      ],
+      "stars": [
+        1700,
+        2700,
+        3550
+      ]
+    },
+    {
+      "name": "Mina de azufre",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 16
+        },
+        {
+          "type": "score",
+          "count": 1400
+        }
+      ],
+      "stars": [
+        1600,
+        2200,
+        2950
+      ]
+    },
+    {
+      "name": "Lago de magma",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1800
+        }
+      ],
+      "stars": [
+        1950,
+        2550,
+        3550
+      ]
+    },
+    {
+      "name": "Guardián del magma",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 29,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 24
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 24
+        },
+        {
+          "type": "score",
+          "count": 2300
+        }
+      ],
+      "stars": [
+        2450,
+        3300,
+        4150
+      ]
+    },
+    {
+      "name": "Columnas de basalto",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 20
+        }
+      ],
+      "stars": [
+        1300,
+        2100,
+        2950
+      ]
+    },
+    {
+      "name": "Cueva del dragón",
+      "width": 7,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1600,
+        2450,
+        3400
+      ]
+    },
+    {
+      "name": "Tesoro carmesí",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 23
+        },
+        {
+          "type": "score",
+          "count": 2000
+        }
+      ],
+      "stars": [
+        2150,
+        2950,
+        3850
+      ]
+    },
+    {
+      "name": "Viento ardiente",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 16
+        }
+      ],
+      "stars": [
+        1600,
+        2300,
+        3000
+      ]
+    },
+    {
+      "name": "Guardián del dragón",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 22
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 22
+        },
+        {
+          "type": "score",
+          "count": 2150
+        }
+      ],
+      "stars": [
+        2350,
+        3100,
+        3700
+      ]
+    },
+    {
+      "name": "Cumbre humeante",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2250
+        }
+      ],
+      "stars": [
+        2400,
+        2850,
+        3650
+      ]
+    },
+    {
+      "name": "Erupción",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 17
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 17
+        }
+      ],
+      "stars": [
+        1550,
+        2400,
+        3350
+      ]
+    },
+    {
+      "name": "Corazón de rubí",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 20
+        },
+        {
+          "type": "score",
+          "count": 1800
+        }
+      ],
+      "stars": [
+        1900,
+        2400,
+        3000
+      ]
+    },
+    {
+      "name": "Trono de fuego",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 21
+        }
+      ],
+      "stars": [
+        2000,
+        2800,
+        3900
+      ]
+    },
+    {
+      "name": "Guardián del volcán",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 23
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 23
+        },
+        {
+          "type": "score",
+          "count": 2150
+        }
+      ],
+      "stars": [
+        2300,
+        3000,
+        3350
+      ]
+    },
+    {
+      "name": "Galería helada",
+      "width": 8,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1500,
+        2450,
+        3800
+      ]
+    },
+    {
+      "name": "Bóveda prismática",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 20
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 20
+        }
+      ],
+      "stars": [
+        1650,
+        2650,
+        3600
+      ]
+    },
+    {
+      "name": "Salón infinita",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1450
+        }
+      ],
+      "stars": [
+        1550,
+        2100,
+        2950
+      ]
+    },
+    {
+      "name": "Abismo de cuarzo",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 16
+        }
+      ],
+      "stars": [
+        1600,
+        2300,
+        3300
+      ]
+    },
+    {
+      "name": "Guardián I",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 29,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 22
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 22
+        },
+        {
+          "type": "score",
+          "count": 2050
+        }
+      ],
+      "stars": [
+        2250,
+        3200,
+        4200
+      ]
+    },
+    {
+      "name": "Santuario estelar",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1400,
+        2100,
+        3000
+      ]
+    },
+    {
+      "name": "Cripta eterna",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 18
+        }
+      ],
+      "stars": [
+        1400,
+        2300,
+        3200
+      ]
+    },
+    {
+      "name": "Pasaje de luz",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 20
+        },
+        {
+          "type": "score",
+          "count": 1800
+        }
+      ],
+      "stars": [
+        2000,
+        2600,
+        3550
+      ]
+    },
+    {
+      "name": "Galería de cuarzo",
+      "width": 7,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 14
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 14
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 14
+        }
+      ],
+      "stars": [
+        1400,
+        2100,
+        3000
+      ]
+    },
+    {
+      "name": "Guardián II",
+      "width": 7,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2300
+        }
+      ],
+      "stars": [
+        2400,
+        2900,
+        3850
+      ]
+    },
+    {
+      "name": "Salón estelar",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 24
+        }
+      ],
+      "stars": [
+        1650,
+        2550,
+        3750
+      ]
+    },
+    {
+      "name": "Abismo eterna",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 15
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 15
+        }
+      ],
+      "stars": [
+        1350,
+        2150,
+        2950
+      ]
+    },
+    {
+      "name": "Mirador de luz",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 18
+        },
+        {
+          "type": "score",
+          "count": 1650
+        }
+      ],
+      "stars": [
+        1750,
+        2400,
+        3250
+      ]
+    },
+    {
+      "name": "Santuario helada",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1750,
+        2700,
+        3600
+      ]
+    },
+    {
+      "name": "Guardián III",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1850
+        }
+      ],
+      "stars": [
+        2000,
+        2600,
+        3650
+      ]
+    },
+    {
+      "name": "Pasaje infinita",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 20
+        }
+      ],
+      "stars": [
+        1350,
+        2350,
+        3100
+      ]
+    },
+    {
+      "name": "Galería eterna",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2150
+        }
+      ],
+      "stars": [
+        2300,
+        2800,
+        3750
+      ]
+    },
+    {
+      "name": "Bóveda de luz",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 18
+        },
+        {
+          "type": "score",
+          "count": 1550
+        }
+      ],
+      "stars": [
+        1650,
+        2200,
+        3450
+      ]
+    },
+    {
+      "name": "Salón helada",
+      "width": 8,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 18
+        }
+      ],
+      "stars": [
+        1650,
+        2700,
+        3650
+      ]
+    },
+    {
+      "name": "Guardián IV",
+      "width": 7,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 29,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 24
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 24
+        },
+        {
+          "type": "score",
+          "count": 2350
+        }
+      ],
+      "stars": [
+        2550,
+        3200,
+        3850
+      ]
+    },
+    {
+      "name": "Mirador infinita",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1350,
+        2300,
+        3350
+      ]
+    },
+    {
+      "name": "Santuario de cuarzo",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1550,
+        2350,
+        3300
+      ]
+    },
+    {
+      "name": "Cripta silenciosa",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 22
+        },
+        {
+          "type": "score",
+          "count": 2000
+        }
+      ],
+      "stars": [
+        2100,
+        2950,
+        4100
+      ]
+    },
+    {
+      "name": "Pasaje estelar",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 1750
+        }
+      ],
+      "stars": [
+        1850,
+        2350,
+        3000
+      ]
+    },
+    {
+      "name": "Guardián V",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 23
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 23
+        },
+        {
+          "type": "score",
+          "count": 2200
+        }
+      ],
+      "stars": [
+        2500,
+        3250,
+        4200
+      ]
+    },
+    {
+      "name": "Bóveda infinita",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 27
+        }
+      ],
+      "stars": [
+        1750,
+        2800,
+        4150
+      ]
+    },
+    {
+      "name": "Salón de cuarzo",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 16
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 16
+        }
+      ],
+      "stars": [
+        1400,
+        2100,
+        3250
+      ]
+    },
+    {
+      "name": "Abismo silenciosa",
+      "width": 7,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 21
+        },
+        {
+          "type": "score",
+          "count": 1850
+        }
+      ],
+      "stars": [
+        1950,
+        2550,
+        3500
+      ]
+    },
+    {
+      "name": "Mirador estelar",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 21
+        }
+      ],
+      "stars": [
+        1850,
+        2800,
+        3700
+      ]
+    },
+    {
+      "name": "Guardián VI",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 21
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 21
+        },
+        {
+          "type": "score",
+          "count": 2050
+        }
+      ],
+      "stars": [
+        2200,
+        2750,
+        3950
+      ]
+    },
+    {
+      "name": "Cripta de luz",
+      "width": 7,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2250
+        }
+      ],
+      "stars": [
+        2350,
+        2850,
+        3700
+      ]
+    },
+    {
+      "name": "Pasaje helada",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 23
+        },
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 23
+        }
+      ],
+      "stars": [
+        1900,
+        2900,
+        3700
+      ]
+    },
+    {
+      "name": "Galería silenciosa",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 19
+        },
+        {
+          "type": "score",
+          "count": 1650
+        }
+      ],
+      "stars": [
+        1700,
+        2450,
+        3300
+      ]
+    },
+    {
+      "name": "Bóveda estelar",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 19
+        },
+        {
+          "type": "collect",
+          "mineral": "Amethyst",
+          "count": 19
+        }
+      ],
+      "stars": [
+        1750,
+        2650,
+        3550
+      ]
+    },
+    {
+      "name": "Guardián VII",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 29,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 29
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 29
+        },
+        {
+          "type": "score",
+          "count": 2750
+        }
+      ],
+      "stars": [
+        3000,
+        3700,
+        4700
+      ]
+    },
+    {
+      "name": "Abismo de luz",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 22
+        }
+      ],
+      "stars": [
+        1300,
+        2250,
+        3500
+      ]
+    },
+    {
+      "name": "Mirador helada",
+      "width": 8,
+      "height": 9,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 23,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 22
+        },
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 22
+        }
+      ],
+      "stars": [
+        1700,
+        2850,
+        4450
+      ]
+    },
+    {
+      "name": "Santuario prismática",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "score",
+          "count": 2400
+        }
+      ],
+      "stars": [
+        2600,
+        3250,
+        4050
+      ]
+    },
+    {
+      "name": "Cripta infinita",
+      "width": 8,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 20,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Ruby",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Carbon",
+          "count": 18
+        },
+        {
+          "type": "collect",
+          "mineral": "Emerald",
+          "count": 18
+        }
+      ],
+      "stars": [
+        1700,
+        2400,
+        3850
+      ]
+    },
+    {
+      "name": "Corazón de Diamante",
+      "width": 7,
+      "height": 8,
+      "mineralTypes": 6,
+      "seed": 0,
+      "moves": 26,
+      "objectives": [
+        {
+          "type": "collect",
+          "mineral": "Gold",
+          "count": 25
+        },
+        {
+          "type": "collect",
+          "mineral": "Sapphire",
+          "count": 25
+        },
+        {
+          "type": "score",
+          "count": 2350
+        }
+      ],
+      "stars": [
+        2400,
+        3250,
+        4050
+      ]
+    }
+  ]
 }

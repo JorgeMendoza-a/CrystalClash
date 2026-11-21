@@ -331,6 +331,64 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Final de nivel: convierte los movimientos sobrantes en bombas (una a
+    /// una, bajando el contador) y las hace explotar. Al terminar avisa a
+    /// GameManager.OnFinaleFinished. Devuelve false si no se pudo empezar.
+    /// </summary>
+    public bool PlayFinale(int moves)
+    {
+        if (IsBusy || Logic == null || moves <= 0) return false;
+
+        if (selectedMineral != null)
+        {
+            selectedMineral.Deselect();
+            selectedMineral = null;
+        }
+
+        StartCoroutine(FinaleRoutine(moves));
+        return true;
+    }
+
+    IEnumerator FinaleRoutine(int moves)
+    {
+        IsBusy = true;
+        SwapResult result = Logic.PlayFinale(moves);
+
+        int left = moves;
+        foreach (GridPos pos in result.FinaleBombs)
+        {
+            Mineral mineral = views[pos.X, pos.Y];
+            if (mineral != null)
+            {
+                mineral.SetPiece((int)mineral.mineralType, SpecialKind.Bomb);
+                StartCoroutine(Pop(mineral.transform));
+            }
+            left--;
+            if (GameHud.Instance != null) GameHud.Instance.SetMoves(left);
+            yield return new WaitForSeconds(0.09f);
+        }
+
+        yield return new WaitForSeconds(0.35f);
+        yield return AnimateSteps(result);
+
+        IsBusy = false;
+        if (GameManager.Instance != null) GameManager.Instance.OnFinaleFinished(result);
+    }
+
+    IEnumerator Pop(Transform target)
+    {
+        Vector3 baseScale = target.localScale;
+        for (float t = 0f; t < 0.18f; t += Time.deltaTime)
+        {
+            if (target == null) yield break;
+            float k = 1f + Mathf.Sin(t / 0.18f * Mathf.PI) * 0.35f;
+            target.localScale = baseScale * k;
+            yield return null;
+        }
+        if (target != null) target.localScale = baseScale;
+    }
+
     /// <summary>Usa un potenciador y lo anima. Devuelve false si no se pudo (tablero ocupado).</summary>
     public bool PlayBooster(BoosterKind kind, GridPos target)
     {

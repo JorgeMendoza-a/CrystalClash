@@ -29,8 +29,6 @@ namespace CrystalClash.Story.Logic
     /// </summary>
     public sealed class LevelSession
     {
-        /// <summary>Puntos extra por cada movimiento que sobra al ganar.</summary>
-        public const int PointsPerRemainingMove = 60;
 
         private readonly List<ObjectiveProgress> objectives = new List<ObjectiveProgress>();
 
@@ -40,8 +38,11 @@ namespace CrystalClash.Story.Logic
         public SessionState State { get; private set; } = SessionState.Playing;
         public IReadOnlyList<ObjectiveProgress> Objectives => objectives;
 
-        /// <summary>Bonus por movimientos sobrantes (solo si se gana).</summary>
+        /// <summary>Puntos de las bombas de bonus (movimientos sobrantes al ganar).</summary>
         public int MoveBonus { get; private set; }
+
+        /// <summary>Cuántas bombas de bonus hubo (= movimientos que sobraron).</summary>
+        public int FinaleBombs { get; private set; }
 
         public int FinalScore => Score + MoveBonus;
 
@@ -108,7 +109,7 @@ namespace CrystalClash.Story.Logic
             if (AllObjectivesComplete())
             {
                 State = SessionState.Won;
-                MoveBonus = MovesLeft * PointsPerRemainingMove;
+                MoveBonus = 0;
                 Stars = CalculateStars(FinalScore);
             }
             else if (MovesLeft == 0)
@@ -116,6 +117,18 @@ namespace CrystalClash.Story.Logic
                 State = SessionState.Lost;
                 Stars = 0;
             }
+        }
+
+        /// <summary>
+        /// Suma los puntos de las bombas de bonus (BoardLogic.PlayFinale) y
+        /// recalcula las estrellas. Solo después de ganar.
+        /// </summary>
+        public void ApplyFinale(SwapResult finale)
+        {
+            if (State != SessionState.Won || finale == null) return;
+            MoveBonus += finale.PointsGained;
+            FinaleBombs += finale.FinaleBombs.Count;
+            Stars = CalculateStars(FinalScore);
         }
 
         public bool AllObjectivesComplete()

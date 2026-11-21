@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
 
     private BoardManager board;
     private RankedMatchController ranked;
+    private bool finalePlayed;
 
     /// <summary>True si esta partida es de clasificatoria (no de historia).</summary>
     public bool IsRanked => ranked != null;
@@ -248,6 +249,13 @@ public class GameManager : MonoBehaviour
 
         if (Session.State == SessionState.Won)
         {
+            // Movimientos sobrantes → bombas de bonus antes del resultado.
+            if (!finalePlayed && Session.MovesLeft > 0 && board != null && board.PlayFinale(Session.MovesLeft))
+            {
+                finalePlayed = true;
+                if (GameHud.Instance != null) GameHud.Instance.ShowBanner($"¡{Session.MovesLeft} bombas de bonus!", 2.2f);
+                return;
+            }
             OnWin();
         }
         else if (Session.State == SessionState.Lost)
@@ -356,6 +364,14 @@ public class GameManager : MonoBehaviour
             new StoryPopup.PopupButton("Inicio", MenuScreens.ShowHome));
     }
 
+    /// <summary>Lo llama BoardManager cuando terminan de explotar las bombas de bonus.</summary>
+    public void OnFinaleFinished(SwapResult finale)
+    {
+        Session.ApplyFinale(finale);
+        RefreshUI();
+        OnWin();
+    }
+
     private void OnWin()
     {
         int levelNumber = Session.Level.Number;
@@ -381,17 +397,12 @@ public class GameManager : MonoBehaviour
             SaveManager.Save();
         }
 
-        if (Session.MoveBonus > 0 && ScoreManager.Instance != null)
-        {
-            ScoreManager.Instance.AddScore(Session.MoveBonus);
-        }
-
         bool isLast = levelNumber >= LevelCatalog.Count;
         StoryPopup.Show(
             "¡Nivel completado!",
             $"Estrellas: <color=#FFD040><b>{Session.Stars}/3</b></color>\n\n" +
             $"Puntos: {Session.Score}\n" +
-            $"Bonus por {Session.MovesLeft} movimientos: +{Session.MoveBonus}\n" +
+            (Session.FinaleBombs > 0 ? $"Bombas de bonus ({Session.FinaleBombs}): +{Session.MoveBonus}\n" : "") +
             $"<b>Total: {Session.FinalScore}</b>" + reward,
             new StoryPopup.PopupButton(isLast ? "Ver mapa" : "Siguiente nivel", NextLevel),
             new StoryPopup.PopupButton("Repetir", RetryLevel),

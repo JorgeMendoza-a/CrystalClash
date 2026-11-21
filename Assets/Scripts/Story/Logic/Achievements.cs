@@ -28,17 +28,20 @@ namespace CrystalClash.Story.Logic
         public const int RankedWinsTarget = 10;
         public const int ChampionPoints = 8000;
 
-        public static List<AchievementStatus> Evaluate(PlayerProgress progress, int totalLevels, int rankedWins, int rankedPoints)
+        /// <param name="firstWorldLevels">Niveles del Mundo 1 (el logro de estrellas es de ese mundo).</param>
+        public static List<AchievementStatus> Evaluate(PlayerProgress progress, int firstWorldLevels, int rankedWins, int rankedPoints)
         {
-            int allStars = totalLevels * 3;
+            int allStars = firstWorldLevels * 3;
+            int worldStars = 0;
+            for (int n = 1; n <= firstWorldLevels; n++) worldStars += progress.GetStars(n);
             return new List<AchievementStatus>
             {
                 new AchievementStatus("combos", "Maestro\nde Combos", $"Crea {CombosTarget} minerales especiales",
                     progress.specialsCreated, CombosTarget),
                 new AchievementStatus("battles", "Héroe\nde Batallas", $"Gana {RankedWinsTarget} partidas de clasificatoria",
                     rankedWins, RankedWinsTarget),
-                new AchievementStatus("stars", "Leyenda\nde Cristales", "Consigue todas las estrellas del mundo",
-                    progress.TotalStars, allStars > 0 ? allStars : 1),
+                new AchievementStatus("stars", "Leyenda\nde Cristales", "Consigue todas las estrellas del Mundo 1",
+                    worldStars, allStars > 0 ? allStars : 1),
                 new AchievementStatus("champion", "Campeón de\nCrystal Clash", "Llega al rango Campeón",
                     rankedPoints, ChampionPoints),
             };
