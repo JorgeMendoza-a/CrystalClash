@@ -6,7 +6,7 @@ using System;
 /// </summary>
 public static class AdsConfig
 {
-    public const string AndroidAppKey = "";
+    public const string AndroidAppKey = "29c275f7d";
     public const string AndroidRewardedAdUnitId = "790fg51xj8xvr999";
 }
 
