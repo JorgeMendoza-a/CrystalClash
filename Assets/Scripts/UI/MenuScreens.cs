@@ -104,11 +104,11 @@ public static class MenuScreens
         row.childForceExpandWidth = true;
         row.padding = new RectOffset(30, 30, 24, 24);
 
-        NavTile(bar.transform, "MAPA", "UI/nav_map", Screen.Map, active);
-        NavTile(bar.transform, "INICIO", "UI/nav_home", Screen.Home, active);
-        NavTile(bar.transform, "TIENDA", "UI/nav_shop", Screen.Shop, active);
-        NavTile(bar.transform, "CLASIFICATORIA", "UI/nav_trophy", Screen.Ranked, active);
-        NavTile(bar.transform, "PERFIL", "UI/nav_profile", Screen.Profile, active);
+        NavTile(bar.transform, "MAPA", "UI/Nav/icono_mapa", Screen.Map, active);
+        NavTile(bar.transform, "INICIO", "UI/Nav/icono_inicio", Screen.Home, active);
+        NavTile(bar.transform, "TIENDA", "UI/Nav/icono_tienda", Screen.Shop, active);
+        NavTile(bar.transform, "CLASIFICATORIA", "UI/Nav/icono_clasificatoria", Screen.Ranked, active);
+        NavTile(bar.transform, "PERFIL", "UI/Nav/icono_perfil", Screen.Profile, active);
     }
 
     private static void NavTile(Transform parent, string label, string icon, Screen target, Screen active)
@@ -127,7 +127,7 @@ public static class MenuScreens
         UiKit.Vertical(tile.gameObject, 6, 0f, TextAnchor.MiddleCenter).padding = new RectOffset(4, 4, 10, 8);
         Image image = UiKit.Image(tile.transform, "Icono", Color.white, UiKit.LoadSprite(icon));
         image.raycastTarget = false;
-        UiKit.Size(image, height: selected ? 104f : 92f);
+        UiKit.Size(image, height: selected ? 118f : 104f);
 
         TMP_Text text = UiKit.Text(tile.transform, label, 26f, selected ? UiKit.Gold : Color.white);
         UiKit.Outline(text, 0.2f);

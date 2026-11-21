@@ -16,7 +16,7 @@ public static class ProfileScreen
     // si no, estos sprites provisionales.
     private static readonly string[] FallbackAvatars =
     {
-        "UI/nav_profile", "Minerals/sapphire", "Minerals/emerald", "Minerals/amethyst",
+        "UI/Nav/icono_perfil", "Minerals/sapphire", "Minerals/emerald", "Minerals/amethyst",
         "Minerals/ruby", "Minerals/gold", "Minerals/diamond", "Minerals/prism"
     };
 
@@ -206,7 +206,7 @@ public static class ProfileScreen
         row.childForceExpandWidth = true;
 
         view.Played = Stat(card.transform, "UI/icon_swords", "Partidas jugadas", "...");
-        view.Wins = Stat(card.transform, "UI/nav_trophy", "Victorias", "...");
+        view.Wins = Stat(card.transform, "UI/Nav/icono_clasificatoria", "Victorias", "...");
         view.WinRate = Stat(card.transform, "UI/icon_target", "% de victorias", "...");
         Stat(card.transform, "Minerals/amethyst", "Cristales", p.gems.ToString("N0"));
     }
