@@ -99,7 +99,8 @@ public class GameManager : MonoBehaviour
         {
             int seconds = progress.SecondsToNextLife(now);
             StoryPopup.Show("Sin vidas",
-                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>\n\nLas vidas se recuperan solas con el tiempo.",
+                $"Próxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>\n\nMira un anuncio para ganar una vida al instante.",
+                new StoryPopup.PopupButton(LifeAds.ButtonLabel, () => LifeAds.WatchForLife(StartStory), LifeAds.Remaining > 0),
                 new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
             return;
         }
@@ -432,7 +433,8 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            StoryPopup.Show("Sin movimientos", body + "\nSe recuperan solas con el tiempo.",
+            StoryPopup.Show("Sin movimientos", body + "\nMira un anuncio para ganar una vida.",
+                new StoryPopup.PopupButton(LifeAds.ButtonLabel, () => LifeAds.WatchForLife(RetryLevel), LifeAds.Remaining > 0),
                 new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
         }
     }

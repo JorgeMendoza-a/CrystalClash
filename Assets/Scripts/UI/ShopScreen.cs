@@ -21,6 +21,13 @@ public static class ShopScreen
         UiKit.Outline(subtitle, 0.15f);
         UiKit.Size(subtitle, height: 46f);
 
+        // Vidas gratis viendo anuncios
+        int lives = SaveManager.Progress.GetLives(GameClock.NowUtc);
+        string livesInfo = lives >= PlayerProgress.MaxLives
+            ? "Tus vidas están llenas"
+            : $"Mira un anuncio y gana 1 vida · quedan {LifeAds.Remaining} de {LifeAds.AdsPerWindow}";
+        FreeLifeItem(list, livesInfo, lives < PlayerProgress.MaxLives && LifeAds.Remaining > 0);
+
         Section(list, "FOTOS DE PERFIL");
         BuildAvatarGrid(list);
 
@@ -48,6 +55,30 @@ public static class ShopScreen
             Item(list, UiKit.LoadSprite(icons[i]), GameManager.BoosterName(kind), $"{descriptions[i]} · tienes {owned}",
                 $"{PlayerProgress.BoosterPrice}", UiKit.LoadSprite("UI/coin"), UiKit.ButtonStyle.Green, () => BuyBooster(kind));
         }
+    }
+
+    private static void FreeLifeItem(Transform parent, string description, bool available)
+    {
+        Image card = UiKit.Card(parent, "Vidas gratis");
+        UiKit.Size(card, height: 200f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 34, 18f);
+        row.childForceExpandWidth = false;
+
+        UiKit.Size(UiKit.Image(card.transform, "Icono", Color.white, UiKit.LoadSprite("UI/heart")), width: 130f);
+
+        GameObject texts = UiKit.Node(card.transform, "Textos");
+        UiKit.Vertical(texts, 0, 0f, TextAnchor.MiddleLeft);
+        UiKit.Size(texts.transform, flexibleWidth: 1f);
+        TMP_Text name = UiKit.Text(texts.transform, "Vida gratis", 50f, UiKit.Gold, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(name, 0.2f);
+        UiKit.Size(name, height: 62f);
+        TMP_Text desc = UiKit.Text(texts.transform, description, 30f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(desc, 0.12f);
+        UiKit.Size(desc, height: 42f);
+
+        Button watch = UiKit.Button(card.transform, "VER", UiKit.ButtonStyle.Green, () => LifeAds.WatchForLife(MenuScreens.Refresh), 46f);
+        watch.interactable = available;
+        UiKit.Size(watch, width: 250f);
     }
 
     private static void Section(Transform parent, string title)

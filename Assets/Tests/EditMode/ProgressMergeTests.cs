@@ -53,4 +53,18 @@ public class ProgressMergeTests
         Assert.IsTrue(merged.OwnsCosmetic("b_volcan_ardiente"));
         Assert.AreEqual(2, merged.ownedCosmetics.Count);
     }
+
+    [Test]
+    public void AddLife_UpToTheMaximum_KeepsTheTimer()
+    {
+        var p = new PlayerProgress();
+        p.LoseLife(1000L);
+        p.LoseLife(1000L);                                   // 3 vidas, cuenta desde 1000
+        Assert.IsTrue(p.AddLife(1100L));
+        Assert.AreEqual(4, p.GetLives(1100L));
+        Assert.AreEqual(PlayerProgress.LifeRegenSeconds - 100, p.SecondsToNextLife(1100L)); // el reloj sigue
+        Assert.IsTrue(p.AddLife(1200L));
+        Assert.AreEqual(PlayerProgress.MaxLives, p.GetLives(1200L));
+        Assert.IsFalse(p.AddLife(1300L));                    // ya estaban llenas
+    }
 }

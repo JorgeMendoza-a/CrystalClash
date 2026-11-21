@@ -1,0 +1,25 @@
+{
+    "name": "CrystalClash.Ads.LevelPlay",
+    "rootNamespace": "",
+    "references": [
+        "CrystalClash.Ads.Core",
+        "Unity.LevelPlay"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "CC_LEVELPLAY"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.services.levelplay",
+            "expression": "8.0.0",
+            "define": "CC_LEVELPLAY"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -46,6 +46,12 @@ public class TopBarView : MonoBehaviour
     private void Build(Transform bar)
     {
         Transform lives = Pill(bar, UiKit.LoadSprite("UI/heart"), 1.1f, out livesText);
+
+        // Tocar las vidas: info y anuncio para ganar una.
+        Image livesImage = lives.GetComponent<Image>();
+        var livesButton = lives.gameObject.AddComponent<Button>();
+        livesButton.targetGraphic = livesImage;
+        livesButton.onClick.AddListener(ShowLivesPopup);
         livesTimer = UiKit.Text(lives, "", 26f, Color.white);
         UiKit.Outline(livesTimer, 0.15f);
         UiKit.Size(livesTimer, width: 100f);
@@ -58,6 +64,25 @@ public class TopBarView : MonoBehaviour
         Image gear = UiKit.Image(settings.transform, "Engranaje", Color.white, UiKit.LoadSprite("UI/gear"));
         gear.raycastTarget = false;
         UiKit.Stretch(gear.rectTransform, 26f);
+    }
+
+    private static void ShowLivesPopup()
+    {
+        PlayerProgress p = SaveManager.Progress;
+        long now = GameClock.NowUtc;
+        int lives = p.GetLives(now);
+        if (lives >= PlayerProgress.MaxLives)
+        {
+            StoryPopup.Show("Vidas", $"Tienes todas tus vidas (<b>{lives}</b>).", new StoryPopup.PopupButton("Genial", null));
+            return;
+        }
+
+        int seconds = p.SecondsToNextLife(now);
+        StoryPopup.Show("Vidas",
+            $"Tienes <b>{lives}</b> de {PlayerProgress.MaxLives} vidas.\nPróxima vida en <b>{seconds / 60}:{seconds % 60:00}</b>\n\n" +
+            $"<size=80%>Anuncios disponibles: {LifeAds.Remaining} de {LifeAds.AdsPerWindow}</size>",
+            new StoryPopup.PopupButton(LifeAds.ButtonLabel, () => LifeAds.WatchForLife(MenuScreens.Refresh), LifeAds.Remaining > 0),
+            new StoryPopup.PopupButton("Cerrar", null));
     }
 
     private static Transform Pill(Transform parent, Sprite icon, float flexible, out TMP_Text value)

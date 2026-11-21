@@ -106,6 +106,16 @@ namespace CrystalClash.Story.Logic
             return true;
         }
 
+        /// <summary>Suma una vida (p. ej. por ver un anuncio). False si ya estaban llenas.</summary>
+        public bool AddLife(long nowUtc)
+        {
+            ApplyRegen(nowUtc);
+            if (lives >= MaxLives) return false;
+            lives++;
+            if (lives >= MaxLives) livesTimestampUtc = nowUtc;
+            return true;
+        }
+
         public void RefillLives(long nowUtc)
         {
             lives = MaxLives;
