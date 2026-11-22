@@ -46,6 +46,9 @@ Combinar 3, Puzzle, Casual, Multijugador, Competitivo
 - Imagen destacada: 1024 × 500 PNG/JPG
 - Capturas de teléfono: mínimo 2 (recomendado 4–8), por ejemplo: Inicio, Mapa de niveles, Tablero, Clasificatoria (VS), Posiciones, Tienda, Perfil.
 
+## Correo de contacto (público)
+crystalclash.soporte@gmail.com
+
 ## Enlaces
 - Política de privacidad: (URL donde publiques docs/privacidad.html)
 - Eliminar cuenta (formulario "Eliminación de datos"): (URL de docs/eliminar-cuenta.html)
