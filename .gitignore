@@ -18,3 +18,7 @@ Builds/
 !CloudCode/Build/
 !CloudCode/Build/*.ccm
 !Tools/**/*.csproj
+
+# Python
+__pycache__/
+*.pyc
