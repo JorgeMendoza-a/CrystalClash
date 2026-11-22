@@ -209,7 +209,7 @@ public class UgsRankedService : IRankedService
         var entries = new List<LeaderboardEntry>();
         foreach (LeaderboardEntryDto dto in dtos ?? new List<LeaderboardEntryDto>())
         {
-            entries.Add(new LeaderboardEntry { Rank = dto.Rank, Name = dto.Name, Points = dto.Points, IsMe = dto.IsMe });
+            entries.Add(new LeaderboardEntry { PlayerId = dto.PlayerId ?? "", Rank = dto.Rank, Name = dto.Name, Points = dto.Points, IsMe = dto.IsMe });
         }
         return entries;
     }
@@ -243,6 +243,20 @@ public class UgsRankedService : IRankedService
     {
         await SignInAsync();
         return Clean(await Call<FriendsList>("RemoveFriend", new Dictionary<string, object> { { "playerId", playerId } }));
+    }
+
+    public async Task<FriendsList> SendFriendRequestToPlayerAsync(string playerId)
+    {
+        await SignInAsync();
+        return Clean(await Call<FriendsList>("SendFriendRequestToPlayer", new Dictionary<string, object> { { "playerId", playerId } }));
+    }
+
+    public async Task<PublicProfile> GetPublicProfileAsync(string playerId)
+    {
+        await SignInAsync();
+        PublicProfile profile = await Call<PublicProfile>("GetPublicProfile", new Dictionary<string, object> { { "playerId", playerId } });
+        if (profile != null && profile.Badges == null) profile.Badges = new List<string>();
+        return profile;
     }
 
     private static FriendsList Clean(FriendsList list)
@@ -373,6 +387,7 @@ public class UgsRankedService : IRankedService
     [Serializable]
     public class LeaderboardEntryDto
     {
+        public string PlayerId;
         public int Rank;
         public string Name;
         public int Points;

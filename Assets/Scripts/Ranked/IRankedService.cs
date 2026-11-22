@@ -62,6 +62,7 @@ public class RankedMatchResult
 [Serializable]
 public class LeaderboardEntry
 {
+    public string PlayerId = "";
     public int Rank;
     public string Name = "";
     public int Points;
@@ -126,6 +127,29 @@ public interface IRankedService
     Task<FriendsList> SendFriendRequestAsync(int shortId);
     Task<FriendsList> RespondFriendRequestAsync(string playerId, bool accept);
     Task<FriendsList> RemoveFriendAsync(string playerId);
+    Task<FriendsList> SendFriendRequestToPlayerAsync(string playerId);
+
+    /// <summary>Perfil de otro jugador (al tocarlo en la tabla o en amigos).</summary>
+    Task<PublicProfile> GetPublicProfileAsync(string playerId);
+}
+
+/// <summary>Perfil de otro jugador (mismos nombres que PublicProfileDto del servidor).</summary>
+[Serializable]
+public class PublicProfile
+{
+    public string PlayerId = "";
+    public int ShortId;
+    public string Name = "";
+    public string Avatar = "a0";
+    public string Banner = "";
+    public int Points;
+    public int Wins;
+    public int Losses;
+    public int Draws;
+    public List<string> Badges = new List<string>();
+
+    /// <summary>"self", "friend", "sent", "incoming" o "none".</summary>
+    public string FriendStatus = "none";
 }
 
 /// <summary>Un amigo o una solicitud (mismos nombres que FriendDto del servidor).</summary>

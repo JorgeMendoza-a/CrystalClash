@@ -175,7 +175,60 @@ namespace CrystalClashRanked
                 var (mine, _) = await LoadFriends(context, api, me);
                 return await ToFriendsDto(context, api, mine, "not_found");
             }
+            return await SendRequestTo(context, api, other);
+        }
 
+        /// <summary>Manda solicitud a un jugador por su PlayerId (al tocarlo en la tabla de posiciones).</summary>
+        [CloudCodeFunction("SendFriendRequestToPlayer")]
+        public async Task<FriendsDto> SendFriendRequestToPlayer(IExecutionContext context, IGameApiClient api, string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId) || playerId.Length > 64) throw new Exception("Jugador inválido.");
+            await LoadProfile(context, api, context.PlayerId);
+            var (profile, _) = await ReadProfile(context, api, playerId);
+            if (profile == null)
+            {
+                var (mine, _) = await LoadFriends(context, api, context.PlayerId);
+                return await ToFriendsDto(context, api, mine, "not_found");
+            }
+            return await SendRequestTo(context, api, playerId);
+        }
+
+        /// <summary>Perfil de otro jugador: nombre, foto, banner, puntos, récord, insignias y si ya es mi amigo.</summary>
+        [CloudCodeFunction("GetPublicProfile")]
+        public async Task<PublicProfileDto> GetPublicProfile(IExecutionContext context, IGameApiClient api, string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId) || playerId.Length > 64) throw new Exception("Jugador inválido.");
+            var (profile, writeLock) = await ReadProfile(context, api, playerId);
+            if (profile == null) throw new Exception("Ese jugador no existe.");
+            await EnsureIndexed(context, api, playerId, profile, writeLock);
+
+            string me = context.PlayerId;
+            var (mine, _) = await LoadFriends(context, api, me);
+            string status = playerId == me ? "self"
+                : mine.Friends.Contains(playerId) ? "friend"
+                : mine.Outgoing.Contains(playerId) ? "sent"
+                : mine.Incoming.Contains(playerId) ? "incoming"
+                : "none";
+
+            return new PublicProfileDto
+            {
+                PlayerId = playerId,
+                ShortId = profile.ShortId,
+                Name = profile.Name,
+                Avatar = profile.Avatar ?? "a0",
+                Banner = profile.Banner ?? "",
+                Points = profile.Points,
+                Wins = profile.Wins,
+                Losses = profile.Losses,
+                Draws = profile.Draws,
+                Badges = profile.Badges ?? new List<string>(),
+                FriendStatus = status
+            };
+        }
+
+        private async Task<FriendsDto> SendRequestTo(IExecutionContext context, IGameApiClient api, string other)
+        {
+            string me = context.PlayerId;
             for (int attempt = 0; attempt < MaxRetries; attempt++)
             {
                 var (mine, myLock) = await LoadFriends(context, api, me);
@@ -304,9 +357,62 @@ namespace CrystalClashRanked
             var response = await api.CloudSaveData.GetCustomItemsAsync(
                 context, context.ServiceToken, context.ProjectId, PlayerIndexCustomId, new List<string> { IndexKey(shortId) }, null, default);
             Item item = response.Data.Results.FirstOrDefault(i => i.Key == IndexKey(shortId));
-            if (item == null || item.Value == null) return null;
-            string id = item.Value is string s ? s : (item.Value is JToken token ? token.ToString() : item.Value.ToString());
-            return string.IsNullOrEmpty(id) ? null : id.Trim('"');
+            if (item != null && item.Value != null)
+            {
+                string id = item.Value is string s ? s : (item.Value is JToken token ? token.ToString() : item.Value.ToString());
+                id = id?.Trim().Trim('"');
+                if (!string.IsNullOrEmpty(id)) return id;
+            }
+
+            // No está en el índice (jugadores de antes del índice que no han vuelto a entrar):
+            // se busca entre los jugadores de la tabla y, de paso, se registran todos en el índice.
+            return await SearchLeaderboardForShortId(context, api, shortId);
+        }
+
+        private async Task<string> SearchLeaderboardForShortId(IExecutionContext context, IGameApiClient api, int shortId)
+        {
+            List<string> playerIds;
+            try
+            {
+                var scores = await api.Leaderboards.GetLeaderboardScoresAsync(
+                    context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, false, 0, 200);
+                playerIds = scores.Data.Results.Select(e => e.PlayerId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            }
+            catch (ApiException)
+            {
+                return null;
+            }
+
+            string found = null;
+            for (int i = 0; i < playerIds.Count; i += 20)
+            {
+                var batch = playerIds.Skip(i).Take(20).ToList();
+                var profiles = await Task.WhenAll(batch.Select(async id => (id, read: await ReadProfile(context, api, id))));
+                foreach (var (id, read) in profiles)
+                {
+                    if (read.profile == null) continue;
+                    await EnsureIndexed(context, api, id, read.profile, read.writeLock);
+                    if (read.profile.ShortId == shortId) found = id;
+                }
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        /// <summary>Registra el ID corto del jugador en el índice si todavía no estaba.</summary>
+        private async Task EnsureIndexed(IExecutionContext context, IGameApiClient api, string playerId, RankedProfileState profile, string writeLock)
+        {
+            if (profile.Indexed || profile.ShortId <= 0) return;
+            try
+            {
+                await SaveCustom(context, api, PlayerIndexCustomId, IndexKey(profile.ShortId), playerId, null);
+                profile.Indexed = true;
+                await TrySaveProfile(context, api, playerId, profile, writeLock);
+            }
+            catch (ApiException)
+            {
+                // Se reintentará la próxima vez.
+            }
         }
 
         private async Task<(FriendsState friends, string writeLock)> LoadFriends(IExecutionContext context, IGameApiClient api, string playerId)
@@ -605,6 +711,7 @@ namespace CrystalClashRanked
                     entries.Add(new LeaderboardEntryDto
                     {
                         Rank = entries.Count + 1,
+                        PlayerId = entry.PlayerId,
                         Name = NameFromMetadata(entry.Metadata) ?? entry.PlayerName,
                         Points = (int)entry.Score,
                         IsMe = entry.PlayerId == context.PlayerId

@@ -127,6 +127,17 @@ public static class StoryPopup
         infoText.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
     }
 
+    /// <summary>Popup con contenido propio entre el título y los botones.</summary>
+    public static void ShowCustom(string title, Action<Transform> buildContent, params PopupButton[] buttons)
+    {
+        Transform panel = CreatePanel(title, null);
+        buildContent?.Invoke(panel);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            CreateButton(panel, buttons[i], 130f, 50f, i == 0 ? UiKit.ButtonStyle.Green : UiKit.ButtonStyle.Blue);
+        }
+    }
+
     /// <summary>Como Show, con una insignia de temporada debajo del título (season 0 = sin insignia).</summary>
     public static void ShowWithBadge(string title, string body, int season, int leagueIndex, params PopupButton[] buttons)
     {

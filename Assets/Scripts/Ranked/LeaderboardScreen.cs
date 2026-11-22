@@ -227,8 +227,8 @@ public class LeaderboardScreen : MonoBehaviour
             Clear();
 
             var entries = new List<LeaderboardEntry>();
-            foreach (FriendInfo f in friends.Friends) entries.Add(new LeaderboardEntry { Name = f.Name, Points = f.Points });
-            if (me != null) entries.Add(new LeaderboardEntry { Name = me.Name, Points = me.Points, IsMe = true });
+            foreach (FriendInfo f in friends.Friends) entries.Add(new LeaderboardEntry { PlayerId = f.PlayerId, Name = f.Name, Points = f.Points });
+            if (me != null) entries.Add(new LeaderboardEntry { PlayerId = me.PlayerId, Name = me.Name, Points = me.Points, IsMe = true });
             entries.Sort((a, b) => b.Points.CompareTo(a.Points));
             for (int i = 0; i < entries.Count; i++) entries[i].Rank = i + 1;
 
@@ -309,6 +309,10 @@ public class LeaderboardScreen : MonoBehaviour
         float height = crown + emblemSizes[place] + 60f + 50f + blockHeights[place] + 30f;
 
         GameObject column = UiKit.Node(parent, "Puesto " + (place + 1));
+        // Tocar el puesto abre el perfil del jugador.
+        Image hit = column.AddComponent<Image>();
+        hit.color = new Color(0f, 0f, 0f, 0f);
+        MakeClickable(hit, entry);
         UiKit.Size(column.transform, height: height);
         UiKit.Vertical(column, 0, 6f, TextAnchor.LowerCenter);
 
@@ -362,10 +366,22 @@ public class LeaderboardScreen : MonoBehaviour
         UiKit.Stretch(number.rectTransform, 6f);
     }
 
+    /// <summary>Al tocar la fila (o el puesto del podio) se abre el perfil de ese jugador.</summary>
+    private static void MakeClickable(Image target, LeaderboardEntry entry)
+    {
+        if (string.IsNullOrEmpty(entry.PlayerId)) return;
+        var button = target.gameObject.AddComponent<Button>();
+        button.targetGraphic = target;
+        Sound.AddClick(button);
+        string playerId = entry.PlayerId;
+        button.onClick.AddListener(() => PlayerProfilePopup.Show(playerId));
+    }
+
     private static void BuildRow(Transform parent, LeaderboardEntry entry, bool sticky)
     {
         RankTier tier = RankTiers.ForPoints(entry.Points);
         Image rowImage = UiKit.Image(parent, "Fila " + entry.Rank, entry.IsMe ? MeColor : RowColor, UiKit.LoadSliced("UI/row", 24, 160f));
+        MakeClickable(rowImage, entry);
         rowImage.type = Image.Type.Sliced;
         rowImage.preserveAspect = false;
         if (!sticky) UiKit.Size(rowImage, height: 130f);

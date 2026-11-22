@@ -192,8 +192,27 @@ namespace CrystalClashRanked
         public bool OpponentIsBot { get; set; }
     }
 
+    /// <summary>Perfil de otro jugador (al tocarlo en la tabla o en amigos).</summary>
+    public class PublicProfileDto
+    {
+        public string PlayerId { get; set; } = "";
+        public int ShortId { get; set; }
+        public string Name { get; set; } = "";
+        public string Avatar { get; set; } = "a0";
+        public string Banner { get; set; } = "";
+        public int Points { get; set; }
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int Draws { get; set; }
+        public List<string> Badges { get; set; } = new List<string>();
+
+        /// <summary>"self", "friend", "sent" (le mandé solicitud), "incoming" (me la mandó) o "none".</summary>
+        public string FriendStatus { get; set; } = "none";
+    }
+
     public class LeaderboardEntryDto
     {
+        public string PlayerId { get; set; } = "";
         public int Rank { get; set; }
         public string Name { get; set; } = "";
         public int Points { get; set; }

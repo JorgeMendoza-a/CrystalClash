@@ -132,6 +132,13 @@ public class FriendsScreen : MonoBehaviour
         UiKit.Size(row, height: 170f);
         Cosmetics.BannerBackground(row.transform, friend.Banner, 6f, 0.5f);
 
+        // Tocar la fila abre su perfil.
+        var open = row.gameObject.AddComponent<Button>();
+        open.targetGraphic = row;
+        Sound.AddClick(open);
+        string playerId = friend.PlayerId;
+        open.onClick.AddListener(() => PlayerProfilePopup.Show(playerId));
+
         HorizontalLayoutGroup layout = UiKit.Horizontal(row.gameObject, 18, 18f);
         layout.padding = new RectOffset(24, 24, 14, 14);
         layout.childForceExpandHeight = false;

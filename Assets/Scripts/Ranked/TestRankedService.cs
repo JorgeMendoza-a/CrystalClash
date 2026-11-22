@@ -194,7 +194,7 @@ public class TestRankedService : IRankedService
         int points = 8600;
         foreach (string name in BotNames)
         {
-            entries.Add(new LeaderboardEntry { Name = name, Points = points });
+            entries.Add(new LeaderboardEntry { PlayerId = "test_" + name, Name = name, Points = points });
             points -= rnd.Next(300, 1300);
         }
         entries.Add(new LeaderboardEntry { Name = profile.Name + " (tú)", Points = profile.Points, IsMe = true });
@@ -250,6 +250,29 @@ public class TestRankedService : IRankedService
     {
         testFriends.Result = "ok";
         return Task.FromResult(testFriends);
+    }
+
+    public Task<FriendsList> SendFriendRequestToPlayerAsync(string playerId)
+    {
+        testFriends.Result = "sent";
+        return Task.FromResult(testFriends);
+    }
+
+    public Task<PublicProfile> GetPublicProfileAsync(string playerId)
+    {
+        LoadProfile();
+        FriendInfo friend = testFriends.Friends.Find(f => f.PlayerId == playerId);
+        return Task.FromResult(new PublicProfile
+        {
+            PlayerId = playerId,
+            ShortId = friend != null ? friend.ShortId : 0,
+            Name = friend != null ? friend.Name : "Jugador",
+            Avatar = friend != null ? friend.Avatar : "a1",
+            Points = friend != null ? friend.Points : 300,
+            Wins = 3,
+            Losses = 2,
+            FriendStatus = friend != null ? "friend" : "none"
+        });
     }
 
     public Task<FriendsList> RemoveFriendAsync(string playerId)
