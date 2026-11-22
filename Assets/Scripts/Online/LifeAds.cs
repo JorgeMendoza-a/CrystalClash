@@ -14,8 +14,6 @@ public static class LifeAds
     private const string CountKey = "crystalclash.ads.lives.count";
     private const string WindowKey = "crystalclash.ads.lives.window";
 
-    private static bool showing;
-
     /// <summary>Anuncios que todavía puedes ver en este período.</summary>
     public static int Remaining
     {
@@ -45,7 +43,6 @@ public static class LifeAds
     /// </summary>
     public static void WatchForLife(Action onDone = null)
     {
-        if (showing) return;
         PlayerProgress p = SaveManager.Progress;
 
         if (p.GetLives(GameClock.NowUtc) >= PlayerProgress.MaxLives)
@@ -61,37 +58,7 @@ public static class LifeAds
                 new StoryPopup.PopupButton("Entendido", onDone));
             return;
         }
-        if (Application.internetReachability == NetworkReachability.NotReachable)
-        {
-            StoryPopup.Show("Sin internet", "Los anuncios necesitan conexión.", new StoryPopup.PopupButton("Entendido", onDone));
-            return;
-        }
-
-        IRewardedAdProvider provider = RewardedAds.Provider;
-        if (provider == null && Application.isEditor)
-        {
-            ShowEditorTestAd(onDone);
-            return;
-        }
-        if (provider == null || !provider.IsReady)
-        {
-            string status = provider == null
-                ? (string.IsNullOrEmpty(AdsConfig.AndroidAppKey) ? "faltan las claves" : "LevelPlay no está activo en este build")
-                : provider.Status;
-            StoryPopup.Show("Anuncio no disponible", "Todavía no hay un anuncio listo.\nInténtalo en unos segundos.\n\n" +
-                $"<size=60%><color=#A0A8B8>Detalle: {status}</color></size>",
-                new StoryPopup.PopupButton("Entendido", onDone));
-            return;
-        }
-
-        showing = true;
-        StoryPopup.Close();
-        provider.Show(success =>
-        {
-            showing = false;
-            if (success) GiveLife(onDone);
-            else StoryPopup.Show("Sin premio", "Mira el anuncio completo para ganar la vida.", new StoryPopup.PopupButton("Entendido", onDone));
-        });
+        AdReward.Show(() => GiveLife(onDone), onDone, "Mira el anuncio completo para ganar la vida.");
     }
 
     private static void GiveLife(Action onDone)
@@ -106,16 +73,6 @@ public static class LifeAds
         Sound.Play("star");
         StoryPopup.Show("¡+1 vida!", $"Ahora tienes <b>{p.GetLives(GameClock.NowUtc)}</b> vidas.",
             new StoryPopup.PopupButton("¡A jugar!", onDone));
-    }
-
-    /// <summary>En el editor no hay anuncios reales: se simula uno para probar el flujo.</summary>
-    private static async void ShowEditorTestAd(Action onDone)
-    {
-        showing = true;
-        StoryPopup.Show("Anuncio de prueba", "(En el celular aquí sale un anuncio real)");
-        await System.Threading.Tasks.Task.Delay(2000);
-        showing = false;
-        GiveLife(onDone);
     }
 
     /// <summary>El período empieza con el primer anuncio visto y dura WindowHours.</summary>
@@ -138,5 +95,62 @@ public static class LifeAds
             PlayerPrefs.SetInt(CountKey, 0);
             PlayerPrefs.Save();
         }
+    }
+}
+
+/// <summary>
+/// Ver un anuncio con recompensa: comprueba internet y que haya anuncio listo,
+/// lo muestra y llama a onRewarded solo si se vio completo. En el editor se
+/// simula un anuncio de prueba.
+/// </summary>
+public static class AdReward
+{
+    private static bool showing;
+
+    public static void Show(Action onRewarded, Action onCancel, string notCompletedMessage)
+    {
+        if (showing) return;
+
+        if (Application.internetReachability == NetworkReachability.NotReachable)
+        {
+            StoryPopup.Show("Sin internet", "Los anuncios necesitan conexión.", new StoryPopup.PopupButton("Entendido", onCancel));
+            return;
+        }
+
+        IRewardedAdProvider provider = RewardedAds.Provider;
+        if (provider == null && Application.isEditor)
+        {
+            ShowEditorTestAd(onRewarded);
+            return;
+        }
+        if (provider == null || !provider.IsReady)
+        {
+            string status = provider == null
+                ? (string.IsNullOrEmpty(AdsConfig.AndroidAppKey) ? "faltan las claves" : "LevelPlay no está activo en este build")
+                : provider.Status;
+            StoryPopup.Show("Anuncio no disponible", "Todavía no hay un anuncio listo.\nInténtalo en unos segundos.\n\n" +
+                $"<size=60%><color=#A0A8B8>Detalle: {status}</color></size>",
+                new StoryPopup.PopupButton("Entendido", onCancel));
+            return;
+        }
+
+        showing = true;
+        StoryPopup.Close();
+        provider.Show(success =>
+        {
+            showing = false;
+            if (success) onRewarded?.Invoke();
+            else StoryPopup.Show("Sin premio", notCompletedMessage, new StoryPopup.PopupButton("Entendido", onCancel));
+        });
+    }
+
+    /// <summary>En el editor no hay anuncios reales: se simula uno para probar el flujo.</summary>
+    private static async void ShowEditorTestAd(Action onRewarded)
+    {
+        showing = true;
+        StoryPopup.Show("Anuncio de prueba", "(En el celular aquí sale un anuncio real)");
+        await System.Threading.Tasks.Task.Delay(2000);
+        showing = false;
+        onRewarded?.Invoke();
     }
 }

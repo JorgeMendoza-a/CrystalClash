@@ -374,42 +374,90 @@ public class GameManager : MonoBehaviour
         OnWin();
     }
 
+    // Premios del último nivel ganado (para poder duplicarlos con un anuncio).
+    private int winCoins;
+    private int winGems;
+    private int winXp;
+    private string winExtra = "";
+
     private void OnWin()
     {
         Sound.Play("win");
         int levelNumber = Session.Level.Number;
-        string reward = "";
+        winCoins = winGems = winXp = 0;
+        winExtra = "";
         if (levelNumber > 0)
         {
             bool firstWin = SaveManager.Progress.GetStars(levelNumber) == 0;
             SaveManager.Progress.RecordWin(levelNumber, Session.Stars, LevelCatalog.Count);
 
-            int coins = PlayerProgress.CoinsForWin(Session.Stars);
-            SaveManager.Progress.coins += coins;
-            int xp = PlayerProgress.XpStoryWin + PlayerProgress.XpPerStar * Session.Stars;
-            SaveManager.Progress.AddXp(xp);
-            reward += $"\n\n<color=#FFD040>+{coins} monedas</color>  <color=#80C8FF>+{xp} XP</color>";
+            winCoins = PlayerProgress.CoinsForWin(Session.Stars);
+            winGems = PlayerProgress.GemsPerLevelWin;
+            winXp = PlayerProgress.XpStoryWin + PlayerProgress.XpPerStar * Session.Stars;
+            SaveManager.Progress.coins += winCoins;
+            SaveManager.Progress.gems += winGems;
+            SaveManager.Progress.AddXp(winXp);
 
             if (firstWin)
             {
                 BoosterKind prize = PlayerProgress.FirstWinReward(levelNumber);
                 SaveManager.Progress.AddBooster(prize, 1);
-                reward += $"\n<color=#66FF77>¡Premio: +1 {BoosterName(prize)}!</color>";
+                winExtra = $"\n<color=#66FF77>¡Premio: +1 {BoosterName(prize)}!</color>";
             }
 
             SaveManager.Save();
         }
 
+        ShowWinPopup(false);
+    }
+
+    private void ShowWinPopup(bool doubled)
+    {
+        int levelNumber = Session.Level.Number;
+        string reward = "";
+        if (levelNumber > 0)
+        {
+            int k = doubled ? 2 : 1;
+            reward = $"\n\n<color=#FFD040>+{winCoins * k} monedas</color>  <color=#C080FF>+{winGems * k} gemas</color>  <color=#80C8FF>+{winXp * k} XP</color>" +
+                     (doubled ? "  <color=#66FF77><b>x2</b></color>" : "") + winExtra;
+        }
+
         bool isLast = levelNumber >= LevelCatalog.Count;
-        StoryPopup.Show(
-            "¡Nivel completado!",
-            $"Estrellas: <color=#FFD040><b>{Session.Stars}/3</b></color>\n\n" +
-            $"Puntos: {Session.Score}\n" +
-            (Session.FinaleBombs > 0 ? $"Bombas de bonus ({Session.FinaleBombs}): +{Session.MoveBonus}\n" : "") +
-            $"<b>Total: {Session.FinalScore}</b>" + reward,
-            new StoryPopup.PopupButton(isLast ? "Ver mapa" : "Siguiente nivel", NextLevel),
-            new StoryPopup.PopupButton("Repetir", RetryLevel),
-            new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap));
+        string body = $"Estrellas: <color=#FFD040><b>{Session.Stars}/3</b></color>\n\n" +
+                      $"Puntos: {Session.Score}\n" +
+                      (Session.FinaleBombs > 0 ? $"Bombas de bonus ({Session.FinaleBombs}): +{Session.MoveBonus}\n" : "") +
+                      $"<b>Total: {Session.FinalScore}</b>" + reward;
+
+        var next = new StoryPopup.PopupButton(isLast ? "Ver mapa" : "Siguiente nivel", NextLevel);
+        var retry = new StoryPopup.PopupButton("Repetir", RetryLevel);
+        var map = new StoryPopup.PopupButton("Mapa", MenuScreens.ShowMap);
+
+        if (levelNumber > 0 && !doubled)
+        {
+            // Opcional: ver un anuncio para duplicar el premio. Si no, no pasa nada.
+            StoryPopup.Show("¡Nivel completado!", body,
+                next,
+                StoryPopup.PopupButton.Styled("x2 Premio  (ver anuncio)", () =>
+                    AdReward.Show(DoubleWinRewards, () => ShowWinPopup(false), "Mira el anuncio completo para duplicar el premio."),
+                    UiKit.ButtonStyle.Purple),
+                retry, map);
+        }
+        else
+        {
+            StoryPopup.Show(doubled ? "¡Premio duplicado!" : "¡Nivel completado!", body, next, retry, map);
+        }
+    }
+
+    /// <summary>El anuncio se vio completo: se suman otra vez monedas, gemas y experiencia.</summary>
+    private void DoubleWinRewards()
+    {
+        PlayerProgress p = SaveManager.Progress;
+        p.coins += winCoins;
+        p.gems += winGems;
+        p.AddXp(winXp);
+        SaveManager.Save();
+        Sound.Play("coin");
+        ShowWinPopup(true);
     }
 
     private void OnLose()

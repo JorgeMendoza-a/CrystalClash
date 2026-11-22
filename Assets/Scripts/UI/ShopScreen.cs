@@ -34,7 +34,7 @@ public static class ShopScreen
         Section(list, "BANNERS");
         if (!string.IsNullOrEmpty(SaveManager.Progress.banner))
         {
-            UiKit.Size(UiKit.Button(list, "Quitar banner", UiKit.ButtonStyle.Gray, Cosmetics.RemoveBanner, 36f), height: 100f);
+            UiKit.Size(UiKit.Button(list, "Quitar banner", UiKit.ButtonStyle.Red, Cosmetics.RemoveBanner, 36f), height: 100f);
         }
         foreach (Cosmetics.Item banner in Cosmetics.Banners) BannerCard(list, banner);
 

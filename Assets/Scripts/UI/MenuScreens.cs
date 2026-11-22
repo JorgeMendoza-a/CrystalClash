@@ -239,6 +239,6 @@ public static class MenuScreens
                 UgsRankedService.TestModeEnabled = !testMode;
                 Refresh();
             }),
-            new StoryPopup.PopupButton("Eliminar cuenta", AccountLink.AskDeleteAccount));
+            StoryPopup.PopupButton.Danger("Eliminar cuenta", AccountLink.AskDeleteAccount));
     }
 }

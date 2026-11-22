@@ -133,12 +133,12 @@ public static class AccountLink
             "Se borrará <b>para siempre</b>:\n• tu progreso, monedas, gemas y compras\n• tu clasificatoria, puntos e insignias\n• tus amigos\n\n" +
             "<size=80%>Si tu cuenta está vinculada con Google, también se borra el vínculo.</size>",
             new StoryPopup.PopupButton("Cancelar", null),
-            new StoryPopup.PopupButton("Continuar", () =>
+            StoryPopup.PopupButton.Danger("Continuar", () =>
                 StoryPopup.ShowInput("¿Seguro?", "Escribe <b>ELIMINAR</b> para confirmar.", "", 10, "Eliminar", text =>
                 {
                     if ((text ?? "").Trim().ToUpperInvariant() == "ELIMINAR") DeleteAccount();
                     else StoryPopup.Show("No se eliminó", "No escribiste ELIMINAR. Tu cuenta sigue igual.", new StoryPopup.PopupButton("Entendido", null));
-                })));
+                }, danger: true)));
     }
 
     private static async void DeleteAccount()

@@ -174,7 +174,7 @@ public class FriendsScreen : MonoBehaviour
         Image emblem = UiKit.Image(buttons, "Emblema", Color.white, UiKit.RankEmblem(tier));
         emblem.preserveAspect = true;
         UiKit.Size(emblem, width: 110f, height: 110f);
-        UiKit.Size(UiKit.Button(buttons, "X", UiKit.ButtonStyle.Gray, () => ConfirmRemove(friend), 40f), width: 90f, height: 90f);
+        UiKit.Size(UiKit.Button(buttons, "X", UiKit.ButtonStyle.Red, () => ConfirmRemove(friend), 40f), width: 90f, height: 90f);
         UiKit.Size(buttons.GetComponent<HorizontalLayoutGroup>(), width: 210f, height: 120f);
     }
 
@@ -193,7 +193,7 @@ public class FriendsScreen : MonoBehaviour
         Row(friend, out Transform buttons);
         TMP_Text waiting = UiKit.Text(buttons, "Pendiente", 30f, UiKit.Muted);
         UiKit.Size(waiting, width: 150f, height: 90f);
-        UiKit.Size(UiKit.Button(buttons, "X", UiKit.ButtonStyle.Gray, () => Act(service.RemoveFriendAsync(friend.PlayerId)), 40f),
+        UiKit.Size(UiKit.Button(buttons, "X", UiKit.ButtonStyle.Red, () => Act(service.RemoveFriendAsync(friend.PlayerId)), 40f),
             width: 90f, height: 90f);
         UiKit.Size(buttons.GetComponent<HorizontalLayoutGroup>(), width: 250f, height: 120f);
     }
@@ -226,7 +226,7 @@ public class FriendsScreen : MonoBehaviour
     private void ConfirmRemove(FriendInfo friend)
     {
         StoryPopup.Show("¿Quitar amigo?", $"<b>{friend.Name}</b> dejará de estar en tu lista de amigos.",
-            new StoryPopup.PopupButton("Quitar", () => Act(service.RemoveFriendAsync(friend.PlayerId))),
+            StoryPopup.PopupButton.Danger("Quitar", () => Act(service.RemoveFriendAsync(friend.PlayerId))),
             new StoryPopup.PopupButton("Cancelar", null));
     }
 

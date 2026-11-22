@@ -23,6 +23,21 @@ public static class StoryPopup
         /// <summary>Contenido armado por código dentro del botón (p. ej. una insignia de temporada).</summary>
         public Action<Transform> BuildContent;
 
+        /// <summary>Color forzado del botón (null = el normal: verde el primero, azul el resto).</summary>
+        public UiKit.ButtonStyle? Style;
+
+        /// <summary>Botón rojo, para acciones que borran algo.</summary>
+        public static PopupButton Danger(string label, Action onClick)
+        {
+            return new PopupButton(label, onClick) { Style = UiKit.ButtonStyle.Red };
+        }
+
+        /// <summary>Botón con un color elegido (p. ej. morado para "ver anuncio").</summary>
+        public static PopupButton Styled(string label, Action onClick, UiKit.ButtonStyle style, bool interactable = true)
+        {
+            return new PopupButton(label, onClick, interactable) { Style = style };
+        }
+
         public PopupButton(string label, Action onClick, bool interactable = true)
         {
             Label = label;
@@ -30,6 +45,7 @@ public static class StoryPopup
             Interactable = interactable;
             Icon = null;
             BuildContent = null;
+            Style = null;
         }
 
         public PopupButton(Sprite icon, Action onClick, bool interactable = true)
@@ -39,6 +55,7 @@ public static class StoryPopup
             Interactable = interactable;
             Icon = icon;
             BuildContent = null;
+            Style = null;
         }
 
         public PopupButton(Action<Transform> buildContent, Action onClick)
@@ -48,6 +65,7 @@ public static class StoryPopup
             Interactable = true;
             Icon = null;
             BuildContent = buildContent;
+            Style = null;
         }
     }
 
@@ -193,7 +211,8 @@ public static class StoryPopup
     }
 
     /// <summary>Popup con un campo de texto (p. ej. para cambiar el nombre).</summary>
-    public static void ShowInput(string title, string body, string initialText, int maxLength, string confirmLabel, Action<string> onConfirm)
+    public static void ShowInput(string title, string body, string initialText, int maxLength, string confirmLabel, Action<string> onConfirm,
+        bool danger = false)
     {
         Transform panel = CreatePanel(title, body);
 
@@ -233,7 +252,8 @@ public static class StoryPopup
         field.text = initialText ?? "";
         box.gameObject.SetActive(true);
 
-        CreateButton(panel, new PopupButton(confirmLabel, () => onConfirm?.Invoke(field.text)), 130f, 50f, UiKit.ButtonStyle.Green);
+        CreateButton(panel, new PopupButton(confirmLabel, () => onConfirm?.Invoke(field.text)), 130f, 50f,
+            danger ? UiKit.ButtonStyle.Red : UiKit.ButtonStyle.Green);
         CreateButton(panel, new PopupButton("Cancelar", null), 120f, 46f, UiKit.ButtonStyle.Gray);
     }
 
@@ -311,6 +331,7 @@ public static class StoryPopup
 
     private static void CreateButton(Transform parent, PopupButton data, float height, float fontSize, UiKit.ButtonStyle style)
     {
+        if (data.Style.HasValue) style = data.Style.Value;
         Sprite sprite = UiKit.ButtonSprite(data.Interactable ? style : UiKit.ButtonStyle.Gray);
         Image image = CreateImage("Button", parent, sprite != null ? Color.white : (data.Interactable ? ButtonColor : DisabledButtonColor));
         if (sprite != null)
