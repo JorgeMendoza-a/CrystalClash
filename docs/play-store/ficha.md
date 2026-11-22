@@ -50,8 +50,8 @@ Combinar 3, Puzzle, Casual, Multijugador, Competitivo
 crystalclash.soporte@gmail.com
 
 ## Enlaces
-- Política de privacidad: (URL donde publiques docs/privacidad.html)
-- Eliminar cuenta (formulario "Eliminación de datos"): (URL de docs/eliminar-cuenta.html)
+- Política de privacidad: https://docs.google.com/document/d/e/2PACX-1vTW8-MGC4PNHHO7tmosHkxTkYBZU-Qu0_yatwUGszs3YAN_tKnFi1RYfdw9n-vecCp-_xcE1Jq7teQW/pub
+- Eliminar cuenta (formulario "Eliminación de datos"): https://docs.google.com/document/d/e/2PACX-1vTW8-MGC4PNHHO7tmosHkxTkYBZU-Qu0_yatwUGszs3YAN_tKnFi1RYfdw9n-vecCp-_xcE1Jq7teQW/pub (sección "Eliminar tu cuenta de Crystal Clash")
 
 ---
 
