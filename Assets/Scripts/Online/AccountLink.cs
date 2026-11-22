@@ -122,6 +122,66 @@ public static class AccountLink
         }
     }
 
+    // ------------------------------------------------------------------
+    // Eliminar cuenta (lo exige Google Play)
+    // ------------------------------------------------------------------
+
+    /// <summary>Botón "Eliminar cuenta": explica, pide escribir ELIMINAR y borra todo.</summary>
+    public static void AskDeleteAccount()
+    {
+        StoryPopup.Show("Eliminar cuenta",
+            "Se borrará <b>para siempre</b>:\n• tu progreso, monedas, gemas y compras\n• tu clasificatoria, puntos e insignias\n• tus amigos\n\n" +
+            "<size=80%>Si tu cuenta está vinculada con Google, también se borra el vínculo.</size>",
+            new StoryPopup.PopupButton("Cancelar", null),
+            new StoryPopup.PopupButton("Continuar", () =>
+                StoryPopup.ShowInput("¿Seguro?", "Escribe <b>ELIMINAR</b> para confirmar.", "", 10, "Eliminar", text =>
+                {
+                    if ((text ?? "").Trim().ToUpperInvariant() == "ELIMINAR") DeleteAccount();
+                    else StoryPopup.Show("No se eliminó", "No escribiste ELIMINAR. Tu cuenta sigue igual.", new StoryPopup.PopupButton("Entendido", null));
+                })));
+    }
+
+    private static async void DeleteAccount()
+    {
+        StoryPopup.Show("Eliminando tu cuenta...", "");
+        try
+        {
+            await UgsRankedService.EnsureSignedInAsync();
+            await UgsRankedService.CallModule<bool>("DeleteAccount");
+            await AuthenticationService.Instance.DeleteAccountAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Eliminar cuenta: " + e.Message);
+            StoryPopup.Show("No se pudo eliminar", "Necesitas internet para eliminar la cuenta.\nInténtalo otra vez.",
+                new StoryPopup.PopupButton("Cerrar", null));
+            return;
+        }
+
+        try
+        {
+            if (PlayerAccountService.Instance.IsSignedIn) PlayerAccountService.Instance.SignOut();
+        }
+        catch (Exception)
+        {
+            // Si no había sesión de Unity Player Accounts, no pasa nada.
+        }
+
+        // Borrar también todo lo guardado en este dispositivo y empezar de cero.
+        UgsRankedService.ResetSession();
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+        SaveManager.ResetProgress();
+        RankedMatchState.Current = null;
+
+        StoryPopup.Show("Cuenta eliminada", "Tus datos se borraron. El juego empezará de nuevo.",
+            new StoryPopup.PopupButton("Aceptar", () =>
+            {
+                AppNavigation.PendingScreen = AppNavigation.Screen.Home;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }));
+    }
+
     private static void SetLinked(bool linked)
     {
         PlayerPrefs.SetInt(LinkedKey, linked ? 1 : 0);

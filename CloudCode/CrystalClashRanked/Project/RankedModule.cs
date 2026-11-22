@@ -231,6 +231,71 @@ namespace CrystalClashRanked
             throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
         }
 
+        // ==================================================================
+        // Eliminar cuenta (lo exige Google Play)
+        // ==================================================================
+
+        /// <summary>
+        /// Borra los datos del jugador: perfil de clasificatoria, progreso, amigos
+        /// (y lo quita de las listas de los demás), su ID corto y su lugar en la tabla.
+        /// Después el juego borra la cuenta de inicio de sesión (DeleteAccountAsync).
+        /// </summary>
+        [CloudCodeFunction("DeleteAccount")]
+        public async Task<bool> DeleteAccount(IExecutionContext context, IGameApiClient api)
+        {
+            string me = context.PlayerId;
+
+            // 1) Quitarlo de las listas de amigos y solicitudes de los demás.
+            var (mine, _) = await LoadFriends(context, api, me);
+            foreach (string other in mine.Friends.Concat(mine.Incoming).Concat(mine.Outgoing).Distinct().ToList())
+            {
+                if (string.IsNullOrEmpty(other) || other == me) continue;
+                for (int attempt = 0; attempt < MaxRetries; attempt++)
+                {
+                    var (theirs, theirLock) = await LoadFriends(context, api, other);
+                    ServerLogic.Remove(me, new FriendsState(), other, theirs);
+                    if (await TrySaveFriends(context, api, other, theirs, theirLock)) break;
+                }
+            }
+
+            var (profile, _) = await ReadProfile(context, api, me);
+
+            // 2) Su ID corto ya no lleva a nadie.
+            if (profile != null && profile.ShortId > 0)
+            {
+                try
+                {
+                    await api.CloudSaveData.DeleteCustomItemAsync(
+                        context, context.ServiceToken, context.ProjectId, PlayerIndexCustomId, IndexKey(profile.ShortId), null, default);
+                }
+                catch (ApiException e) when (e.Response != null && e.Response.StatusCode == HttpStatusCode.NotFound)
+                {
+                }
+            }
+
+            // 3) Tabla de posiciones: el juego no puede borrar la fila, así que queda en 0
+            //    y marcada con temporada -1 (GetLeaderboard solo muestra la temporada actual).
+            try
+            {
+                await api.Leaderboards.AddLeaderboardPlayerScoreAsync(
+                    context, context.ServiceToken, Guid.Parse(context.ProjectId), LeaderboardId, me,
+                    new AddLeaderboardScore(0, new Dictionary<string, object> { { "name", "" }, { "season", -1 } }));
+            }
+            catch (ApiException)
+            {
+            }
+
+            // 4) Todos sus datos protegidos (perfil, progreso, amigos).
+            try
+            {
+                await api.CloudSaveData.DeleteProtectedItemsAsync(context, context.ServiceToken, context.ProjectId, me, default);
+            }
+            catch (ApiException e) when (e.Response != null && e.Response.StatusCode == HttpStatusCode.NotFound)
+            {
+            }
+            return true;
+        }
+
         private static string IndexKey(int shortId) => "p" + shortId;
 
         private async Task<string> FindPlayerByShortId(IExecutionContext context, IGameApiClient api, int shortId)

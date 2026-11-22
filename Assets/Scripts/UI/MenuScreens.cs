@@ -239,18 +239,6 @@ public static class MenuScreens
                 UgsRankedService.TestModeEnabled = !testMode;
                 Refresh();
             }),
-            new StoryPopup.PopupButton("Borrar progreso", ConfirmReset));
-    }
-
-    private static void ConfirmReset()
-    {
-        StoryPopup.Show("¿Borrar progreso?",
-            "Se borran tus niveles, estrellas, monedas, gemas y potenciadores de este dispositivo.\nNo se puede deshacer.",
-            new StoryPopup.PopupButton("Cancelar", null),
-            new StoryPopup.PopupButton("Sí, borrar", () =>
-            {
-                SaveManager.ResetProgress();
-                Refresh();
-            }));
+            new StoryPopup.PopupButton("Eliminar cuenta", AccountLink.AskDeleteAccount));
     }
 }
