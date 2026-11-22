@@ -200,6 +200,16 @@ namespace CrystalClash.Story.Logic
         /// <summary>Especiales creados en total (para el logro "Maestro de Combos").</summary>
         public int specialsCreated;
 
+        // Recompensa diaria y misiones diarias (ver DailyEvents.cs). Los días son
+        // "días desde 1970" en la hora local del jugador.
+        public int dailyLastDay;
+        public int dailyStreak;
+        public int missionsDay;
+        public int[] missionIds = new int[0];
+        public int[] missionProgress = new int[0];
+        public bool[] missionClaimed = new bool[0];
+        public bool missionBonusClaimed;
+
         /// <summary>Última vez que se guardó (segundos UTC). Sirve para juntar con la copia de la nube.</summary>
         public long savedUtc;
 
@@ -210,6 +220,9 @@ namespace CrystalClash.Story.Logic
             copy.stars = new List<int>(stars ?? new List<int>());
             copy.boosters = boosters != null ? (int[])boosters.Clone() : null;
             copy.ownedCosmetics = new List<string>(ownedCosmetics ?? new List<string>());
+            copy.missionIds = missionIds != null ? (int[])missionIds.Clone() : new int[0];
+            copy.missionProgress = missionProgress != null ? (int[])missionProgress.Clone() : new int[0];
+            copy.missionClaimed = missionClaimed != null ? (bool[])missionClaimed.Clone() : new bool[0];
             return copy;
         }
 

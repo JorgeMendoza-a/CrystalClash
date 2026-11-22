@@ -216,6 +216,7 @@ public class GameManager : MonoBehaviour
     public void RegisterBooster(BoosterKind kind, SwapResult result)
     {
         SaveManager.Progress.TryUseBooster(kind);
+        DailyMissions.Add(SaveManager.Progress, GameDays.Today, MissionType.UseBoosters, 1);
         SaveManager.Save();
         Session.ApplyBooster(result);
         CountSpecials(result);
@@ -227,7 +228,16 @@ public class GameManager : MonoBehaviour
     private static void CountSpecials(SwapResult result)
     {
         if (result == null || !result.IsValid) return;
-        foreach (CascadeStep step in result.Steps) SaveManager.Progress.specialsCreated += step.Created.Count;
+        int created = 0, cleared = 0;
+        foreach (CascadeStep step in result.Steps)
+        {
+            created += step.Created.Count;
+            cleared += step.Cleared.Count;
+        }
+        PlayerProgress p = SaveManager.Progress;
+        p.specialsCreated += created;
+        DailyMissions.Add(p, GameDays.Today, MissionType.CreateSpecials, created);
+        DailyMissions.Add(p, GameDays.Today, MissionType.ClearMinerals, cleared);
     }
 
     private void SetPendingBooster(BoosterKind? kind)
@@ -397,6 +407,8 @@ public class GameManager : MonoBehaviour
             SaveManager.Progress.coins += winCoins;
             SaveManager.Progress.gems += winGems;
             SaveManager.Progress.AddXp(winXp);
+            DailyMissions.Add(SaveManager.Progress, GameDays.Today, MissionType.PassLevels, 1);
+            DailyMissions.Add(SaveManager.Progress, GameDays.Today, MissionType.EarnStars, Session.Stars);
 
             if (firstWin)
             {

@@ -67,6 +67,9 @@ public static class MenuScreens
 
         TopBarView.Create(root);
         BuildBottomNav(root, screen);
+
+        // Primera vez del día en el Inicio: se abre solo el premio diario.
+        if (screen == Screen.Home) DailyEventsPopup.AutoShowIfAvailable();
     }
 
     /// <summary>Vuelve a dibujar la pantalla actual (p. ej. después de comprar).</summary>
@@ -145,7 +148,7 @@ public static class MenuScreens
     {
         GameObject column = UiKit.Node(root, "Columna");
         UiKit.Stretch((RectTransform)column.transform);
-        UiKit.Vertical(column, 0, 22f, TextAnchor.MiddleCenter);
+        UiKit.Vertical(column, 0, 16f, TextAnchor.MiddleCenter);
 
         BuildCrystals(column.transform);
 
@@ -158,12 +161,13 @@ public static class MenuScreens
         UiKit.Size(crystal, height: 165f);
         UiKit.Size(UiKit.Title(column.transform, "CLASH", 150f), height: 165f);
 
-        UiKit.Size(UiKit.Node(column.transform, "Espacio").transform, height: 20f);
+        UiKit.Size(UiKit.Node(column.transform, "Espacio").transform, height: 10f);
 
         MainButton(column.transform, "JUGAR", UiKit.ButtonStyle.Green, 180f, 84f, PlayCurrentLevel);
-        MainButton(column.transform, "NIVELES", UiKit.ButtonStyle.Blue, 140f, 60f, ShowMap);
-        MainButton(column.transform, "CLASIFICATORIA", UiKit.ButtonStyle.Purple, 140f, 60f, ShowRanked);
-        MainButton(column.transform, "TIENDA", UiKit.ButtonStyle.Blue, 140f, 60f, () => Show(Screen.Shop));
+        DailyEventsPopup.BuildHomeButtons(column.transform);
+        MainButton(column.transform, "NIVELES", UiKit.ButtonStyle.Blue, 125f, 56f, ShowMap);
+        MainButton(column.transform, "CLASIFICATORIA", UiKit.ButtonStyle.Purple, 125f, 56f, ShowRanked);
+        MainButton(column.transform, "TIENDA", UiKit.ButtonStyle.Blue, 125f, 56f, () => Show(Screen.Shop));
     }
 
     /// <summary>Racimo de cristales sobre el logo (con los sprites de los minerales).</summary>

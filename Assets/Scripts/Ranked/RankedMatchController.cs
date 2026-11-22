@@ -203,6 +203,8 @@ public class RankedMatchController : MonoBehaviour
         int xp = result.Outcome == MatchOutcome.Win ? PlayerProgress.XpRankedWin
             : result.Outcome == MatchOutcome.Draw ? PlayerProgress.XpRankedDraw : PlayerProgress.XpRankedLoss;
         SaveManager.Progress.AddXp(xp);
+        DailyMissions.Add(SaveManager.Progress, GameDays.Today, MissionType.PlayRanked, 1);
+        if (result.Outcome == MatchOutcome.Win) DailyMissions.Add(SaveManager.Progress, GameDays.Today, MissionType.WinRanked, 1);
         SaveManager.Save();
         gemsLine += $"  <color=#80C8FF>+{xp} XP</color>";
 
