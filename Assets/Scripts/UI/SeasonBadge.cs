@@ -130,6 +130,16 @@ public static class SeasonRewards
         }
 
         SeasonReward r = rewards[index];
+        if (r.Kind == (int)SeasonRewardKind.WeeklyEnd)
+        {
+            string medal = r.Division == 1 ? "¡CAMPEÓN DE LA SEMANA!" : r.Division <= 3 ? "¡Podio!" : "¡Gracias por participar!";
+            StoryPopup.Show("Torneo semanal",
+                $"{medal}\nTerminaste en el <b>puesto {r.Division}</b>\n\n" +
+                $"<color=#FFD040>+{r.Coins} monedas</color>   <color=#C080FF>+{r.Gems} gemas</color>",
+                new StoryPopup.PopupButton(index + 1 < rewards.Count ? "Siguiente" : "¡Genial!", () => ShowNext(rewards, index + 1)));
+            Sound.Play(r.Division <= 3 ? "win" : "coin");
+            return;
+        }
         string prizes = $"<color=#FFD040>+{r.Coins} monedas</color>" + (r.Gems > 0 ? $"   <color=#C080FF>+{r.Gems} gemas</color>" : "");
         bool end = r.Kind == (int)SeasonRewardKind.SeasonEnd;
         string title = end ? $"¡Fin de la Temporada {r.Season}!" : "¡Nuevo rango!";

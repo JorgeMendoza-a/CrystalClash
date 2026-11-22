@@ -258,6 +258,25 @@ public class TestRankedService : IRankedService
         return Task.FromResult(testFriends);
     }
 
+    public Task<WeeklyBoard> GetWeeklyAsync(int count)
+    {
+        LoadProfile();
+        int week = WeeklyRules.Week(GameClockNow());
+        var board = new WeeklyBoard { Week = week, EndsUtc = WeeklyRules.WeekEndUtc(week) };
+        string[] names = { BotNames[0], BotNames[1 % BotNames.Length], BotNames[2 % BotNames.Length] };
+        int[] points = { 21, 15, 9 };
+        for (int i = 0; i < names.Length; i++)
+        {
+            board.Entries.Add(new WeeklyRow { Rank = i + 1, PlayerId = "test_" + names[i], Name = names[i], Points = points[i], Wins = points[i] / 3 });
+        }
+        board.Entries.Add(new WeeklyRow { Rank = 4, PlayerId = profile.PlayerId, Name = profile.Name, Points = 6, Wins = 2, IsMe = true });
+        board.MyRank = 4;
+        board.MyPoints = 6;
+        return Task.FromResult(board);
+    }
+
+    private static long GameClockNow() => System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
     public Task<PublicProfile> GetPublicProfileAsync(string playerId)
     {
         LoadProfile();

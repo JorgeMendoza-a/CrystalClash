@@ -44,6 +44,7 @@ namespace CrystalClashRanked
         private const string QueueKey = "queue";
         private const string FriendsKey = "friends";
         private const string PlayerIndexCustomId = "player_index";
+        private const string WeeklyCustomId = "weekly";
         private const string MatchKey = "state";
         private const int MaxRetries = 5;
         private const int HistorySize = 20;
@@ -684,11 +685,89 @@ namespace CrystalClashRanked
                 {
                     await ApplyResult(context, api, pair.Key, pair.Value);
                 }
+                await AddWeeklyResults(context, api, match.Results, profiles);
 
                 return match.Results.TryGetValue(me, out ResultDto result) ? result : new ResultDto { Pending = true };
             }
 
             throw new Exception("El servidor está ocupado, inténtalo de nuevo.");
+        }
+
+        // ==================================================================
+        // Torneo semanal
+        // ==================================================================
+
+        private static string WeeklyKey(int week) => "w" + week;
+
+        /// <summary>Tabla del torneo de esta semana, con mi puesto aunque no esté entre los primeros.</summary>
+        [CloudCodeFunction("GetWeekly")]
+        public async Task<WeeklyDto> GetWeekly(IExecutionContext context, IGameApiClient api, int limit)
+        {
+            limit = Math.Max(1, Math.Min(50, limit));
+            int week = WeeklyRules.Week(Now);
+            var (state, _) = await LoadCustom<WeeklyState>(context, api, WeeklyCustomId, WeeklyKey(week));
+
+            var ranking = WeeklyRules.Ranking(state.Entries);
+            var dto = new WeeklyDto { Week = week, EndsUtc = WeeklyRules.WeekEndUtc(week) };
+            for (int i = 0; i < ranking.Count; i++)
+            {
+                var (id, entry) = (ranking[i].Key, ranking[i].Value);
+                bool isMe = id == context.PlayerId;
+                if (isMe)
+                {
+                    dto.MyRank = i + 1;
+                    dto.MyPoints = entry.Points;
+                }
+                if (i < limit)
+                {
+                    dto.Entries.Add(new WeeklyRowDto { Rank = i + 1, PlayerId = id, Name = entry.Name, Points = entry.Points, Wins = entry.Wins, IsMe = isMe });
+                }
+            }
+            return dto;
+        }
+
+        /// <summary>Suma el resultado de una partida a la tabla de la semana (solo jugadores humanos).</summary>
+        private async Task AddWeeklyResults(IExecutionContext context, IGameApiClient api,
+            Dictionary<string, ResultDto> results, Dictionary<string, RankedProfileState> profiles)
+        {
+            int week = WeeklyRules.Week(Now);
+            for (int attempt = 0; attempt < MaxRetries; attempt++)
+            {
+                var (state, writeLock) = await LoadCustom<WeeklyState>(context, api, WeeklyCustomId, WeeklyKey(week));
+                foreach (var pair in results)
+                {
+                    if (!profiles.TryGetValue(pair.Key, out RankedProfileState profile) || profile == null) continue;
+                    if (!state.Entries.TryGetValue(pair.Key, out WeeklyEntry entry))
+                    {
+                        entry = new WeeklyEntry();
+                        state.Entries[pair.Key] = entry;
+                    }
+                    entry.Name = profile.Name;
+                    WeeklyRules.Add(entry, (MatchOutcome)pair.Value.Outcome);
+                }
+                if (await TrySaveCustom(context, api, WeeklyCustomId, WeeklyKey(week), state, writeLock)) return;
+            }
+            // Si no se pudo guardar tras varios intentos, esa partida no suma al torneo (los puntos de rango sí).
+        }
+
+        /// <summary>
+        /// Si empezó una semana nueva, revisa en qué puesto quedó el jugador la semana
+        /// anterior y le deja el premio pendiente. Devuelve true si cambió el perfil.
+        /// </summary>
+        private async Task<bool> ApplyWeeklyReward(IExecutionContext context, IGameApiClient api, string playerId, RankedProfileState profile)
+        {
+            int week = WeeklyRules.Week(Now);
+            if (profile.WeeklyCheckedWeek >= week) return false;
+
+            int previous = week - 1;
+            if (profile.WeeklyCheckedWeek > 0 && profile.WeeklyCheckedWeek <= previous)
+            {
+                var (state, _) = await LoadCustom<WeeklyState>(context, api, WeeklyCustomId, WeeklyKey(previous));
+                SeasonReward reward = WeeklyRules.RewardFor(WeeklyRules.RankOf(state.Entries, playerId), previous);
+                if (reward != null) profile.PendingRewards.Add(reward);
+            }
+            profile.WeeklyCheckedWeek = week;
+            return true;
         }
 
         [CloudCodeFunction("GetLeaderboard")]
@@ -914,7 +993,13 @@ namespace CrystalClashRanked
                 {
                     // Primera vez: perfil nuevo con su ID en orden y un nombre de minero.
                     int id = await NextPlayerId(context, api);
-                    profile = new RankedProfileState { ShortId = id, Name = "Minero" + id, Points = RankedRules.StartingPoints };
+                    profile = new RankedProfileState
+                    {
+                        ShortId = id,
+                        Name = "Minero" + id,
+                        Points = RankedRules.StartingPoints,
+                        WeeklyCheckedWeek = WeeklyRules.Week(Now)
+                    };
                     changed = true;
                 }
                 else if (profile.ShortId == 0)
@@ -926,6 +1011,9 @@ namespace CrystalClashRanked
 
                 int seasonBefore = profile.Season;
                 if (ServerLogic.ApplySeason(profile, Now)) changed = true;
+
+                // Torneo semanal: premio de la semana anterior (una sola revisión por semana).
+                if (await ApplyWeeklyReward(context, api, playerId, profile)) changed = true;
 
                 // Índice ID corto -> jugador (para poder agregarlo como amigo por su ID).
                 if (!profile.Indexed)

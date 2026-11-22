@@ -251,6 +251,15 @@ public class UgsRankedService : IRankedService
         return Clean(await Call<FriendsList>("SendFriendRequestToPlayer", new Dictionary<string, object> { { "playerId", playerId } }));
     }
 
+    public async Task<WeeklyBoard> GetWeeklyAsync(int count)
+    {
+        await SignInAsync();
+        WeeklyBoard board = await Call<WeeklyBoard>("GetWeekly", new Dictionary<string, object> { { "limit", count } });
+        board = board ?? new WeeklyBoard();
+        board.Entries = board.Entries ?? new List<WeeklyRow>();
+        return board;
+    }
+
     public async Task<PublicProfile> GetPublicProfileAsync(string playerId)
     {
         await SignInAsync();

@@ -38,6 +38,15 @@ namespace CrystalClashRanked
 
         /// <summary>True cuando su ID corto ya está en el índice (para buscarlo al agregar amigos).</summary>
         public bool Indexed { get; set; }
+
+        /// <summary>Última semana en la que ya se revisó el premio del torneo semanal anterior.</summary>
+        public int WeeklyCheckedWeek { get; set; }
+    }
+
+    /// <summary>Tabla del torneo de una semana (dato global): PlayerId -> puntos.</summary>
+    public class WeeklyState
+    {
+        public Dictionary<string, WeeklyEntry> Entries { get; set; } = new Dictionary<string, WeeklyEntry>();
     }
 
     /// <summary>Amigos y solicitudes de un jugador (datos protegidos del jugador). Guarda PlayerIds.</summary>
@@ -208,6 +217,25 @@ namespace CrystalClashRanked
 
         /// <summary>"self", "friend", "sent" (le mandé solicitud), "incoming" (me la mandó) o "none".</summary>
         public string FriendStatus { get; set; } = "none";
+    }
+
+    public class WeeklyRowDto
+    {
+        public int Rank { get; set; }
+        public string PlayerId { get; set; } = "";
+        public string Name { get; set; } = "";
+        public int Points { get; set; }
+        public int Wins { get; set; }
+        public bool IsMe { get; set; }
+    }
+
+    public class WeeklyDto
+    {
+        public int Week { get; set; }
+        public long EndsUtc { get; set; }
+        public List<WeeklyRowDto> Entries { get; set; } = new List<WeeklyRowDto>();
+        public int MyRank { get; set; }
+        public int MyPoints { get; set; }
     }
 
     public class LeaderboardEntryDto

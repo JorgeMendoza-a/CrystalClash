@@ -9,7 +9,10 @@ namespace CrystalClash.Ranked.Logic
         RankUp = 0,
 
         /// <summary>Terminó la temporada: premio según tu rango final.</summary>
-        SeasonEnd = 1
+        SeasonEnd = 1,
+
+        /// <summary>Terminó el torneo semanal: premio según tu puesto (Division = puesto, Season = semana).</summary>
+        WeeklyEnd = 2
     }
 
     /// <summary>Una recompensa de temporada (la entrega el servidor; el juego la muestra y suma monedas/gemas).</summary>

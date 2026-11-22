@@ -131,6 +131,32 @@ public interface IRankedService
 
     /// <summary>Perfil de otro jugador (al tocarlo en la tabla o en amigos).</summary>
     Task<PublicProfile> GetPublicProfileAsync(string playerId);
+
+    /// <summary>Tabla del torneo semanal (con mi puesto aunque no esté entre los primeros).</summary>
+    Task<WeeklyBoard> GetWeeklyAsync(int count);
+}
+
+/// <summary>Una fila del torneo semanal (mismos nombres que WeeklyRowDto del servidor).</summary>
+[Serializable]
+public class WeeklyRow
+{
+    public int Rank;
+    public string PlayerId = "";
+    public string Name = "";
+    public int Points;
+    public int Wins;
+    public bool IsMe;
+}
+
+/// <summary>Torneo semanal (mismos nombres que WeeklyDto del servidor).</summary>
+[Serializable]
+public class WeeklyBoard
+{
+    public int Week;
+    public long EndsUtc;
+    public List<WeeklyRow> Entries = new List<WeeklyRow>();
+    public int MyRank;
+    public int MyPoints;
 }
 
 /// <summary>Perfil de otro jugador (mismos nombres que PublicProfileDto del servidor).</summary>

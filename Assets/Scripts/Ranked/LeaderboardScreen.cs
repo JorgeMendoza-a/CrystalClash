@@ -186,9 +186,79 @@ public class LeaderboardScreen : MonoBehaviour
         }
         else
         {
-            Clear();
-            Message("La tabla semanal llegará pronto.");
+            LoadWeekly();
         }
+    }
+
+    /// <summary>Pestaña Semanal: torneo de la semana (victoria 3, empate 1) con premios para los mejores.</summary>
+    private async void LoadWeekly()
+    {
+        Clear();
+        Message("Cargando...");
+        try
+        {
+            WeeklyBoard board = await service.GetWeeklyAsync(Count);
+            if (this == null || tab != 2) return;
+            Clear();
+
+            WeeklyInfo(board);
+
+            var entries = new List<LeaderboardEntry>();
+            foreach (WeeklyRow row in board.Entries)
+            {
+                entries.Add(new LeaderboardEntry { PlayerId = row.PlayerId, Rank = row.Rank, Name = row.Name, Points = row.Points, IsMe = row.IsMe });
+            }
+            var mine = new LeaderboardEntry
+            {
+                PlayerId = me != null ? me.PlayerId : "",
+                Rank = board.MyRank,
+                Name = me != null ? me.Name : "Tú",
+                Points = board.MyPoints,
+                IsMe = true
+            };
+
+            if (entries.Count == 0)
+            {
+                Message("Nadie ha jugado esta semana todavía.\n¡Gana una partida de clasificatoria y ponte primero!");
+                BuildFooter(mine);
+                return;
+            }
+            Fill(entries, mine);
+        }
+        catch (Exception e)
+        {
+            if (this == null || tab != 2) return;
+            Debug.LogWarning("Torneo semanal: " + e.Message);
+            Clear();
+            Message("No se pudo cargar.\nRevisa tu internet.");
+        }
+    }
+
+    /// <summary>Tarjeta con cuánto falta, cómo se suman puntos y botón de premios.</summary>
+    private void WeeklyInfo(WeeklyBoard board)
+    {
+        Image card = UiKit.Card(list, "Torneo");
+        UiKit.Size(card, height: 180f);
+        HorizontalLayoutGroup row = UiKit.Horizontal(card.gameObject, 30, 16f);
+        row.childForceExpandHeight = false;
+
+        TimeSpan left = TimeSpan.FromSeconds(Math.Max(0, board.EndsUtc - GameClock.NowUtc));
+        TMP_Text text = UiKit.Text(card.transform,
+            $"<b>TORNEO SEMANAL</b>  ·  termina en <color=#FFD040>{left.Days}d {left.Hours}h</color>\n" +
+            $"<size=80%>Victoria +{WeeklyRules.WinPoints} pts  ·  Empate +{WeeklyRules.DrawPoints} pt  ·  Los mejores ganan gemas</size>",
+            34f, Color.white, FontStyles.Normal, TextAlignmentOptions.Left);
+        UiKit.Outline(text, 0.15f);
+        UiKit.Size(text, flexibleWidth: 1f, height: 130f);
+
+        UiKit.Size(UiKit.Button(card.transform, "PREMIOS", UiKit.ButtonStyle.Purple, ShowWeeklyRewards, 34f), width: 260f, height: 100f);
+    }
+
+    private static void ShowWeeklyRewards()
+    {
+        StoryPopup.Show("Premios del torneo",
+            "Al terminar la semana (lunes), según tu puesto:\n\n" + string.Join("\n", WeeklyRules.RewardLines) +
+            "\n\n<size=80%>El premio llega solo la próxima vez que entres a la clasificatoria.</size>",
+            new StoryPopup.PopupButton("Entendido", null));
     }
 
     // ------------------------------------------------------------------
@@ -249,7 +319,7 @@ public class LeaderboardScreen : MonoBehaviour
         }
     }
 
-    private void Fill(List<LeaderboardEntry> entries)
+    private void Fill(List<LeaderboardEntry> entries, LeaderboardEntry footerFallback = null)
     {
         if (entries.Count == 0)
         {
@@ -262,7 +332,7 @@ public class LeaderboardScreen : MonoBehaviour
             for (int i = 0; i < entries.Count; i++) BuildRow(list, entries[i], false);
         }
 
-        LeaderboardEntry mine = entries.Find(e => e.IsMe);
+        LeaderboardEntry mine = entries.Find(e => e.IsMe) ?? footerFallback;
         BuildFooter(mine);
     }
 
