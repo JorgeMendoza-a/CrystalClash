@@ -70,7 +70,7 @@ namespace CrystalClash.Story.Logic
         public const int LifeRegenSeconds = 20 * 60;
 
         public const int CoinsPerWin = 50;
-        public const int GemsPerLevelWin = 5;   // gemas por superar un nivel de historia
+        public const int GemsPerLevelWin = 5;   // gemas la primera vez que se supera un nivel de historia
         public const int CoinsPerStar = 25;
         public const int BoosterPrice = 250;     // monedas
         public const int RefillLivesPrice = 20;  // gemas

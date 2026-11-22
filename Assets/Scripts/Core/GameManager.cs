@@ -392,7 +392,7 @@ public class GameManager : MonoBehaviour
             SaveManager.Progress.RecordWin(levelNumber, Session.Stars, LevelCatalog.Count);
 
             winCoins = PlayerProgress.CoinsForWin(Session.Stars);
-            winGems = PlayerProgress.GemsPerLevelWin;
+            winGems = firstWin ? PlayerProgress.GemsPerLevelWin : 0; // gemas solo la primera vez que se pasa
             winXp = PlayerProgress.XpStoryWin + PlayerProgress.XpPerStar * Session.Stars;
             SaveManager.Progress.coins += winCoins;
             SaveManager.Progress.gems += winGems;
@@ -418,7 +418,8 @@ public class GameManager : MonoBehaviour
         if (levelNumber > 0)
         {
             int k = doubled ? 2 : 1;
-            reward = $"\n\n<color=#FFD040>+{winCoins * k} monedas</color>  <color=#C080FF>+{winGems * k} gemas</color>  <color=#80C8FF>+{winXp * k} XP</color>" +
+            string gems = winGems > 0 ? $"  <color=#C080FF>+{winGems * k} gemas</color>" : "";
+            reward = $"\n\n<color=#FFD040>+{winCoins * k} monedas</color>{gems}  <color=#80C8FF>+{winXp * k} XP</color>" +
                      (doubled ? "  <color=#66FF77><b>x2</b></color>" : "") + winExtra;
         }
 
