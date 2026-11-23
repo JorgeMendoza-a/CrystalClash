@@ -14,17 +14,19 @@ RES = os.path.join(ROOT, "Assets", "Resources")
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
 OUT = ARGS[0] if ARGS else "promo_out"
 
-# --narrado: un minero animado explica el juego (voz con Piper TTS).
-# Variables de entorno: PIPER_BIN (ejecutable de piper) y PIPER_VOICE (modelo .onnx en español).
+# --narrado: un minero animado explica el juego.
+# Voz con Kokoro TTS (recomendado): KOKORO_DIR (carpeta del modelo), KOKORO_PYTHON (python con
+# kokoro-onnx instalado), KOKORO_VOICE (em_santa, em_alex o ef_dora).
+# O con Piper TTS: PIPER_BIN (ejecutable) y PIPER_VOICE (modelo .onnx en español).
 NARRATE = "--narrado" in sys.argv
 NARRATION = [
-    "¡Hola, minero! Bienvenido a Crystal Clash.",
-    "Combina tres o más cristales del mismo color para romperlos y sumar puntos. ¡Hay cien niveles por descubrir!",
-    "Junta cuatro o cinco y crea especiales: taladros, dinamita y prismas que lo limpian todo.",
-    "En la clasificatoria retas a otro jugador en línea, con el mismo tablero. ¡Gana quien haga más puntos!",
-    "Sube de Bronce hasta Campeón y gana premios en cada temporada.",
-    "Consigue avatares y banners épicos para presumir tu perfil.",
-    "Agrega a tus amigos y compite en el torneo semanal. ¡Nos vemos en la mina!",
+    "¡Ey, minero! ¿Listo para la aventura? ¡Bienvenido a Crystal Clash!",
+    "Junta tres cristales del mismo color y... ¡pum! ¡Se rompen! Hay cien niveles esperándote.",
+    "¿Juntas cuatro o cinco? ¡Creas especiales! Taladros, dinamita y prismas que lo revientan todo.",
+    "¿Te crees el mejor? ¡Reta a otros jugadores en línea, en el mismo tablero! Gana quien haga más puntos.",
+    "Sube desde Bronce hasta Campeón... ¡y llévate premios cada temporada!",
+    "Y presume tu estilo con avatares y banners épicos.",
+    "¡Invita a tus amigos, gana el torneo semanal... y nos vemos en la mina!",
 ]
 os.makedirs(OUT, exist_ok=True)
 FRAMES = os.path.join(OUT, "frames")
@@ -271,13 +273,17 @@ VOICE = []        # (inicio, muestras a 44100 Hz) por frase
 VOICE_LEN = [0.0] * len(NARRATION)
 
 def synth_narration():
-    piper = os.environ.get("PIPER_BIN", "piper")
-    model = os.environ["PIPER_VOICE"]
+    kokoro = os.environ.get("KOKORO_DIR")
     clips = []
     for i, line in enumerate(NARRATION):
         path = os.path.join(OUT, f"voz_{i}.wav")
-        subprocess.run([piper, "-m", model, "-f", path], input=line.encode("utf-8"), check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if kokoro:
+            helper = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tts_kokoro.py")
+            cmd = [os.environ.get("KOKORO_PYTHON", sys.executable), helper, kokoro,
+                   os.environ.get("KOKORO_VOICE", "em_santa"), os.environ.get("KOKORO_SPEED", "1.08"), path]
+        else:
+            cmd = [os.environ.get("PIPER_BIN", "piper"), "-m", os.environ["PIPER_VOICE"], "-f", path]
+        subprocess.run(cmd, input=line.encode("utf-8"), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         with wave.open(path) as w:
             sr = w.getframerate()
             x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
