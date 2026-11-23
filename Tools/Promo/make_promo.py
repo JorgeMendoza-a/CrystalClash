@@ -11,7 +11,21 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RES = os.path.join(ROOT, "Assets", "Resources")
-OUT = sys.argv[1] if len(sys.argv) > 1 else "promo_out"
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+OUT = ARGS[0] if ARGS else "promo_out"
+
+# --narrado: un minero animado explica el juego (voz con Piper TTS).
+# Variables de entorno: PIPER_BIN (ejecutable de piper) y PIPER_VOICE (modelo .onnx en español).
+NARRATE = "--narrado" in sys.argv
+NARRATION = [
+    "¡Hola, minero! Bienvenido a Crystal Clash.",
+    "Combina tres o más cristales del mismo color para romperlos y sumar puntos. ¡Hay cien niveles por descubrir!",
+    "Junta cuatro o cinco y crea especiales: taladros, dinamita y prismas que lo limpian todo.",
+    "En la clasificatoria retas a otro jugador en línea, con el mismo tablero. ¡Gana quien haga más puntos!",
+    "Sube de Bronce hasta Campeón y gana premios en cada temporada.",
+    "Consigue avatares y banners épicos para presumir tu perfil.",
+    "Agrega a tus amigos y compite en el torneo semanal. ¡Nos vemos en la mina!",
+]
 os.makedirs(OUT, exist_ok=True)
 FRAMES = os.path.join(OUT, "frames")
 os.makedirs(FRAMES, exist_ok=True)
@@ -253,7 +267,36 @@ def plan_board_scene(start):
     cascade()
     return steps, t
 
-BOARD_START = 3.0
+VOICE = []        # (inicio, muestras a 44100 Hz) por frase
+VOICE_LEN = [0.0] * len(NARRATION)
+
+def synth_narration():
+    piper = os.environ.get("PIPER_BIN", "piper")
+    model = os.environ["PIPER_VOICE"]
+    clips = []
+    for i, line in enumerate(NARRATION):
+        path = os.path.join(OUT, f"voz_{i}.wav")
+        subprocess.run([piper, "-m", model, "-f", path], input=line.encode("utf-8"), check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with wave.open(path) as w:
+            sr = w.getframerate()
+            x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
+        idx = np.arange(0, len(x), sr / 44100.0)
+        x = np.interp(idx, np.arange(len(x)), x)
+        # quitar silencio del principio y del final
+        loud = np.where(np.abs(x) > 0.02)[0]
+        if len(loud): x = x[max(0, loud[0] - 800): loud[-1] + 2000]
+        clips.append(x)
+        VOICE_LEN[i] = len(x) / 44100.0
+    return clips
+
+VOICE_CLIPS = synth_narration() if NARRATE else []
+LEAD = 0.35   # la frase empieza un poco después de que entra la escena
+
+def scene_length(index, base):
+    return max(base, LEAD + VOICE_LEN[index] + 0.7) if NARRATE else base
+
+BOARD_START = scene_length(0, 3.0)
 BOARD_STEPS, BOARD_END = plan_board_scene(BOARD_START)
 
 def draw_board(frame, t):
@@ -454,17 +497,144 @@ def scene_outro(frame, t, start):
     paste_center(frame, pill, W / 2, 1640, kp * (1 + 0.03 * math.sin(t * 6)))
     text(frame, "MUY PRONTO EN GOOGLE PLAY", 58, W / 2, 1640, kp * (1 + 0.03 * math.sin(t * 6)), 1.0)
 
+BOARD_SCENE_END = BOARD_START + scene_length(1, BOARD_END + 0.6 - BOARD_START)
 SCENES = [
     (0.0, BOARD_START, lambda f, t: scene_intro(f, t)),
-    (BOARD_START, BOARD_END + 0.6, lambda f, t: scene_board(f, t)),
+    (BOARD_START, BOARD_SCENE_END, lambda f, t: scene_board(f, t)),
 ]
-s = BOARD_END + 0.6
-SPECIALS = s; s += 4.0
-VERSUS = s; s += 4.5
-RANKS_T = s; s += 4.2
-PROFILE = s; s += 4.0
+s = BOARD_SCENE_END
+SPECIALS = s; s += scene_length(2, 4.0)
+VERSUS = s; s += scene_length(3, 4.5)
+RANKS_T = s; s += scene_length(4, 4.2)
+PROFILE = s; s += scene_length(5, 4.0)
 OUTRO = s
-DURATION = OUTRO + 4.5
+DURATION = OUTRO + scene_length(6, 4.5) + (0.6 if NARRATE else 0)
+VOICE_START = [0.4, BOARD_START + LEAD, SPECIALS + LEAD, VERSUS + LEAD, RANKS_T + LEAD, PROFILE + LEAD, OUTRO + LEAD]
+
+# ------------------------------------------------------------------
+# Minero narrador (dibujado por código) y subtítulos
+# ------------------------------------------------------------------
+MINER_SIZE = 430
+_miner_cache = {}
+
+def draw_miner(mouth, blink):
+    """Minero de caricatura. mouth: 0 (cerrada) .. 1 (abierta). blink: ojos cerrados."""
+    key = (round(mouth * 6), blink)
+    if key in _miner_cache: return _miner_cache[key]
+    S2 = 2
+    Wm, Hm = MINER_SIZE * S2, int(MINER_SIZE * 1.1) * S2
+    im = Image.new("RGBA", (Wm, Hm), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    ol = (30, 18, 5, 255); lw = 9 * S2 // 2
+    cx = Wm // 2
+    def sc(v): return int(v * S2)
+
+    # Cuerpo: camisa azul y tirantes
+    d.rounded_rectangle([cx - sc(165), sc(330), cx + sc(165), Hm + sc(40)], radius=sc(80), fill=(40, 90, 190, 255), outline=ol, width=lw)
+    d.rectangle([cx - sc(95), sc(345), cx - sc(60), Hm], fill=(140, 90, 40, 255), outline=ol, width=lw)
+    d.rectangle([cx + sc(60), sc(345), cx + sc(95), Hm], fill=(140, 90, 40, 255), outline=ol, width=lw)
+    # Cuello
+    d.rectangle([cx - sc(45), sc(300), cx + sc(45), sc(350)], fill=(240, 190, 145, 255))
+    # Cabeza
+    d.ellipse([cx - sc(130), sc(110), cx + sc(130), sc(370)], fill=(250, 205, 160, 255), outline=ol, width=lw)
+    # Orejas
+    for side in (-1, 1):
+        ex = cx + side * sc(130)
+        d.ellipse([ex - sc(25), sc(225), ex + sc(25), sc(285)], fill=(245, 195, 150, 255), outline=ol, width=lw)
+    # Casco amarillo con visera y lámpara
+    d.pieslice([cx - sc(150), sc(30), cx + sc(150), sc(290)], 180, 360, fill=(255, 200, 40, 255), outline=ol, width=lw)
+    d.rounded_rectangle([cx - sc(170), sc(150), cx + sc(170), sc(185)], radius=sc(16), fill=(235, 170, 20, 255), outline=ol, width=lw)
+    d.line([cx, sc(40), cx, sc(150)], fill=(235, 170, 20, 255), width=sc(14))
+    d.ellipse([cx - sc(42), sc(55), cx + sc(42), sc(135)], fill=(200, 200, 210, 255), outline=ol, width=lw)
+    d.ellipse([cx - sc(28), sc(68), cx + sc(28), sc(122)], fill=(255, 250, 200, 255))
+    # Cejas
+    for side in (-1, 1):
+        bx = cx + side * sc(55)
+        d.line([bx - sc(30), sc(205) - side * 0, bx + sc(30), sc(198)], fill=(90, 55, 25, 255), width=sc(11))
+    # Ojos
+    for side in (-1, 1):
+        ex = cx + side * sc(55)
+        if blink:
+            d.line([ex - sc(24), sc(240), ex + sc(24), sc(240)], fill=ol, width=sc(8))
+        else:
+            d.ellipse([ex - sc(26), sc(212), ex + sc(26), sc(268)], fill=(255, 255, 255, 255), outline=ol, width=sc(5))
+            d.ellipse([ex - sc(12) + side * sc(3), sc(228), ex + sc(12) + side * sc(3), sc(256)], fill=(40, 30, 25, 255))
+            d.ellipse([ex - sc(6) + side * sc(3), sc(231), ex + sc(1) + side * sc(3), sc(239)], fill=(255, 255, 255, 255))
+    # Mejillas
+    for side in (-1, 1):
+        mx = cx + side * sc(85)
+        d.ellipse([mx - sc(22), sc(280), mx + sc(22), sc(305)], fill=(255, 150, 140, 140))
+    # Nariz
+    d.ellipse([cx - sc(24), sc(255), cx + sc(24), sc(298)], fill=(240, 170, 130, 255), outline=ol, width=sc(5))
+    # Boca (se abre con la voz)
+    open_h = sc(8 + 40 * mouth)
+    top = sc(312)
+    d.rounded_rectangle([cx - sc(40), top, cx + sc(40), top + open_h], radius=sc(18), fill=(120, 30, 35, 255), outline=ol, width=sc(5))
+    if mouth > 0.35:
+        d.ellipse([cx - sc(22), top + open_h - sc(22), cx + sc(22), top + open_h + sc(4)], fill=(230, 100, 110, 255))
+    # Bigote
+    for side in (-1, 1):
+        d.pieslice([cx - sc(5) if side > 0 else cx - sc(75), sc(290), cx + sc(75) if side > 0 else cx + sc(5), sc(335)],
+                   0, 180, fill=(110, 65, 30, 255), outline=ol, width=sc(5))
+    miner = im.resize((Wm // S2, Hm // S2), Image.LANCZOS)
+    _miner_cache[key] = miner
+    return miner
+
+def voice_level(t):
+    """Qué tan fuerte habla en el instante t (0..1), para mover la boca."""
+    for i, start in enumerate(VOICE_START):
+        clip = VOICE_CLIPS[i]
+        j = int((t - start) * 44100)
+        if 0 <= j < len(clip):
+            seg = clip[j: j + 1470]
+            return clamp(float(np.sqrt((seg ** 2).mean())) * 7.0) if len(seg) else 0.0
+    return 0.0
+
+def current_line(t):
+    for i, start in enumerate(VOICE_START):
+        if start - 0.15 <= t <= start + VOICE_LEN[i] + 0.35: return i
+    return -1
+
+def wrap(textline, size, max_w):
+    f = font(size)
+    words, lines, cur = textline.split(), [], ""
+    for w in words:
+        test = (cur + " " + w).strip()
+        if f.getlength(test) <= max_w: cur = test
+        else: lines.append(cur); cur = w
+    if cur: lines.append(cur)
+    return lines
+
+_bubble_cache = {}
+def bubble(i):
+    if i in _bubble_cache: return _bubble_cache[i]
+    bw, size = 700, 46
+    lines = wrap(NARRATION[i], size, bw - 70)
+    bh = 50 + len(lines) * 58
+    im = Image.new("RGBA", (bw + 40, bh + 10), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([30, 0, bw + 30, bh], radius=36, fill=(255, 255, 255, 245), outline=(30, 18, 5, 255), width=6)
+    d.polygon([(30, bh - 70), (0, bh - 20), (62, bh - 40)], fill=(255, 255, 255, 245), outline=(30, 18, 5, 255))
+    d.line([(33, bh - 66), (60, bh - 42)], fill=(255, 255, 255, 245), width=8)
+    for k, ln in enumerate(lines):
+        d.text((65, 25 + k * 58), ln, font=font(size), fill=(40, 25, 70, 255))
+    _bubble_cache[i] = im
+    return im
+
+def draw_narrator(frame, t):
+    level = voice_level(t)
+    blink = (t % 3.3) < 0.12
+    bob = math.sin(t * 2.4) * 6 + level * 8
+    k = back_out(prog(t, 0.0, 0.6))
+    miner = draw_miner(level, blink)
+    paste_center(frame, glow(500, (255, 230, 150), 0.35), 180, 1690, 1.0, 0.5 + 0.2 * math.sin(t * 4))
+    paste_center(frame, miner, 190, H - miner.height / 2 + 30 - bob + (1 - k) * 400, 1.0)
+    i = current_line(t)
+    if i >= 0:
+        b = bubble(i)
+        a = clamp((t - (VOICE_START[i] - 0.15)) / 0.15)
+        frame_y = 1480 + (440 - b.height) / 2
+        paste_center(frame, b, 330 + b.width / 2, frame_y + b.height / 2, 1.0, a)
 SCENES += [
     (SPECIALS, VERSUS, lambda f, t: scene_specials(f, t, SPECIALS)),
     (VERSUS, RANKS_T, lambda f, t: scene_versus(f, t, VERSUS)),
@@ -486,7 +656,14 @@ def render():
                 fade = min(clamp((t - start) / 0.25), clamp((end - t) / 0.25)) if start > 0 else clamp((end - t) / 0.25)
                 if fade < 1:
                     a = layer.getchannel("A").point(lambda v: int(v * fade)); layer.putalpha(a)
-                frame.alpha_composite(layer)
+                if NARRATE:
+                    # Deja espacio abajo para el minero y los subtítulos
+                    small = layer.resize((int(W * 0.77), int(H * 0.77)), Image.LANCZOS)
+                    frame.alpha_composite(small, (int((W - small.width) / 2), 0))
+                else:
+                    frame.alpha_composite(layer)
+        if NARRATE:
+            draw_narrator(frame, t)
         frame.alpha_composite(VIGNETTE)
         if t < 0.4:  # fundido desde negro
             frame = Image.blend(Image.new("RGBA", (W, H), (0, 0, 0, 255)), frame, t / 0.4)
@@ -539,6 +716,20 @@ def make_audio(path):
     for i in range(0, 9, 2): add("coin.wav", PROFILE + 0.25 + i * 0.1, 0.4)
     add("win.wav", OUTRO + 0.1, 0.8)
 
+    if NARRATE:
+        duck = np.ones(n, np.float32)
+        for i, start in enumerate(VOICE_START):
+            a = int(start * sr); b = min(n, a + len(VOICE_CLIPS[i]))
+            duck[max(0, a - 4000): min(n, b + 6000)] = 0.45
+        # suavizar el cambio de volumen
+        kernel = np.ones(4410, np.float32) / 4410
+        duck = np.convolve(duck, kernel, mode="same")
+        out *= duck
+        for i, start in enumerate(VOICE_START):
+            add_clip = VOICE_CLIPS[i]
+            a = int(start * sr); b = min(n, a + len(add_clip))
+            out[a:b] += add_clip[: b - a] * 1.6
+
     peak = np.max(np.abs(out)) or 1
     out = np.tanh(out / peak * 1.3) / np.tanh(1.3) * 0.9
     with wave.open(path, "wb") as w:
@@ -549,7 +740,7 @@ if __name__ == "__main__":
     total = render()
     audio = os.path.join(OUT, "audio.wav")
     make_audio(audio)
-    video = os.path.join(OUT, "crystal_clash_promo.mp4")
+    video = os.path.join(OUT, "crystal_clash_promo_narrado.mp4" if NARRATE else "crystal_clash_promo.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", os.path.join(FRAMES, "f%05d.jpg"),
                     "-i", audio, "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", video], check=True)
